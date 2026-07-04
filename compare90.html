@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>90行版本对比</title>
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="90行对比" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="shortcut icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css?v=20260611-layout-9" />
+  </head>
+  <body class="compare-page-body">
+    <section id="comparePageLock" class="app-lock">
+      <div class="lock-panel">
+        <span class="brand-mark"></span>
+        <h1>90行版本对比</h1>
+        <p>请输入页面密码进入对比页。</p>
+        <div class="lock-form">
+          <input id="comparePagePassword" type="password" maxlength="32" placeholder="页面密码" autocomplete="current-password" />
+          <button id="toggleComparePagePasswordButton" type="button">显示</button>
+          <button id="unlockComparePageButton" type="button">进入</button>
+        </div>
+        <p id="comparePageAuthMessage" class="auth-message"></p>
+      </div>
+    </section>
+
+    <main id="comparePageRoot" class="app compare-page-app" hidden>
+      <section class="agent-shell compare-hero">
+        <div class="agent-shell-top">
+          <div class="agent-copy">
+            <span class="agent-badge">Compare Agent</span>
+            <h2>90行三版本对比</h2>
+            <p>从版本库中选择三个版本，每个版本读取 30 行，依次装载到 1-90 行选号区。</p>
+          </div>
+          <div class="agent-sidecard">
+            <span class="agent-sidecard-title">Page Switch</span>
+            <div class="agent-status">
+              <span class="agent-pill">90行主选号区</span>
+              <span class="agent-pill">3个版本联装</span>
+              <span class="agent-pill">共用版本库</span>
+            </div>
+            <p class="agent-hint">保存为版本后仍写入同一个本地版本库，主页面可直接继续查看和调整。</p>
+          </div>
+        </div>
+        <div class="agent-actions compare-hero-actions">
+          <button id="backToMainPageTop" class="agent-primary-action" type="button" data-accent="ruby" data-nav-tag="MAIN">返回45行主页面</button>
+          <button class="agent-jump" type="button" data-switch-page="compare180" data-accent="violet" data-nav-tag="180">切到180行页</button>
+          <button id="jumpToCompareControls" class="agent-jump" type="button" data-accent="amber" data-nav-tag="LOAD">跳到版本选择</button>
+          <button id="jumpToCompareBoard" class="agent-jump" type="button" data-accent="violet" data-nav-tag="BOARD">跳到90行选号区</button>
+          <button id="jumpToCompareVersions" class="agent-jump" type="button" data-accent="mint" data-nav-tag="CHECK">跳到版本列表</button>
+        </div>
+      </section>
+
+      <section id="compareControlPanel" class="version-shell compare-panel" aria-label="三版本装载设置">
+        <div class="history-top">
+          <h2>三版本装载</h2>
+          <div class="version-tools">
+            <input id="compareVersionPassword" type="password" placeholder="输入密码查看版本" autocomplete="current-password" />
+            <button id="unlockCompareVersionsButton" type="button">验证</button>
+            <button id="lockCompareVersionsButton" type="button" hidden>锁定</button>
+            <button id="loadCompareVersionsButton" type="button">加载3个版本</button>
+            <button id="saveCompareBoardButton" class="ghost" type="button">一键保存为版本</button>
+            <button class="ghost" type="button" data-switch-page="compare180">180行对比页</button>
+            <button id="backToMainPageButton" class="ghost" type="button">返回主页面</button>
+          </div>
+        </div>
+        <p id="comparePageHint" class="version-auth-message">请先验证版本库，再选择三个版本。</p>
+        <div class="compare-five-layout">
+          <div class="compare-form compare-five-form">
+            <label>
+              <span>版本一</span>
+              <select id="compareVersionOne"></select>
+            </label>
+            <label>
+              <span>版本二</span>
+              <select id="compareVersionTwo"></select>
+            </label>
+            <label>
+              <span>版本三</span>
+              <select id="compareVersionThree"></select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="toolbar compare-toolbar" aria-label="90行编辑控制">
+        <div class="toolbar-top">
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <div>
+              <h1>90行选号编辑</h1>
+              <p>可直接点格子增删球，也可以通过顶部控制输入行号、区号和号码后手动补充。</p>
+            </div>
+          </div>
+          <div class="toolbar-note">
+            <span class="toolbar-kicker">Edit Control</span>
+            <strong>对比页继续编辑</strong>
+            <p>三版本装载完成后，1-90 行都可以继续手动选号和修订。</p>
+          </div>
+        </div>
+        <div class="controls">
+          <label>
+            <span>行</span>
+            <input id="compareRowInput" type="number" min="1" max="90" value="1" />
+          </label>
+          <label>
+            <span>区</span>
+            <select id="compareZoneInput">
+              <option value="front">前区</option>
+              <option value="back">后区</option>
+            </select>
+          </label>
+          <label>
+            <span>号码</span>
+            <input id="compareNumberInput" type="number" min="1" max="35" value="1" />
+          </label>
+          <label>
+            <span>球色</span>
+            <input id="compareColorInput" type="color" value="#d6202a" />
+          </label>
+          <label>
+            <span>大小</span>
+            <input id="compareSizeInput" type="range" min="20" max="34" value="25" />
+          </label>
+          <label>
+            <span>缩放</span>
+            <input id="compareZoomInput" type="range" min="30" max="130" value="100" />
+          </label>
+          <button id="compareAddBallButton" type="button">添加球</button>
+          <button id="compareDeleteColorButton" type="button">删此颜色</button>
+          <button id="compareAddDividerButton" type="button">添加线条</button>
+          <button id="compareClearBoardButton" type="button">清空选号区</button>
+        </div>
+      </section>
+
+      <section class="palette compare-palette" aria-label="对比页颜色选择">
+        <button class="swatch compare-swatch active" type="button" data-color="#d6202a" style="--swatch: #d6202a">红</button>
+        <button class="swatch compare-swatch" type="button" data-color="#1768b7" style="--swatch: #1768b7">蓝</button>
+        <button class="swatch compare-swatch" type="button" data-color="#14a365" style="--swatch: #14a365">绿</button>
+        <button class="swatch compare-swatch" type="button" data-color="#f59e0b" style="--swatch: #f59e0b">橙</button>
+        <button class="swatch compare-swatch" type="button" data-color="#7c3aed" style="--swatch: #7c3aed">紫</button>
+        <button class="swatch compare-swatch" type="button" data-color="#111827" style="--swatch: #111827">黑</button>
+      </section>
+
+      <section id="compareBoardPanel" class="board-shell compare-board-shell" aria-label="90行选号面板">
+        <div class="board-top">
+          <div class="status">
+            <strong id="compareBallCount">0</strong>
+            <span>个球</span>
+          </div>
+          <div class="board-actions">
+            <button id="captureCompareBoardButton" class="ghost" type="button">截图</button>
+            <button id="clearCompareBoardButton" class="ghost" type="button">清空90行</button>
+            <button id="saveCompareBoardButtonInline" class="ghost" type="button">保存为版本</button>
+            <button class="ghost" type="button" data-switch-page="compare180">180行页</button>
+            <button id="backToMainPageInline" class="ghost" type="button">返回主页面</button>
+          </div>
+          <span id="compareCurrentBaseLabel" class="base-label">当前编辑：空白画面</span>
+        </div>
+        <div id="compareVersionBanner" class="version-banner" hidden>
+          <span class="version-banner-label">版本</span>
+          <span id="compareVersionBannerText" class="version-banner-text"></span>
+        </div>
+        <div class="board-wrap compare-board-wrap">
+          <div id="compareBoard" class="board compare-board" aria-label="90行选号走势表">
+            <div>
+              <div class="zone-title front-title">前区 1-35</div>
+              <div id="compareFrontBoard" class="zone-board front-board" aria-label="前区 1 到 35"></div>
+            </div>
+            <div>
+              <div class="zone-title back-title">后区 1-12</div>
+              <div id="compareBackBoard" class="zone-board back-board" aria-label="后区 1 到 12"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="compareVersionsPanel" class="version-shell compare-panel" aria-label="版本列表">
+        <div class="history-top">
+          <h2>版本列表</h2>
+          <div class="version-tools">
+            <input id="compareVersionSearch" type="search" placeholder="查找时间、号码、颜色" />
+            <button id="downloadCompareVersionsButton" type="button">下载版本信息</button>
+            <label class="file-import-button">
+              <input id="importCompareVersionsInput" type="file" accept=".json,application/json" />
+              导入版本信息
+            </label>
+          </div>
+        </div>
+        <p id="compareVersionAuthMessage" class="version-auth-message">验证后显示版本列表，可在这里查看和管理已保存的版本。</p>
+        <div class="version-layout">
+          <ol id="compareVersionList" class="version-list"></ol>
+        </div>
+      </section>
+    </main>
+
+    <script src="vendor/html2canvas.min.js"></script>
+    <script>
+      window.comparePageConfig = {
+        compareVersionsCount: 3,
+        drawRowsPerVersion: 30,
+        rowsLabel: "90行",
+        versionsText: "三个版本",
+        titlePrefix: "90行对比图",
+        draftStorageKey: "lottery-board-compare90-draft",
+        contextStorageKey: "lottery-board-compare90-context",
+        captureSplitRow: 90,
+      };
+    </script>
+    <script src="compare.js?v=20260611-compare-page-17"></script>
+  </body>
+</html>

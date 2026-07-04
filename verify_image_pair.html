@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Image Pair</title>
+    <script>
+      localStorage.clear();
+      sessionStorage.clear();
+      sessionStorage.setItem("lottery-page-auth", "true");
+    </script>
+  </head>
+  <body>
+    <div id="appLock"></div>
+    <main id="appRoot">
+      <section id="agentHomePanel" data-agent-section></section>
+      <section id="agentControlPanel" data-agent-section></section>
+      <section id="agentPalettePanel" data-agent-section></section>
+      <section id="agentBoardPanel" data-agent-section>
+        <div id="board" class="board">
+          <div><div id="frontBoard"></div></div>
+          <div><div id="backBoard"></div></div>
+        </div>
+      </section>
+      <section id="agentVersionPanel" data-agent-section></section>
+      <section id="agentImportPanel" data-agent-section></section>
+      <div class="board-wrap"></div>
+      <input id="appPassword" />
+      <button id="toggleAppPasswordButton"></button>
+      <button id="unlockAppButton"></button>
+      <p id="appAuthMessage"></p>
+      <button id="installAppButton"></button>
+      <p id="installHint"></p>
+      <span id="displayModeBadge"></span>
+      <span id="networkStatusBadge"></span>
+      <input id="rowInput" type="number" value="1" />
+      <select id="zoneInput"><option value="front">front</option><option value="back">back</option></select>
+      <input id="numberInput" type="number" value="1" />
+      <input id="colorInput" type="color" value="#d6202a" />
+      <input id="sizeInput" type="range" value="25" />
+      <input id="zoomInput" type="range" value="100" />
+      <button id="addBallButton"></button>
+      <button id="eraseButton"></button>
+      <button id="deleteColorButton"></button>
+      <button id="addDividerButton"></button>
+      <button id="clearButton"></button>
+      <button id="sampleButton"></button>
+      <button id="clearSampleButton"></button>
+      <button id="saveHistoryButton"></button>
+      <button id="saveVersionButton"></button>
+      <button id="openComparePageButton"></button>
+      <button id="openComparePageFromHome"></button>
+      <button id="openCompare90PageButton"></button>
+      <button id="openCompare90PageFromHome"></button>
+      <button id="captureBoardButton"></button>
+      <button id="clearMainBoardButton"></button>
+      <button id="clearHistoryButton"></button>
+      <button id="clearVersionsButton"></button>
+      <strong id="ballCount"></strong>
+      <span id="currentBaseLabel"></span>
+      <div id="versionBanner"><span id="versionBannerText"></span></div>
+      <ol id="historyList"></ol>
+      <ol id="versionList"></ol>
+      <input id="versionSearch" />
+      <button id="downloadVersionsButton"></button>
+      <input id="importVersionsInput" type="file" />
+      <button id="compareVersionsButton"></button>
+      <input id="versionPassword" />
+      <button id="unlockVersionsButton"></button>
+      <button id="lockVersionsButton"></button>
+      <p id="versionAuthMessage"></p>
+      <div id="versionPreview"></div>
+      <h3 id="versionPreviewTitle"></h3>
+      <input id="drawDateInput" />
+      <textarea id="drawDataInput"></textarea>
+      <input id="drawFileInput" type="file" />
+      <button id="generateDrawVersionButton"></button>
+      <button id="cancelEditDrawVersionButton"></button>
+      <p id="drawImportMessage"></p>
+      <div id="versionModal"><h2 id="versionModalTitle"></h2><div id="versionModalBody"></div><button id="closeVersionModalButton"></button></div>
+      <div id="compareModal">
+        <select id="compareVersionOne"></select>
+        <select id="compareVersionTwo"></select>
+        <select id="compareVersionThree"></select>
+        <p id="compareHint"></p>
+        <button id="applyCompareButton"></button>
+        <button id="saveCompareButton"></button>
+        <button id="closeCompareModalButton"></button>
+      </div>
+      <textarea id="descInput"></textarea>
+      <input id="descFileInput" type="file" />
+      <button id="descAddButton"></button>
+      <button id="descHelpButton"></button>
+      <div id="descHelpTip"></div>
+      <button class="swatch" data-color="#d6202a"></button>
+      <button class="swatch" data-color="#1768b7"></button>
+      <button class="swatch" data-color="#14a365"></button>
+      <button class="swatch" data-color="#f59e0b"></button>
+      <button class="swatch" data-color="#7c3aed"></button>
+      <button class="swatch" data-color="#111827"></button>
+      <pre id="result"></pre>
+    </main>
+    <script>
+      window.matchMedia = window.matchMedia || function () {
+        return {
+          matches: false,
+          addEventListener() {},
+          removeEventListener() {},
+          addListener() {},
+          removeListener() {},
+        };
+      };
+      window.alert = function () {};
+      window.confirm = function () { return true; };
+      window.navigator.serviceWorker = { register: async () => ({}) };
+    </script>
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="vendor/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+      function buildWindowedDrawBalls(targetSourceIssue) {
+        const allDraws = sortDrawsByIssue(getBuiltInDrawData());
+        if (!targetSourceIssue) return createBuiltInDrawBalls();
+        const sourceIndex = allDraws.findIndex((draw) => draw.issue === targetSourceIssue);
+        if (sourceIndex < 0) return createBuiltInDrawBalls();
+        const sourceDraws = allDraws.slice(sourceIndex, sourceIndex + drawRows);
+        rowIssues = {};
+        sourceDraws.forEach((draw, index) => {
+          rowIssues[index + 1] = draw.issue;
+        });
+        return sourceDraws.flatMap((draw, index) => {
+          const row = index + 1;
+          return [
+            ...draw.front.map((number) => ({ ...makeBall(row, "front", number, sampleRedColor), protected: true })),
+            ...draw.back.map((number) => ({ ...makeBall(row, "back", number, sampleBlueColor), protected: true })),
+          ];
+        });
+      }
+
+      (function run() {
+        const originalRandom = Math.random;
+        Math.random = () => 0;
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get("mode") || "single";
+        const sourceIssueForWindow = mode === "batch"
+          ? (params.get("startIssue") || "2026021")
+          : (params.get("sourceIssue") || "2026020");
+
+        applyBalls(buildWindowedDrawBalls(sourceIssueForWindow), {
+          baseTitle: "BuiltIn",
+          rowIssues,
+          protectBalls: true,
+          persist: false,
+        });
+
+        const allDraws = sortDrawsByIssue(getBuiltInDrawData());
+
+        function buildCurrentMaps() {
+          const issueToRow = Object.fromEntries(
+            Object.entries(rowIssues).map(([row, issue]) => [issue, Number(row)])
+          );
+          const ballsByRow = new Map();
+          collectBalls().forEach((ball) => {
+            const row = Number(ball.row);
+            const current = ballsByRow.get(row) || { front: [], back: [] };
+            current[ball.zone].push(ball.number);
+            ballsByRow.set(row, current);
+          });
+          return { issueToRow, ballsByRow };
+        }
+
+        function evaluatePair(sourceIssue, targetIssue) {
+          applyBalls(buildWindowedDrawBalls(sourceIssue), {
+            baseTitle: "BuiltIn",
+            rowIssues,
+            protectBalls: true,
+            persist: false,
+          });
+
+          const { issueToRow, ballsByRow } = buildCurrentMaps();
+          const sourceRow = issueToRow[sourceIssue];
+          const targetRow = issueToRow[targetIssue];
+          if (!sourceRow || !targetRow) return null;
+
+          const ratioPlan = getActiveSampleRatios();
+          const frontRepeatTarget = 0;
+          const backRepeatTarget = 0;
+          const frontSample = buildSampleNumbers(sourceRow, "front", ratioPlan);
+          const backSample = buildSampleNumbers(sourceRow, "back");
+          const frontCombos = buildSampleFrontCombos(
+            frontSample.candidateEntries,
+            ratioPlan,
+            samplePickCount,
+            sampleIntervals,
+            frontSample.ratioSupportMap,
+            frontSample.referenceRows,
+            frontRepeatTarget,
+            frontSample.selectedNumbers,
+            frontSample.selectedNumbers,
+          );
+          const backCombos = buildSampleFreeCombos(
+            backSample.candidateEntries,
+            sampleBackPickCount,
+            backRepeatTarget,
+            backSample.selectedNumbers,
+          );
+          const variants = buildSingleSamplePlan(frontCombos, backCombos, ratioPlan, 0);
+          const target = ballsByRow.get(targetRow) || { front: [], back: [] };
+          const targetFront = new Set(target.front);
+          const targetBack = new Set(target.back);
+          const rows = variants.slice(0, 5).map((variant, index) => {
+            const front = variant.front?.numbers || [];
+            const back = variant.back?.numbers || [];
+            const frontHits = front.filter((n) => targetFront.has(n));
+            const backHits = back.filter((n) => targetBack.has(n));
+            const totalHits = frontHits.length + backHits.length;
+            return {
+              rank: index + 1,
+              label: variant.label,
+              front,
+              back,
+              frontHits,
+              backHits,
+              frontHitRate: Number(((frontHits.length / 5) * 100).toFixed(1)),
+              backHitRate: Number(((backHits.length / 2) * 100).toFixed(1)),
+              totalHitRate: Number(((totalHits / 7) * 100).toFixed(1)),
+              totalHits,
+            };
+          });
+          const totalHitRates = rows.map((row) => row.totalHitRate);
+          return {
+            sourceIssue,
+            sourceRow,
+            targetIssue,
+            targetRow,
+            targetFront: [...target.front].sort((a, b) => a - b),
+            targetBack: [...target.back].sort((a, b) => a - b),
+            rows,
+            summary: {
+              top1TotalHitRate: rows[0]?.totalHitRate || 0,
+              bestOfTop5TotalHitRate: totalHitRates.length ? Math.max(...totalHitRates) : 0,
+              avgTop5TotalHitRate: totalHitRates.length
+                ? Number((totalHitRates.reduce((sum, value) => sum + value, 0) / totalHitRates.length).toFixed(2))
+                : 0,
+            },
+          };
+        }
+
+        function evaluateBatch(step) {
+          const startIssue = Number(params.get("startIssue")) || 0;
+          const endIssue = Number(params.get("endIssue")) || 0;
+          const issues = allDraws
+            .map((draw) => Number(draw.issue))
+            .filter(Number.isFinite)
+            .filter((issue) => (!startIssue || issue >= startIssue) && (!endIssue || issue <= endIssue))
+            .sort((left, right) => left - right);
+          const pairs = issues
+            .map((issue) => [String(issue), String(issue + step)])
+            .filter(([sourceIssue, targetIssue]) =>
+              allDraws.some((draw) => draw.issue === sourceIssue) &&
+              allDraws.some((draw) => draw.issue === targetIssue)
+            )
+            .map(([sourceIssue, targetIssue]) => evaluatePair(sourceIssue, targetIssue))
+            .filter(Boolean);
+          const top1Rates = pairs.map((pair) => pair.summary.top1TotalHitRate);
+          const bestRates = pairs.map((pair) => pair.summary.bestOfTop5TotalHitRate);
+          const avgRates = pairs.map((pair) => pair.summary.avgTop5TotalHitRate);
+          return {
+            mode: "batch",
+            step,
+            pairCount: pairs.length,
+            availableIssueRange: {
+              min: issues[0] || null,
+              max: issues[issues.length - 1] || null,
+            },
+            summary: {
+              avgTop1TotalHitRate: top1Rates.length
+                ? Number((top1Rates.reduce((sum, value) => sum + value, 0) / top1Rates.length).toFixed(2))
+                : 0,
+              avgBestOfTop5TotalHitRate: bestRates.length
+                ? Number((bestRates.reduce((sum, value) => sum + value, 0) / bestRates.length).toFixed(2))
+                : 0,
+              avgTop5TotalHitRate: avgRates.length
+                ? Number((avgRates.reduce((sum, value) => sum + value, 0) / avgRates.length).toFixed(2))
+                : 0,
+              minTop1TotalHitRate: top1Rates.length ? Math.min(...top1Rates) : 0,
+              minBestOfTop5TotalHitRate: bestRates.length ? Math.min(...bestRates) : 0,
+            },
+            pairs,
+          };
+        }
+
+        window.verifyHarness = {
+          availableIssues: allDraws.map((draw) => draw.issue),
+          evaluatePair,
+          evaluateBatch,
+        };
+
+        const payload = mode === "idle"
+          ? { mode: "idle", availableIssues: allDraws.map((draw) => draw.issue).sort() }
+          : mode === "batch"
+            ? evaluateBatch(Number(params.get("step")) || 10)
+            : evaluatePair(
+              params.get("sourceIssue") || "2026020",
+              params.get("targetIssue") || "2026030",
+            );
+
+        document.getElementById("result").textContent = JSON.stringify(payload, null, 2);
+        Math.random = originalRandom;
+      })();
+    </script>
+  </body>
+</html>
