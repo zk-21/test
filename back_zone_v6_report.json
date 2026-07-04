@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-06-26T02:01:48.573Z",
+  "baseline": "桥接v4 (54.5%)",
+  "strategies": [
+    {
+      "name": "A: 当前桥接v4",
+      "backHitRate": 26.3,
+      "hitDistribution": {
+        "hit2": 28,
+        "hit1": 52,
+        "hit0": 19
+      },
+      "hit1PlusRate": "80.8"
+    },
+    {
+      "name": "B: 前区大小比调整（大号多则后区大号+2）",
+      "backHitRate": 26.3,
+      "hitDistribution": {
+        "hit2": 27,
+        "hit1": 51,
+        "hit0": 21
+      },
+      "hit1PlusRate": "78.8"
+    },
+    {
+      "name": "C: 前区和值涨跌调整（涨则后区大号+2）",
+      "backHitRate": 26.3,
+      "hitDistribution": {
+        "hit2": 28,
+        "hit1": 51,
+        "hit0": 20
+      },
+      "hit1PlusRate": "79.8"
+    },
+    {
+      "name": "D: 综合调整（大小比+和值涨跌）",
+      "backHitRate": 26.3,
+      "hitDistribution": {
+        "hit2": 26,
+        "hit1": 53,
+        "hit0": 20
+      },
+      "hit1PlusRate": "79.8"
+    }
+  ],
+  "bestStrategy": "D: 综合调整（大小比+和值涨跌）",
+  "bestHitRate": 26.3,
+  "conclusion": "建议保持当前策略"
+}

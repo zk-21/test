@@ -1,0 +1,353 @@
+{
+  "schema": "select-ball-rules/v1",
+  "description": "selectBall 选号约束规则配置 - 示例规则集",
+  "generatedAt": "2026-06-23T16:53:00+08:00",
+  "rules": {
+
+    "_comment_anchor": "========== A. 锚点变换规则 (Anchor Transform) ==========",
+    "anchor_transform": {
+      "enabled": true,
+      "description": "以上一期号码为锚点，通过偏移变换生成目标期号码",
+      "anchor_keep_score": 35,
+      "anchor_keep_score_desc": "组合中直接包含锚点号码时的单号得分",
+      "anchor_offset_weights": {
+        "description": "号码与锚点距离对应的权重分配",
+        "distance_1": 5,
+        "distance_2": 5,
+        "distance_3": 5,
+        "distance_4": 11,
+        "distance_5": 12,
+        "distance_6": 6,
+        "distance_7": 11,
+        "distance_8": 5,
+        "distance_9": 3,
+        "distance_10": 2
+      },
+      "transform_bonus": 14,
+      "transform_bonus_desc": "号码不在锚点集合中但与锚点有有效偏移关系时的奖励",
+      "far_offset_bonus": 3,
+      "far_offset_bonus_desc": "距离>=4或=7的偏移额外奖励",
+      "explain_coverage_bonus": {
+        "description": "被解释的号码数量越多，奖励越高（分段）",
+        "5_explained": 20,
+        "4_explained": 12,
+        "3_explained": 5
+      },
+      "anchor_crowd_penalty": 5,
+      "anchor_crowd_penalty_desc": "单个锚点被多个组合号码依赖时的惩罚",
+      "anchor_keep_penalty": 5,
+      "anchor_keep_penalty_desc": "过多直接保留锚点号码时的惩罚",
+      "cross_row_bridge": {
+        "enabled": true,
+        "description": "跨行桥接：结合选中行和参考行号码作为端点，中间号码加分",
+        "bridge_bonus": 5
+      },
+      "run_support": {
+        "enabled": true,
+        "description": "连号支撑：锚点中连续号码段周围±4范围内的号码加分",
+        "radius": 4,
+        "weights": [5, 4, 3, 2]
+      }
+    },
+
+    "_comment_interval": "========== B. 区间比约束 (Interval Ratio Constraint) ==========",
+    "interval_ratio": {
+      "enabled": true,
+      "description": "号码分为3个区间: 前区1-12, 中区13-24, 后区25-35",
+      "intervals": [
+        { "name": "前区", "min": 1, "max": 12 },
+        { "name": "中区", "min": 13, "max": 24 },
+        { "name": "后区", "min": 25, "max": 35 }
+      ],
+      "ratio_match_score": 80,
+      "ratio_match_desc": "组合区间比与选中行区间比一致时得分",
+      "ratio_constraint_score": {
+        "zero_to_one_or_more": 15,
+        "zero_to_one_desc": "选中行某区间为0但组合中该区间>=1",
+        "four_to_three_or_less": 10,
+        "four_to_three_desc": "选中行某区间>=4但组合中该区间<=3",
+        "max_diff_lte_2": 5,
+        "max_diff_lte_1": 20,
+        "max_diff_desc": "区间最大值与最小值之差"
+      },
+      "coverage_bonus": {
+        "3_intervals": 30,
+        "2_intervals": 10,
+        "desc": "覆盖的区间数量越多奖励越高"
+      },
+      "extreme_penalty": {
+        "threshold": 4,
+        "per_excess": 200,
+        "desc": "某区间>=5个号码时，每个超出部分扣200分；>=4时每超出扣100分"
+      },
+      "expected_ratio": {
+        "enabled": true,
+        "description": "从参考行统计最常见区间比，匹配则加80分",
+        "lookback_rows": 10,
+        "match_score": 80
+      }
+    },
+
+    "_comment_tail": "========== C. 尾号约束 (Tail/Last-Digit Constraint) ==========",
+    "tail_constraint": {
+      "enabled": true,
+      "description": "尾号（个位数0-9）分析维度",
+      "tail_overlap": {
+        "description": "组合尾号与选中行尾号重叠数量评分",
+        "4_overlap": 50,
+        "3_overlap": 35,
+        "2_overlap": 20,
+        "1_overlap": 8,
+        "0_overlap": 0
+      },
+      "tail_neighbor": {
+        "per_match": 2,
+        "description": "尾号±1邻号匹配（含0和9循环），每个匹配+2分",
+        "allow_wrap": true,
+        "allow_wrap_desc": "0和9视为邻居"
+      },
+      "tail_consecutive": {
+        "description": "尾号连续模式",
+        "3_consecutive": 40,
+        "2_consecutive": 20
+      },
+      "tail_arithmetic": {
+        "description": "尾号等差模式",
+        "4_arithmetic": 30,
+        "4_arithmetic_step": [2, 3, 4],
+        "3_arithmetic": 15,
+        "3_arithmetic_step": [1, 2, 3, 4]
+      },
+      "complementary_tails": {
+        "enabled": true,
+        "description": "互补尾号：两尾号之和=10（如1+9, 2+8, 3+7, 4+6, 5+5）",
+        "pairs": [[1,9], [2,8], [3,7], [4,6], [5,5]],
+        "per_pair_bonus": 5
+      },
+      "tail_continuity": {
+        "enabled": true,
+        "description": "重复尾号延续：选中行有重复尾号，目标行是否也有",
+        "match_score": 10
+      },
+      "common_tail_count": {
+        "expected_min": 1,
+        "expected_max": 2,
+        "description": "相邻两行之间通常有1-2个共同尾号",
+        "in_range_bonus": 10
+      },
+      "same_tail_mid_priority": {
+        "enabled": true,
+        "description": "同尾号时，中间号码(10-33)加分，边缘号码(<10)减分",
+        "mid_range": [10, 33],
+        "mid_bonus": 5,
+        "edge_penalty": 5
+      }
+    },
+
+    "_comment_structural": "========== D. 结构特征约束 (Structural Constraint) ==========",
+    "structural_constraint": {
+      "enabled": true,
+      "description": "5个号码的结构特征统计约束",
+      "odd_even_ratio": {
+        "description": "奇偶比：5个号码中奇数的个数",
+        "min_odd": 1,
+        "max_odd": 4,
+        "forbidden": ["全奇(5)", "全偶(0)"],
+        "penalty_for_invalid": 50
+      },
+      "sum_range": {
+        "description": "和值：5个号码之和",
+        "expected_mean": 90,
+        "expected_std": 22,
+        "hard_min": 50,
+        "hard_max": 135,
+        "soft_min": 68,
+        "soft_max": 112
+      },
+      "span_range": {
+        "description": "跨度：最大号-最小号",
+        "expected_mean": 24,
+        "expected_std": 7,
+        "hard_min": 6,
+        "hard_max": 34,
+        "soft_min": 17,
+        "soft_max": 31
+      },
+      "consecutive_pairs": {
+        "description": "连号对：号码中连续数字的对数",
+        "expected_min": 0,
+        "expected_max": 2,
+        "too_many_penalty": 30,
+        "too_many_threshold": 3
+      },
+      "longest_run": {
+        "description": "最长连号段长度",
+        "expected_max": 2,
+        "exceed_penalty": 20
+      },
+      "gap_analysis": {
+        "enabled": true,
+        "description": "间距分析：排序后相邻号码差值分布",
+        "min_gap": 1,
+        "max_single_gap": 15,
+        "large_gap_bonus": 5,
+        "large_gap_threshold": 8
+      }
+    },
+
+    "_comment_pool": "========== E. 号码池构建约束 (Pool Construction) ==========",
+    "pool_construction": {
+      "enabled": true,
+      "description": "构建候选号码池的规则",
+      "reference_window": {
+        "radius": 1,
+        "description": "选中行±1范围内的行构成参考行集合",
+        "note": "如果radius=2，则选中行±2范围的行都加入参考集合"
+      },
+      "anchor_guarantee": {
+        "enabled": true,
+        "description": "锚点保底：所有锚点号码必须进入选号池"
+      },
+      "interval_guarantee": {
+        "enabled": true,
+        "min_per_interval": 3,
+        "description": "区间保底：每个区间至少3个名额"
+      },
+      "frequency_enhance": {
+        "enabled": true,
+        "hot_threshold": 2,
+        "hot_bonus": 5,
+        "cold_bonus": 3,
+        "description": "频率增强：历史频率>=2的热号加分，冷号也获得补偿"
+      },
+      "target_pool_size": 25,
+      "pool_size_desc": "按综合得分排序填充池到目标大小",
+      "number_single_score_components": [
+        "anchor_offset_score",
+        "run_support_score",
+        "frequency_score",
+        "cold_score",
+        "interval_coverage_bonus",
+        "tail_pattern_bonus"
+      ]
+    },
+
+    "_comment_hard_filter": "========== F. 硬过滤规则 (Hard Filter) ==========",
+    "hard_filter": {
+      "enabled": true,
+      "description": "统计硬过滤，不满足任意条件的组合直接淘汰",
+      "conditions": {
+        "sum_in_range": {
+          "min": 50,
+          "max": 135,
+          "desc": "和值必须在50-135之间"
+        },
+        "span_in_range": {
+          "min": 6,
+          "max": 34,
+          "desc": "跨度必须在6-34之间"
+        },
+        "not_all_odd_or_even": {
+          "desc": "不能全奇数或全偶数",
+          "odd_range": [1, 4]
+        },
+        "min_intervals_covered": {
+          "min": 2,
+          "desc": "号码必须分布在至少2个区间"
+        }
+      }
+    },
+
+    "_comment_reference": "========== G. 参考行匹配规则 (Reference Row Matching) ==========",
+    "reference_row_matching": {
+      "enabled": true,
+      "description": "与参考行号码的匹配度评分",
+      "number_overlap": {
+        "per_match": 8,
+        "desc": "与参考行号码重叠，每个匹配+8分"
+      },
+      "neighbor_match": {
+        "per_match": 3,
+        "desc": "与参考行号码的±1邻号匹配，每个+3分"
+      },
+      "tail_match": {
+        "per_match": 4,
+        "desc": "与参考行尾号重叠，每个+4分"
+      },
+      "tail_neighbor_match": {
+        "per_match": 2,
+        "desc": "与参考行尾号的±1邻号匹配，每个+2分"
+      }
+    },
+
+    "_comment_scoring": "========== H. 综合评分公式 ==========",
+    "scoring_formula": {
+      "description": "总得分由以下部分累加组成",
+      "components": [
+        { "name": "anchor_transform_score", "desc": "锚点变换分", "category": "anchor" },
+        { "name": "coverage_bonus", "desc": "覆盖奖励", "category": "anchor" },
+        { "name": "transform_diversity_bonus", "desc": "变换多样性奖励", "category": "anchor" },
+        { "name": "far_offset_bonus", "desc": "远距偏移奖励", "category": "anchor" },
+        { "name": "anchor_coverage_bonus", "desc": "锚点覆盖奖励", "category": "anchor" },
+        { "name": "negative_anchor_crowd_penalty", "desc": "锚点拥挤惩罚(-)", "category": "anchor" },
+        { "name": "negative_anchor_keep_penalty", "desc": "锚点保留惩罚(-)", "category": "anchor" },
+        { "name": "negative_consecutive_penalty", "desc": "连号惩罚(-)", "category": "structural" },
+        { "name": "negative_span_penalty", "desc": "跨度惩罚(-)", "category": "structural" },
+        { "name": "span_bonus", "desc": "跨度奖励", "category": "structural" },
+        { "name": "frequency_bonus", "desc": "频率奖励", "category": "pool" },
+        { "name": "cold_bonus", "desc": "冷号奖励", "category": "pool" },
+        { "name": "hot_bonus", "desc": "热号奖励", "category": "pool" },
+        { "name": "reference_row_match_score", "desc": "参考行匹配分", "category": "reference" },
+        { "name": "reference_diversity_bonus", "desc": "参考行多样性奖励", "category": "reference" },
+        { "name": "interval_diversity_bonus", "desc": "区间多样性奖励", "category": "interval" },
+        { "name": "same_tail_mid_bonus", "desc": "同尾中间奖励", "category": "tail" },
+        { "name": "ratio_match_bonus", "desc": "区间比匹配奖励", "category": "interval" },
+        { "name": "negative_extreme_penalty", "desc": "极端分布惩罚(-)", "category": "interval" },
+        { "name": "interval_constraint_score_x3", "desc": "区间比约束分×3", "category": "interval" },
+        { "name": "tail_pattern_score", "desc": "尾号模式分", "category": "tail" },
+        { "name": "tail_overlap_score", "desc": "尾号重复分", "category": "tail" }
+      ]
+    },
+
+    "_comment_combo_rules": "========== I. 组合约束分级 (Constraint Level) ==========",
+    "constraint_combo_levels": {
+      "description": "多约束条件的组合分级",
+      "strong": {
+        "conditions": "区间比匹配 AND 尾号重复>=2 AND 尾号模式>=20",
+        "expectation": "高命中率，组合数量少"
+      },
+      "medium": {
+        "conditions": "(尾号重复>=2 AND 尾号模式>=20) OR 区间比匹配",
+        "expectation": "中等命中率，组合数量适中"
+      },
+      "weak": {
+        "conditions": "其他所有组合",
+        "expectation": "基准命中率，组合数量大"
+      }
+    }
+  },
+
+  "_comment_scenarios": "========== J. 预置场景配置 ==========",
+  "preset_scenarios": {
+    "conservative": {
+      "name": "保守策略",
+      "desc": "最大化约束，确保命中但组合范围窄",
+      "anchor_transform": { "anchor_keep_penalty": 10, "transform_bonus": 10 },
+      "interval_ratio": { "extreme_penalty": { "threshold": 3, "per_excess": 300 } },
+      "tail_constraint": { "tail_overlap": { "3_overlap": 50, "2_overlap": 30 } },
+      "structural_constraint": { "sum_range": { "soft_min": 75, "soft_max": 105 } }
+    },
+    "aggressive": {
+      "name": "激进策略",
+      "desc": "放宽约束，扩大候选范围",
+      "anchor_transform": { "anchor_keep_penalty": 2, "transform_bonus": 20 },
+      "interval_ratio": { "extreme_penalty": { "threshold": 5, "per_excess": 100 } },
+      "tail_constraint": { "tail_overlap": { "2_overlap": 30, "1_overlap": 15 } },
+      "pool_construction": { "target_pool_size": 35 }
+    },
+    "balanced": {
+      "name": "均衡策略（默认）",
+      "desc": "保持各项默认配置，平衡命中率和覆盖范围"
+    }
+  }
+}

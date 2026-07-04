@@ -1,0 +1,80 @@
+{
+  "testDate": "2026-06-25T15:53:43.738Z",
+  "thresholds": [
+    2,
+    3,
+    4
+  ],
+  "results": {
+    "2": {
+      "bulou6Hits": 157,
+      "bulou6Total": 495,
+      "bulou6Rate": 31.7,
+      "unionHits": 323,
+      "unionTotal": 495,
+      "unionRate": 65.3,
+      "mixedHits": 160,
+      "mixedTotal": 495,
+      "mixedRate": 32.3,
+      "top5Rate": 26.1,
+      "dist": {
+        "0": 7,
+        "1": 47,
+        "2": 29,
+        "3": 13,
+        "4": 2,
+        "5": 1
+      },
+      "bestStrategy": "混合策略",
+      "bestRate": 32.3
+    },
+    "3": {
+      "bulou6Hits": 148,
+      "bulou6Total": 495,
+      "bulou6Rate": 29.9,
+      "unionHits": 379,
+      "unionTotal": 495,
+      "unionRate": 76.6,
+      "mixedHits": 150,
+      "mixedTotal": 495,
+      "mixedRate": 30.3,
+      "top5Rate": 26.1,
+      "dist": {
+        "0": 12,
+        "1": 38,
+        "2": 38,
+        "3": 10,
+        "4": 1,
+        "5": 0
+      },
+      "bestStrategy": "混合策略",
+      "bestRate": 30.3
+    },
+    "4": {
+      "bulou6Hits": 135,
+      "bulou6Total": 495,
+      "bulou6Rate": 27.3,
+      "unionHits": 412,
+      "unionTotal": 495,
+      "unionRate": 83.2,
+      "mixedHits": 147,
+      "mixedTotal": 495,
+      "mixedRate": 29.7,
+      "top5Rate": 26.1,
+      "dist": {
+        "0": 15,
+        "1": 41,
+        "2": 35,
+        "3": 8,
+        "4": 0,
+        "5": 0
+      },
+      "bestStrategy": "混合策略",
+      "bestRate": 29.7
+    }
+  },
+  "recommendation": {
+    "bestThreshold": 2,
+    "bestBulou6Rate": 31.7
+  }
+}

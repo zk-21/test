@@ -1,0 +1,47 @@
+{
+  "testDate": "2026-06-26T02:06:27.307Z",
+  "results": {
+    "A: 当前(基线)": {
+      "totalHits": 108,
+      "totalBalls": 198,
+      "hitRate": 54.5,
+      "hit2": 28,
+      "hit1": 52,
+      "hit0": 19
+    },
+    "B: ±1桥接+遗漏": {
+      "totalHits": 107,
+      "totalBalls": 198,
+      "hitRate": 54,
+      "hit2": 26,
+      "hit1": 55,
+      "hit0": 18
+    },
+    "C: ±2桥接+重复": {
+      "totalHits": 102,
+      "totalBalls": 198,
+      "hitRate": 51.5,
+      "hit2": 26,
+      "hit1": 50,
+      "hit0": 23
+    },
+    "D: 纯桥接(无频率)": {
+      "totalHits": 108,
+      "totalBalls": 198,
+      "hitRate": 54.5,
+      "hit2": 28,
+      "hit1": 52,
+      "hit0": 19
+    },
+    "E: 桥接+冷号爆发": {
+      "totalHits": 101,
+      "totalBalls": 198,
+      "hitRate": 51,
+      "hit2": 24,
+      "hit1": 53,
+      "hit0": 22
+    }
+  },
+  "bestRate": "A: 当前(基线)",
+  "bestAtLeast1": "B: ±1桥接+遗漏"
+}

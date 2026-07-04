@@ -1,0 +1,38 @@
+{
+  "testDate": "2026-06-25T17:09:13.351Z",
+  "results": {
+    "A: 当前": {
+      "totalHits": 393,
+      "totalBalls": 1485,
+      "hitRate": 26.5,
+      "hit2": 29,
+      "hit1": 47,
+      "hit0": 23
+    },
+    "B: 近5期+遗漏": {
+      "totalHits": 393,
+      "totalBalls": 1485,
+      "hitRate": 26.5,
+      "hit2": 15,
+      "hit1": 60,
+      "hit0": 24
+    },
+    "C: 加权频率": {
+      "totalHits": 393,
+      "totalBalls": 1485,
+      "hitRate": 26.5,
+      "hit2": 24,
+      "hit1": 50,
+      "hit0": 25
+    },
+    "D: 热冷组合": {
+      "totalHits": 393,
+      "totalBalls": 1485,
+      "hitRate": 26.5,
+      "hit2": 22,
+      "hit1": 57,
+      "hit0": 20
+    }
+  },
+  "best": "A: 当前"
+}

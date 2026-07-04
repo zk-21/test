@@ -1,0 +1,139 @@
+{
+  "testDate": "2026-06-25T16:28:22.244Z",
+  "poolSizes": [
+    20,
+    22,
+    24,
+    25,
+    26,
+    27,
+    28
+  ],
+  "results": {
+    "20": {
+      "poolCoverage": 94.1,
+      "poolHits": 466,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 2,
+        "4": 22,
+        "5": 74,
+        "le2": 1
+      },
+      "perfectCoverage": 96,
+      "top5Rate": 26.9,
+      "top1Rate": 28.7,
+      "bulou6Rate": 29.5,
+      "unionRate": 69.1,
+      "totalPairs": 99
+    },
+    "22": {
+      "poolCoverage": 96.8,
+      "poolHits": 479,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 1,
+        "4": 14,
+        "5": 84,
+        "le2": 0
+      },
+      "perfectCoverage": 98,
+      "top5Rate": 26.9,
+      "top1Rate": 26.9,
+      "bulou6Rate": 32.7,
+      "unionRate": 67.1,
+      "totalPairs": 99
+    },
+    "24": {
+      "poolCoverage": 98.2,
+      "poolHits": 486,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 1,
+        "4": 7,
+        "5": 91,
+        "le2": 0
+      },
+      "perfectCoverage": 98,
+      "top5Rate": 26.3,
+      "top1Rate": 26.3,
+      "bulou6Rate": 30.5,
+      "unionRate": 65.9,
+      "totalPairs": 99
+    },
+    "25": {
+      "poolCoverage": 98.8,
+      "poolHits": 489,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 0,
+        "4": 6,
+        "5": 93,
+        "le2": 0
+      },
+      "perfectCoverage": 99,
+      "top5Rate": 26,
+      "top1Rate": 26.7,
+      "bulou6Rate": 30.5,
+      "unionRate": 65.1,
+      "totalPairs": 99
+    },
+    "26": {
+      "poolCoverage": 98.8,
+      "poolHits": 489,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 0,
+        "4": 6,
+        "5": 93,
+        "le2": 0
+      },
+      "perfectCoverage": 99,
+      "top5Rate": 26.1,
+      "top1Rate": 26.7,
+      "bulou6Rate": 31.3,
+      "unionRate": 65.7,
+      "totalPairs": 99
+    },
+    "27": {
+      "poolCoverage": 99.4,
+      "poolHits": 492,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 0,
+        "4": 3,
+        "5": 96,
+        "le2": 0
+      },
+      "perfectCoverage": 99,
+      "top5Rate": 25.9,
+      "top1Rate": 26.9,
+      "bulou6Rate": 31.7,
+      "unionRate": 65.3,
+      "totalPairs": 99
+    },
+    "28": {
+      "poolCoverage": 99.8,
+      "poolHits": 494,
+      "poolTotal": 495,
+      "covDist": {
+        "3": 0,
+        "4": 1,
+        "5": 98,
+        "le2": 0
+      },
+      "perfectCoverage": 99,
+      "top5Rate": 26.1,
+      "top1Rate": 27.1,
+      "bulou6Rate": 31.7,
+      "unionRate": 65.3,
+      "totalPairs": 99
+    }
+  },
+  "recommendation": {
+    "currentSize": 28,
+    "recommendedSize": 25,
+    "coverageChange": -1,
+    "top5Change": -0.10000000000000142
+  }
+}

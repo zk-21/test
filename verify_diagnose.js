@@ -1,0 +1,107 @@
+// 诊断分析：为什么前5组合命中率低
+const draws={17:[2,9,14,20,31],18:[2,6,14,22,24],19:[9,10,20,33,35],20:[6,7,18,21,30],27:[3,15,20,29,31],28:[3,13,15,17,21],29:[4,11,12,13,25],30:[10,13,19,21,30]};
+const dr=35,fr=30;
+
+function gu(n=[]){return[...new Set((Array.isArray(n)?n:[]).map(Number).filter(x=>Number.isInteger(x)&&x>0))].sort((a,b)=>a-b)}
+function gsw(sel,rad){const s=Math.min(Math.max(Number(sel)||1,1),dr);const st=Math.max(1,s-rad);const ed=Math.min(dr,s+rad);const ref=[];for(let r=st;r<=ed;r++)ref.push(r);if(fr>=1&&fr<=dr&&!ref.includes(fr))ref.push(fr);ref.sort((a,b)=>a-b);return ref}
+function ga(ref){return[...new Set(ref.flatMap(r=>draws[r]||[]))].sort((a,b)=>a-b)}
+
+const rw=8,wrw=4;
+const ow=new Map([[1,8],[2,8],[3,8],[4,11],[5,12],[6,6],[7,11],[8,5],[9,3],[10,2]]);
+const iv=[{min:1,max:12},{min:13,max:24},{min:25,max:35}];
+const amd=17;
+
+function cm(v,min,max){return Math.min(Math.max(Number(v)||min,min),max)}
+function sl(v=0,c=1){return Math.min(c,Math.max(0,Number(v)||0))}
+function bcs(n=[]){const s=gu(n),r=[];let c=[];s.forEach((x,i)=>{if(i===0||x===s[i-1]+1)c.push(x);else{if(c.length>=2)r.push([...c]);c=[x]}});if(c.length>=2)r.push([...c]);return r}
+function ccp(n=[]){let p=0,lr=0,cr=0;for(let i=0;i<n.length;i++){if(i===0||n[i]!==n[i-1]+1)cr=1;else{cr++;p++}lr=Math.max(lr,cr)}return{pairs:p,longestRun:lr}}
+function gi(n,i=iv){return i.findIndex(t=>n>=t.min&&n<=t.max)}
+function grk(n=[],i=iv){const c=i.map(()=>0);n.forEach(x=>{const d=gi(x,i);if(d>=0)c[d]++});return c.join(":")}
+function bta(n=[]){const s=gu(n),m=new Map();s.forEach(x=>{const t=x%10;const b=m.get(t)||[];b.push(x);m.set(t,b)});let st=null,sc=0;m.forEach((b,t)=>{if(b.length>sc){sc=b.length;st=t}});return{strongestTail:st,strongestCount:sc}}
+function btn(tails){const r=new Set();tails.forEach(t=>{r.add((t+1)%10);r.add((t+9)%10)});return r}
+function epa(n,a=[],as=null){const s=gu(a),sn=as||new Set(s);if(sn.has(n))return 0;let sc=0;for(let i=0;i<s.length;i++)if(Math.abs(n-s[i])===1)sc+=4;return sc}
+function epb(c=[],a=[]){const s=gu(a),cs=new Set(c);let sc=0;for(let li=0;li<s.length;li++){for(let ri=li+1;ri<s.length;ri++){const l=s[li],r2=s[ri],g=r2-l;if(g<=1||g>4)continue;const bw=[];for(let n=l+1;n<r2;n++)if(cs.has(n))bw.push(n);if(bw.length===0)continue;const cl=Math.max(1,5-g);if(bw.length===g-1)sc+=28+cl*8;else sc+=bw.length*(6+cl*2);if(cs.has(l))sc+=4;if(cs.has(r2))sc+=4}}return sc}
+function eaf(n,a=[],as=null){const s=gu(a),sn=as||new Set(s);if(sn.has(n))return 0;let f=0;for(let i=0;i<s.length;i++)if(Math.abs(n-s[i])===1)f++;return f*2}
+function eat(c=[],a=[]){const s=gu(a),cs=new Set(c);let ap=0;for(let i=0;i<s.length;i++){const an=s[i];for(let d=1;d<=8;d++){const l=an-d,r2=an+d;if(l>=1&&r2<=35&&cs.has(l)&&cs.has(r2))ap++}for(let d=1;d<=6;d++){const s2=an+d;if(s2<=35&&cs.has(s2)){const t=s2+d;if(t<=35&&cs.has(t))ap++}}for(let d=1;d<=6;d++){const f=an-2*d;if(f>=1&&cs.has(f)){const s2=an-d;if(s2>=1&&cs.has(s2))ap++}}}if(ap<2)return 0;let sc=0;for(let i=0;i<s.length;i++){const an=s[i];for(let d=1;d<=8;d++){const l=an-d,r2=an+d;if(l>=1&&r2<=35&&cs.has(l)&&cs.has(r2))sc+=4+Math.max(1,8-d)}for(let d=1;d<=6;d++){const s2=an+d;if(s2<=35&&cs.has(s2)){const t=s2+d;if(t<=35&&cs.has(t))sc+=3+Math.max(1,6-d)}}for(let d=1;d<=6;d++){const f=an-2*d;if(f>=1&&cs.has(f)){const s2=an-d;if(s2>=1&&cs.has(s2))sc+=3+Math.max(1,6-d)}}}return sc}
+function cts(cn2,an2){const at2=an2.map(n=>n%10),ct=cn2.map(n=>n%10);let sc=0;const as2=new Set(at2);const mc=cn2.filter(n=>as2.has(n%10)).length;if(mc>=1&&mc<=3)sc+=mc*5;const au=[...new Set(at2)],cu=[...new Set(ct)];const up=new Set();cu.forEach(ct2=>{au.forEach(at3=>{const d=Math.abs(ct2-at3);const ia=d===1||d===9;if(!ia)return;const pk=`${Math.min(ct2,at3)}-${Math.max(ct2,at3)}`;if(up.has(pk))return;up.add(pk);sc+=2;const ac=au.filter(at4=>{const d2=Math.abs(ct2-at4);return d2===1||d2===9}).length;if(ac>=2)sc+=1})});const ca=[];for(let i=0;i<cu.length;i++)for(let j=i+1;j<cu.length;j++){const d=Math.abs(cu[i]-cu[j]);if(d===1||d===9)ca.push([cu[i],cu[j]])}const aa=[];for(let i=0;i<au.length;i++)for(let j=i+1;j<au.length;j++){const d=Math.abs(au[i]-au[j]);if(d===1||d===9)aa.push([au[i],au[j]])}if(ca.length>0&&aa.length>0)sc+=Math.min(ca.length,aa.length)*3;const atc={};at2.forEach(t=>{atc[t]=(atc[t]||0)+1});const ctc={};ct.forEach(t=>{ctc[t]=(ctc[t]||0)+1});const ar2=Object.entries(atc).filter(([,c])=>c>=2).map(([t])=>parseInt(t));const cr=Object.entries(ctc).filter(([,c])=>c>=2).map(([t])=>parseInt(t));if(ar2.length>0){sc+=cr.length*6;const mr=ar2.filter(t=>cr.includes(t)).length;sc+=mr*8;ar2.forEach(at3=>cr.forEach(ct2=>{const d=Math.abs(at3-ct2);if(d===1||d===9)sc+=4}))}const ast=[...new Set(at2)].sort((a,b)=>a-b);const cst=[...new Set(ct)].sort((a,b)=>a-b);const acp=[];for(let i=0;i<ast.length;i++)for(let j=i+1;j<ast.length;j++){const d=ast[j]-ast[i];if(d===1||d===9)acp.push([ast[i],ast[j]])}const ccp3=[];for(let i=0;i<cst.length;i++)for(let j=i+1;j<cst.length;j++){const d=cst[j]-cst[i];if(d===1||d===9)ccp3.push([cst[i],cst[j]])}if(acp.length>0&&ccp3.length>0){sc+=Math.min(acp.length,ccp3.length)*5;const em=acp.filter(([a1,a2])=>ccp3.some(([c1,c2])=>a1===c1&&a2===c2)).length;sc+=em*6}ar2.forEach(rt=>{const hc=acp.some(([a,b])=>a===rt||b===rt);if(hc){const ch=cr.includes(rt);const cc=ccp3.some(([a,b])=>a===rt||b===rt);if(ch&&cc)sc+=10;else if(ch||cc)sc+=4}});return sc*2.0}
+function esat(n3=[],a3=[]){const cn=gu(n3),an=gu(a3);if(cn.length===0||an.length===0)return{ats:0,aoh:0,akh:0,arsh:0,ec:0,ecb:0,tc:0,tdb:0,fc:0,fob:0,akp:0,akb:0,acc:0,acb:0,acp2:0,fmb:0,tsb:0,srn:new Set()};const cs=new Set(cn),as2=new Set(an),srn=new Set(),en2=new Set(),ea=new Map(),tn=new Set(),fon=new Set();let ats=0,aoh=0,akh=0,arsh=0,fmb=0;cn.forEach(n=>{if(as2.has(n)){akh++;ats+=6;en2.add(n);ea.set(n,(ea.get(n)||0)+1)}an.forEach(a=>{const d=Math.abs(n-a);const os=ow.get(d)||0;if(os<=0)return;aoh++;ats+=os;en2.add(n);ea.set(a,(ea.get(a)||0)+1);if(!as2.has(n))tn.add(n);if(d>=4||d===7)fon.add(n)});fmb+=epa(n,an,as2);fmb+=eaf(n,an,as2)});bcs(an).forEach(seg=>{const st=seg[0],ed=seg[seg.length-1];cn.forEach(n=>{const er=n>=st-4&&n<=ed+4&&!as2.has(n);if(!er)return;const dist=n<st?st-n:n-ed;if(dist<1||dist>4)return;arsh++;ats+=16-dist*2;srn.add(n);en2.add(n)})});bcs(cn).forEach(seg=>{const sc=seg.filter(n=>{if(srn.has(n))return true;return an.some(a=>Math.abs(n-a)<=3)}).length;if(sc>=Math.min(2,seg.length)){seg.forEach(n=>srn.add(n));seg.forEach(n=>en2.add(n));ats+=seg.length*8;arsh+=sc}});fmb+=epb(cn,an);fmb+=eat(cn,an);const ec=en2.size,tc=tn.size,fc=fon.size,acc=ea.size;const ecb=ec>=cn.length?cn.length*14:ec>=cn.length-1?ec*10:ec>=3?ec*6:ec*2;const tdb=tc>=cn.length-1?tc*16:tc>=3?tc*11:tc*4;const fob=fc>=3?fc*14:fc>=2?fc*10:fc*3;const akp=akh>=4?(akh-3)*14:0;const akb=akh>=2&&akh<=3?(akh-1)*14:0;const acb=acc>=4?acc*12:acc>=3?acc*7:acc*2;const mal=ea.size>0?Math.max(...ea.values()):0;const lds=[...ea.values()];const oa=lds.filter(l=>l>=3).length;const ta=an.length;let cd=1.0;if(oa<=Math.ceil(ta*0.4)&&mal<=5)cd=0.5;const acp2=mal>=4?Math.round((mal-3)*12*cd):(mal>=3&&oa>=Math.ceil(ta*0.6)?Math.round((mal-2)*12*0.7):0);const tsb=cts(cn,an);return{ats,aoh,akh,arsh,ec,ecb,tc,tdb,fc,fob,akp,akb,acc,acb,acp2,fmb,tsb,srn}}
+function eac2(n3=[],a3=[]){const cn=gu(n3),an2=gu(a3);if(cn.length===0||an2.length===0)return{aeh:0,aph:0,asc:0};const cs=new Set(cn);let aeh=0,aph=0,asc=0;an2.forEach(a=>{for(let d=1;d<=amd;d++){const l=a-d,r2=a+d;if(l<1&&r2>35)continue;const hl=l>=1&&cs.has(l),hr=r2<=35&&cs.has(r2);if(!hl&&!hr)continue;const cl=Math.max(1,amd-d+1);aeh+=Number(hl)+Number(hr);asc+=(hl&&hr?16:4)+cl*(hl&&hr?5:2);if(hl&&hr)aph++}});return{aeh,aph,asc}}
+function edt2(n3=[],a3=[]){const cn=gu(n3),an2=gu(a3);if(cn.length===0||an2.length===0)return{dth:0,dts:0,dtlr:0};const dfs=an2.map(a=>{const f=cn.find(c=>Math.abs(c-a)<=3);return f!==undefined?Math.abs(c-a):null}).filter(d=>d!==null);if(dfs.length<2)return{dth:dfs.length,dts:dfs.length*4,dtlr:dfs.length};let lr=1,cr=1;for(let i=1;i<dfs.length;i++){if(dfs[i]===dfs[i-1]){cr++;lr=Math.max(lr,cr)}else cr=1}return{dth:dfs.length,dts:dfs.length*6+(lr>=3?lr*10:lr*3),dtlr:lr}}
+function ebg2(n3=[],a3=[]){const cn=gu(n3),an2=gu(a3);if(cn.length===0||an2.length===0)return{bgh:0,beh:0,bph:0,bsc:0};const cs=new Set(cn);let bgh=0,beh=0,bph=0,bsc=0;const ps=new Set();for(let li=0;li<an2.length;li++){for(let ri=li+1;ri<an2.length;ri++){const l=an2[li],r2=an2[ri],g=r2-l;if(g<=1||g>4)continue;const cl=Math.max(1,5-g);[l,r2].forEach(ep=>{if(cs.has(ep)){beh++;bsc+=8+cl*3}});for(let x=l+1;x<r2;x++){if(cs.has(x)){bgh++;bsc+=24+cl*6}}if(cs.has(l)&&cs.has(r2)&&!ps.has(`${l},${r2}`)){bph++;ps.add(`${l},${r2}`)}}}return{bgh,beh,bph,bsc}}
+function escar2(n3=[],ref){const cn=gu(n3);if(!ref||cn.length===0)return{sc:0,ms:0,ol:0,nh:0,to:0,aph:0,asc:0,bgh:0,beh:0,bph:0,bsc:0,dts:0,dtlr:0,cs:0,lrs:0,ss:0};const{pars:cp2,lr:clr}=ccp(cn);const rn=ref.n||[],rs2=new Set(rn),rts=ref.t||new Set(),crk=grk(cn),rrk=ref.r||"";const ol=cn.filter(n=>rs2.has(n)).length;const nh=cn.filter(n=>rs2.has(n-1)||rs2.has(n+1)).length;const to=cn.filter(n=>rts.has(n%10)).length;const tns=btn([...rts]);const tno=cn.filter(n=>tns.has(n%10)).length;const rm=crk===rrk?1:0;const sth=ref.ta?.strongestCount>=2&&ref.ta?.strongestTail!==null?cn.filter(n=>n%10===ref.ta.strongestTail).length:0;const cs2=ref.cp>0?Math.max(0,3-Math.abs(cp2-ref.cp)):cp2===0?1:0;const lrs=ref.lr2>1?Math.max(0,3-Math.abs(clr-ref.lr2)):clr<=2?1:0;const ar=eac2(cn,rn);const df=edt2(cn,rn);const bg=ebg2(cn,rn);const ss=(ref.cs2||[]).reduce((t,seg)=>{const ss2=new Set(seg);const sh=cn.filter(n=>ss2.has(n)).length;const aj=cn.filter(n=>ss2.has(n-1)||ss2.has(n+1)).length;if(sh>=Math.min(2,seg.length))return t+2;if(aj>0)return t+1;return t},0);const sc2=sl(ol,3)*rw+sl(nh,3)*rw+sl(to,3)*rw+sl(tno,3)*wrw+sl(rm,1)*rw+sl(sth,3)*rw+sl(ar.aph,3)*rw+sl(ar.aeh,3)*rw+sl(df.dtlr-1,3)*rw+sl(bg.bph,3)*rw+sl(bg.bgh,3)*rw+sl(cs2,3)*rw+sl(lrs,3)*rw+sl(ss,3)*rw;let ms=0;if(ol>=1)ms++;if(nh>=1)ms++;if(to>=1)ms++;if(tno>=1)ms++;if(rm)ms++;if(sth>=1)ms++;if(ar.aph>=1)ms++;if(df.dtlr>=3)ms++;if(bg.bgh>=1)ms++;if(cs2>=1||ss>=1)ms++;return{sc:sc2,ms,ol:cn.filter(n=>rs2.has(n)).length,nh,to,tno,rm,sth,aph:ar.aph,asc:ar.asc+df.dts,dtlr:df.dtlr,bgh:bg.bgh,beh:bg.beh,bph:bg.bph,bsc:bg.bsc,cs:cs2,lrs,ss}}
+function gcrp2(n3=[],srn=new Set()){const segs=bcs(n3);let lr=0,rp=0,drc=0;segs.forEach(seg=>{lr=Math.max(lr,seg.length);const sc2=seg.filter(n=>srn.has(n)).length;const sr=seg.length>0?sc2/seg.length:0;const sd=sr>=0.8?0.45:sr>=0.6?0.75:1;if(seg.length===2){drc++;rp+=Math.round(8*sd);return}if(seg.length>=4){rp+=Math.round((70+(seg.length-4)*16)*sd);return}if(seg.length===3){rp+=Math.round(36*sd)}});if(drc>=2)rp+=(drc-1)*10;return{lr,rp}}
+function gcss2(n3=[],i=iv){const s=gu(n3);if(s.length<=1)return{sp:0,spn:0,spb:0,ci:0};const sp=s[s.length-1]-s[0];let spn=0,spb=0;const ics=i.map(()=>0);s.forEach(x=>{const d=gi(x,i);if(d>=0)ics[d]++});const cic=ics.filter(c=>c>0).length;const mic=ics.length>0?Math.max(...ics):s.length;if(cic>=3){if(sp>=15&&sp<=28)spb+=16;else if(sp>=12&&sp<=32)spb+=8;if(sp<=18)spn+=2;if(sp<=16)spn+=4;if(sp<=13)spn+=8;if(sp<=10)spn+=14}else if(cic===2){if(sp<=12)spn+=3;if(sp<=10)spn+=6;if(sp<=8)spn+=10;if(sp<=6)spn+=14}else{if(sp<=7)spn+=2;if(sp<=5)spn+=6;if(sp<=3)spn+=10}for(let i=0;i<s.length;i++){let j=i;while(j<s.length&&s[j]-s[i]<=8)j++;const c=j-i;if(cic>=3){if(c>=4)spn+=14+(c-4)*8;else if(c===3)spn+=4}else if(cic===2){if(c>=4)spn+=10+(c-4)*6}else{if(c>=4)spn+=8+(c-4)*4}}if(cic>=3){if(mic>=4)spn+=10+(mic-4)*6}else if(cic===2){if(mic>=4)spn+=8+(mic-4)*4}if(cic>=3){const mnc=Math.min(...ics.filter(c=>c>0));if(mnc>=1)spb+=6;if(mnc>=2)spb+=8}return{sp,spn,spb,ci:cic}}
+function bbr2(n){const ns2=gu(n);const{pars,lr}=ccp(ns2);const ss2=bcs(ns2);const ts2=new Set(ns2.map(x=>x%10));return{n:ns2,t:ts2,cp:pars,lr2:lr,cs2:ss2,r:grk(ns2),ta:bta(ns2)}}
+function scf2(cn2,an2,refs2,fm2,hn2,cld2){const n3=gu(cn2);const at=esat(n3,an2);const{rp,lr}=gcrp2(n3,at.srn);const sp3=gcss2(n3);const asp=at.arsh>=2?Math.round(sp3.spn*0.6):sp3.spn;let fb=0,cb=0;if(fm2)n3.forEach(x=>{const c=fm2.get(x)||0;if(c>=2)fb+=c*4});if(cld2){const ch=n3.filter(x=>cld2.has(x)).length;cb=ch*10}let hb=0;if(hn2&&hn2.size>0){const hh=n3.filter(x=>hn2.has(x)).length;if(hh>=2)hb=hh*6}const rms=refs2.map(ref=>escar2(n3,ref));const rmsc=rms.reduce((s,m)=>s+(m.sc||0),0);const rsr=rms.filter(m=>(m.ms||0)>=2).length;const rsmb=rsr>0?rsr*6:0;return{nums:n3,sc:at.ats+at.ecb+at.tdb+at.fob+at.acb+(at.akb||0)+(at.fmb||0)+(at.tsb||0)-at.acp2-at.akp-rp-asp+(sp3.spb||0)+fb+cb+hb+rmsc+rsmb}}
+function cg2(arr,pk){const s=[];function h(st,d,cur){if(d===pk){s.push([...cur]);return}for(let i=st;i<=arr.length-(pk-d);i++){cur[d]=arr[i];h(i+1,d+1,cur)}}h(0,0,new Array(pk));return s}
+
+const tests=[
+  {sel:17,target:27},
+  {sel:18,target:28},
+  {sel:19,target:29},
+  {sel:20,target:30},
+];
+
+console.log("===== 诊断分析：命中率低的根本原因 =====\n");
+
+for(const t of tests){
+  const selRow=t.sel, targetPeriod=t.target;
+  const targetNums=draws[targetPeriod];
+  const targetSet=new Set(targetNums);
+  const selNums=draws[selRow];
+  
+  // 1. 参考行和锚点
+  const refs=gsw(selRow,1);
+  const anchorNums=ga(refs).filter(n=>!selNums.includes(n));
+  
+  // 2. 选号池
+  const fm2=new Map();
+  for(let r=selRow+1;r<=selRow+10;r++){if(!draws[r])continue;draws[r].forEach(x=>fm2.set(x,(fm2.get(x)||0)+1))}
+  const cld2=new Set();for(let i=1;i<=35;i++){if(!fm2.has(i))cld2.add(i)}
+  const hn2=new Set();fm2.forEach((c,n)=>{if(c>=2)hn2.add(n)});
+  const rob=refs.map(r=>bbr2(draws[r]));
+  const all=Array.from({length:35},(_,i)=>i+1);
+  const ss2=all.map(n=>{const sg=esat([n],anchorNums);let s=(sg.ats||0)+(sg.tc||0)*14+(sg.fob||0)+(sg.akb||0)+(sg.fmb||0)+(sg.tsb||0)-(sg.akp||0);if(cld2.has(n))s+=12;const fc=fm2.get(n)||0;if(fc>=2)s+=fc*3;return{n,sc:s}}).sort((a,b)=>b.sc-a.sc||a.n-b.n);
+  const PS=22;const pool=new Set();selNums.forEach(n=>pool.add(n));
+  for(const s of ss2){if(pool.size>=PS)break;pool.add(s.n)}
+  const poolArr=[...pool].sort((a,b)=>a-b);
+  
+  // 3. 目标号码分析
+  const inPool=targetNums.filter(n=>pool.has(n));
+  const notInPool=targetNums.filter(n=>!pool.has(n));
+  
+  // 4. 目标号码与锚点的关系
+  const anchorSet=new Set(anchorNums);
+  
+  console.log(`━━━ 选中行${selRow} [${selNums.join(",")}] → 第${targetPeriod}期 [${targetNums.join(",")}] ━━━`);
+  console.log(`参考行: ${refs.join(",")}`);
+  console.log(`锚点号码(${anchorNums.length}个): [${anchorNums.join(",")}]`);
+  console.log(`选号池(${poolArr.length}个): [${poolArr.join(",")}]`);
+  console.log(`目标号码: [${targetNums.join(",")}]`);
+  console.log(`  ✓ 在池中: [${inPool.join(",")||"无"}] (${inPool.length}/5)`);
+  console.log(`  ✗ 不在池中: [${notInPool.join(",")||"无"}] (${notInPool.length}/5)`);
+  
+  // 分析不在池中的号码
+  if(notInPool.length>0){
+    console.log(`  不在池中的号码分析:`);
+    for(const n of notInPool){
+      const singleScore=ss2.find(s=>s.n===n);
+      const rank=ss2.findIndex(s=>s.n===n)+1;
+      const inAnchor=anchorSet.has(n);
+      const inCold=cld2.has(n);
+      const futureFreq=fm2.get(n)||0;
+      // 计算单号得分明细
+      const sg=esat([n],anchorNums);
+      console.log(`    ${n}: 排名#${rank}, 单号分=${singleScore?.sc||0}, 是锚点=${inAnchor}, 冷号=${inCold}, 后10期频次=${futureFreq}, ats=${sg.ats}, tc=${sg.tc}, fob=${sg.fob}`);
+    }
+  }
+  
+  // 目标号码的尾号分析
+  const targetTails=targetNums.map(n=>n%10);
+  const anchorTails=[...new Set(anchorNums.map(n=>n%10))];
+  console.log(`  目标尾号: [${targetTails.join(",")}]`);
+  console.log(`  锚点尾号: [${anchorTails.join(",")}]`);
+  const tailOverlap=targetTails.filter(t=>anchorTails.includes(t));
+  console.log(`  尾号重叠: [${tailOverlap.join(",")||"无"}]`);
+  console.log();
+}

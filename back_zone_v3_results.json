@@ -1,0 +1,47 @@
+{
+  "testDate": "2026-06-25T17:29:05.134Z",
+  "results": {
+    "A: 当前(基线)": {
+      "totalHits": 105,
+      "totalBalls": 198,
+      "hitRate": 53,
+      "hit2": 29,
+      "hit1": 47,
+      "hit0": 23
+    },
+    "B: 冷号回归增强": {
+      "totalHits": 101,
+      "totalBalls": 198,
+      "hitRate": 51,
+      "hit2": 21,
+      "hit1": 59,
+      "hit0": 19
+    },
+    "C: 连号+跨距优先": {
+      "totalHits": 102,
+      "totalBalls": 198,
+      "hitRate": 51.5,
+      "hit2": 25,
+      "hit1": 52,
+      "hit0": 22
+    },
+    "D: 反向近5期+遗漏": {
+      "totalHits": 102,
+      "totalBalls": 198,
+      "hitRate": 51.5,
+      "hit2": 23,
+      "hit1": 56,
+      "hit0": 20
+    },
+    "E: 综合(冷号+反向+连号)": {
+      "totalHits": 101,
+      "totalBalls": 198,
+      "hitRate": 51,
+      "hit2": 24,
+      "hit1": 53,
+      "hit0": 22
+    }
+  },
+  "bestRate": "A: 当前(基线)",
+  "bestAtLeast1": "B: 冷号回归增强"
+}

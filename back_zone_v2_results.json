@@ -1,0 +1,54 @@
+{
+  "testDate": "2026-06-25T17:19:49.635Z",
+  "results": {
+    "A: 当前(基线)": {
+      "totalHits": 105,
+      "totalBalls": 198,
+      "hitRate": 53,
+      "hit2": 29,
+      "hit1": 47,
+      "hit0": 23
+    },
+    "B: 遗漏回归增强": {
+      "totalHits": 103,
+      "totalBalls": 198,
+      "hitRate": 52,
+      "hit2": 22,
+      "hit1": 59,
+      "hit0": 18
+    },
+    "C: 近3期热号+遗漏": {
+      "totalHits": 100,
+      "totalBalls": 198,
+      "hitRate": 50.5,
+      "hit2": 24,
+      "hit1": 52,
+      "hit0": 23
+    },
+    "D: 上期跟随+热号": {
+      "totalHits": 92,
+      "totalBalls": 198,
+      "hitRate": 46.5,
+      "hit2": 19,
+      "hit1": 54,
+      "hit0": 26
+    },
+    "E: 频率分层+冷号爆发": {
+      "totalHits": 101,
+      "totalBalls": 198,
+      "hitRate": 51,
+      "hit2": 26,
+      "hit1": 49,
+      "hit0": 24
+    },
+    "F: 综合最优(热+冷+邻)": {
+      "totalHits": 96,
+      "totalBalls": 198,
+      "hitRate": 48.5,
+      "hit2": 19,
+      "hit1": 58,
+      "hit0": 22
+    }
+  },
+  "best": "A: 当前(基线)"
+}

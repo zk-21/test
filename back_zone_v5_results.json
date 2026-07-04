@@ -1,0 +1,38 @@
+{
+  "testDate": "2026-06-26T01:46:18.083Z",
+  "results": {
+    "A: 当前桥接v4": {
+      "totalHits": 108,
+      "totalBalls": 198,
+      "hitRate": 54.5,
+      "hit2": 28,
+      "hit1": 52,
+      "hit0": 19
+    },
+    "B: 多期桥接(近2期)": {
+      "totalHits": 100,
+      "totalBalls": 198,
+      "hitRate": 50.5,
+      "hit2": 23,
+      "hit1": 54,
+      "hit0": 22
+    },
+    "D: 桥接+奇偶平衡": {
+      "totalHits": 108,
+      "totalBalls": 198,
+      "hitRate": 54.5,
+      "hit2": 28,
+      "hit1": 52,
+      "hit0": 19
+    },
+    "F: 桥接+冷号回归": {
+      "totalHits": 108,
+      "totalBalls": 198,
+      "hitRate": 54.5,
+      "hit2": 30,
+      "hit1": 48,
+      "hit0": 21
+    }
+  },
+  "best": "A: 当前桥接v4"
+}

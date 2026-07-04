@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-06-26T02:12:15.258Z",
+  "baseline": "桥接v4 (54.5%)",
+  "strategies": [
+    {
+      "name": "A: 当前桥接v4 (基线)",
+      "backHitRate": 54.5,
+      "hitDistribution": {
+        "hit2": 28,
+        "hit1": 52,
+        "hit0": 19
+      },
+      "hit1PlusRate": "80.8"
+    },
+    {
+      "name": "B: 增强重复权重 (重复+5, ±1+4, ±2+2, ±3+1)",
+      "backHitRate": 51.5,
+      "hitDistribution": {
+        "hit2": 24,
+        "hit1": 54,
+        "hit0": 21
+      },
+      "hit1PlusRate": "78.8"
+    },
+    {
+      "name": "C: 重复+4, ±1+4, ±2+1, ±3+0",
+      "backHitRate": 51.5,
+      "hitDistribution": {
+        "hit2": 22,
+        "hit1": 58,
+        "hit0": 19
+      },
+      "hit1PlusRate": "80.8"
+    },
+    {
+      "name": "D: 仅重复和±1 (重复+4, ±1+4)",
+      "backHitRate": 51.5,
+      "hitDistribution": {
+        "hit2": 22,
+        "hit1": 58,
+        "hit0": 19
+      },
+      "hit1PlusRate": "80.8"
+    }
+  ],
+  "bestStrategy": "A: 当前桥接v4 (基线)",
+  "bestHitRate": 54.5,
+  "conclusion": "建议保持当前策略"
+}

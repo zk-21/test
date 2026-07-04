@@ -1,0 +1,862 @@
+{
+  "summary": {
+    "totalPairs": 99,
+    "top1Ge3Rate": "0.0%",
+    "top5UnionCoverage": "36.2%",
+    "backCoverage": "50.5%",
+    "poolCoverage": "70.7%",
+    "top5Bulou6Coverage": "39.6%"
+  },
+  "details": [
+    {
+      "sIssue": "2025101",
+      "tIssue": "2025111",
+      "actualFront": [
+        2,
+        9,
+        14,
+        21,
+        26
+      ],
+      "actualBack": [
+        2,
+        12
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            8,
+            16,
+            17,
+            25,
+            27
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            4,
+            8,
+            15,
+            16,
+            28
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            8,
+            16,
+            17,
+            19,
+            31
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            8,
+            9,
+            17,
+            25,
+            28
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            3,
+            8,
+            16,
+            17,
+            25
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            2,
+            8,
+            17,
+            25,
+            27
+          ],
+          "hitCount": 1
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 2
+    },
+    {
+      "sIssue": "2025102",
+      "tIssue": "2025112",
+      "actualFront": [
+        3,
+        4,
+        21,
+        23,
+        24
+      ],
+      "actualBack": [
+        9,
+        12
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            6,
+            8,
+            14,
+            16,
+            25
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            5,
+            8,
+            14,
+            23,
+            27
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            6,
+            8,
+            14,
+            29,
+            30
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            2,
+            6,
+            14,
+            23,
+            24
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            6,
+            8,
+            14,
+            27,
+            28
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            6,
+            7,
+            14,
+            16,
+            24
+          ],
+          "hitCount": 1
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 4
+    },
+    {
+      "sIssue": "2025103",
+      "tIssue": "2025113",
+      "actualFront": [
+        1,
+        14,
+        18,
+        28,
+        35
+      ],
+      "actualBack": [
+        2,
+        3
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            2,
+            4,
+            18,
+            20,
+            35
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            4,
+            17,
+            18,
+            22,
+            28
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            3,
+            4,
+            18,
+            31,
+            35
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            2,
+            4,
+            18,
+            30,
+            35
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            3,
+            4,
+            18,
+            29,
+            35
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            4,
+            9,
+            18,
+            21,
+            35
+          ],
+          "hitCount": 2
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 5
+    },
+    {
+      "sIssue": "2025104",
+      "tIssue": "2025114",
+      "actualFront": [
+        3,
+        8,
+        9,
+        12,
+        15
+      ],
+      "actualBack": [
+        1,
+        5
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            1,
+            21,
+            23,
+            24,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            1,
+            19,
+            20,
+            24,
+            33
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            1,
+            2,
+            24,
+            26,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            1,
+            3,
+            24,
+            32,
+            33
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            1,
+            4,
+            21,
+            32,
+            33
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            11,
+            14,
+            19,
+            24,
+            32
+          ],
+          "hitCount": 0
+        }
+      ],
+      "backHitCount": 2,
+      "poolHitCount": 4
+    },
+    {
+      "sIssue": "2025105",
+      "tIssue": "2025115",
+      "actualFront": [
+        3,
+        12,
+        14,
+        21,
+        35
+      ],
+      "actualBack": [
+        1,
+        5
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            11,
+            14,
+            18,
+            25,
+            35
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            12,
+            14,
+            18,
+            24,
+            33
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            12,
+            13,
+            14,
+            17,
+            35
+          ],
+          "hitCount": 3
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            12,
+            14,
+            18,
+            25,
+            32
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            12,
+            14,
+            18,
+            30,
+            35
+          ],
+          "hitCount": 3
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            14,
+            17,
+            18,
+            29,
+            35
+          ],
+          "hitCount": 2
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 4
+    },
+    {
+      "sIssue": "2025106",
+      "tIssue": "2025116",
+      "actualFront": [
+        2,
+        6,
+        16,
+        22,
+        29
+      ],
+      "actualBack": [
+        8,
+        12
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            7,
+            9,
+            24,
+            25,
+            30
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            4,
+            10,
+            13,
+            25,
+            31
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            4,
+            9,
+            15,
+            16,
+            25
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            3,
+            4,
+            9,
+            12,
+            25
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            9,
+            10,
+            14,
+            25,
+            31
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            4,
+            7,
+            8,
+            9,
+            25
+          ],
+          "hitCount": 0
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 3
+    },
+    {
+      "sIssue": "2025107",
+      "tIssue": "2025117",
+      "actualFront": [
+        5,
+        10,
+        18,
+        21,
+        29
+      ],
+      "actualBack": [
+        6,
+        7
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            3,
+            4,
+            13,
+            17,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            3,
+            4,
+            16,
+            18,
+            34
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            3,
+            4,
+            14,
+            31,
+            35
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            3,
+            4,
+            13,
+            32,
+            35
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            3,
+            4,
+            17,
+            32,
+            35
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            3,
+            4,
+            9,
+            32,
+            35
+          ],
+          "hitCount": 0
+        }
+      ],
+      "backHitCount": 1,
+      "poolHitCount": 3
+    },
+    {
+      "sIssue": "2025108",
+      "tIssue": "2025118",
+      "actualFront": [
+        2,
+        8,
+        9,
+        12,
+        21
+      ],
+      "actualBack": [
+        4,
+        5
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            11,
+            12,
+            13,
+            30,
+            31
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            13,
+            25,
+            26,
+            27,
+            34
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            8,
+            11,
+            13,
+            30,
+            31
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            9,
+            11,
+            13,
+            30,
+            31
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            10,
+            11,
+            13,
+            26,
+            31
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            11,
+            13,
+            25,
+            30,
+            31
+          ],
+          "hitCount": 0
+        }
+      ],
+      "backHitCount": 2,
+      "poolHitCount": 4
+    },
+    {
+      "sIssue": "2025109",
+      "tIssue": "2025119",
+      "actualFront": [
+        8,
+        15,
+        27,
+        29,
+        31
+      ],
+      "actualBack": [
+        1,
+        7
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            2,
+            3,
+            14,
+            24,
+            28
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            3,
+            14,
+            16,
+            23,
+            25
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            3,
+            14,
+            15,
+            24,
+            27
+          ],
+          "hitCount": 2
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            1,
+            3,
+            14,
+            24,
+            25
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            2,
+            3,
+            14,
+            24,
+            30
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            3,
+            14,
+            24,
+            27,
+            28
+          ],
+          "hitCount": 1
+        }
+      ],
+      "backHitCount": 0,
+      "poolHitCount": 4
+    },
+    {
+      "sIssue": "2025110",
+      "tIssue": "2025120",
+      "actualFront": [
+        11,
+        13,
+        22,
+        26,
+        35
+      ],
+      "actualBack": [
+        2,
+        8
+      ],
+      "planResults": [
+        {
+          "label": "Top1",
+          "frontNums": [
+            2,
+            20,
+            21,
+            28,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top2",
+          "frontNums": [
+            2,
+            14,
+            16,
+            29,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top3",
+          "frontNums": [
+            2,
+            5,
+            21,
+            32,
+            33
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "Top4",
+          "frontNums": [
+            2,
+            3,
+            21,
+            32,
+            35
+          ],
+          "hitCount": 1
+        },
+        {
+          "label": "Top5",
+          "frontNums": [
+            2,
+            21,
+            23,
+            29,
+            32
+          ],
+          "hitCount": 0
+        },
+        {
+          "label": "补漏6",
+          "frontNums": [
+            2,
+            13,
+            21,
+            32,
+            34
+          ],
+          "hitCount": 1
+        }
+      ],
+      "backHitCount": 2,
+      "poolHitCount": 4
+    }
+  ]
+}
