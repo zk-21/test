@@ -1,0 +1,59 @@
+{
+  "timestamp": "2026-07-02T05:50:49.374Z",
+  "baseline": {
+    "weights": {
+      "transfer": 1,
+      "globalFreq": 28,
+      "overlap1": 6,
+      "arith1": 12,
+      "overlap10": 4,
+      "arith10": 10,
+      "topN": 5
+    },
+    "results": {
+      "totalPeriods": 71,
+      "perfectPredictions": 0,
+      "highPredictions": 9,
+      "mediumPredictions": 24,
+      "lowPredictions": 31,
+      "poorPredictions": 7,
+      "avgCoverage": 2.464788732394366,
+      "perfectRate": 0,
+      "highRate": 0.1267605633802817,
+      "mediumRate": 0.3380281690140845
+    }
+  },
+  "optimized": {
+    "weights": {
+      "transfer": 1,
+      "globalFreq": 35,
+      "overlap1": 8,
+      "arith1": 10,
+      "overlap10": 4,
+      "arith10": 10,
+      "topN": 8
+    },
+    "results": {
+      "avgCoverage": 3.732394366197183,
+      "perfectRate": 0,
+      "highRate": 0,
+      "mediumRate": 0
+    }
+  },
+  "improvement": {
+    "avgCoverage": 1.267605633802817,
+    "highRate": -0.1267605633802817
+  },
+  "recommendations": [
+    {
+      "priority": "高",
+      "action": "应用优化后的权重配置",
+      "reason": "平均覆盖率可提升1.27"
+    },
+    {
+      "priority": "中",
+      "action": "增加预测尾号数量到8",
+      "reason": "更多预测尾号可提高覆盖率"
+    }
+  ]
+}

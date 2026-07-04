@@ -1,0 +1,93 @@
+{
+  "summary": {
+    "totalPeriods": 99,
+    "Top1_front": {
+      "totalHits": 73,
+      "totalBalls": 495,
+      "hitRate": "14.75%"
+    },
+    "Top2_front": {
+      "totalHits": 68,
+      "totalBalls": 495,
+      "hitRate": "13.74%"
+    },
+    "Top3_front": {
+      "totalHits": 75,
+      "totalBalls": 495,
+      "hitRate": "15.15%"
+    },
+    "Top4_front": {
+      "totalHits": 70,
+      "totalBalls": 495,
+      "hitRate": "14.14%"
+    },
+    "Top5_front": {
+      "totalHits": 66,
+      "totalBalls": 495,
+      "hitRate": "13.33%"
+    },
+    "bulou6": {
+      "totalHits": 68,
+      "totalBalls": 495,
+      "hitRate": "13.74%"
+    },
+    "back": {
+      "totalHits": 99,
+      "totalBalls": 198,
+      "hitRate": "50.00%"
+    },
+    "pool": {
+      "totalHits": 339,
+      "totalBalls": 495,
+      "hitRate": "68.48%"
+    },
+    "top5Union": {
+      "totalHits": 223,
+      "hitRate": "45.05%"
+    },
+    "top5b6Union": {
+      "totalHits": 270,
+      "hitRate": "54.55%"
+    }
+  },
+  "poolCoverageAnalysis": {
+    "1": {
+      "count": 2,
+      "totalTopHits": 5,
+      "totalBulouHits": 1,
+      "totalUnion": 1
+    },
+    "2": {
+      "count": 14,
+      "totalTopHits": 31,
+      "totalBulouHits": 4,
+      "totalUnion": 22
+    },
+    "3": {
+      "count": 37,
+      "totalTopHits": 109,
+      "totalBulouHits": 25,
+      "totalUnion": 87
+    },
+    "4": {
+      "count": 32,
+      "totalTopHits": 137,
+      "totalBulouHits": 26,
+      "totalUnion": 107
+    },
+    "5": {
+      "count": 14,
+      "totalTopHits": 70,
+      "totalBulouHits": 12,
+      "totalUnion": 53
+    }
+  },
+  "highHitCount": 25,
+  "lowHitCount": 45,
+  "bulou6Effect": {
+    "improved": 43,
+    "same": 56,
+    "worse": 0
+  },
+  "avgOverlap": 8.929292929292929
+}

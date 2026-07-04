@@ -1,0 +1,14 @@
+{
+  "totalPairs": 117,
+  "hits": {
+    "doubleHits": 117,
+    "atLeastOneHit": 117,
+    "anyHit": 117
+  },
+  "hitRates": {
+    "doubleHit": "100.0%",
+    "atLeastOneHit": "100.0%",
+    "anyHit": "100.0%"
+  },
+  "missDetails": []
+}

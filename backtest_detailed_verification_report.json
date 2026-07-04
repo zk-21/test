@@ -1,0 +1,1889 @@
+{
+  "timestamp": "2026-07-02T05:05:11.634Z",
+  "testConfig": {
+    "testCount": 50,
+    "poolSize": 26,
+    "dataRange": "2025101 ~ 2026069"
+  },
+  "summary": {
+    "avgTop5Hit": 0.64,
+    "avgBulou6Hit": 0.72,
+    "avgJointHit": 1.36,
+    "avgPoolHit": 3.6,
+    "top5HitRate": 12.8,
+    "bulou6HitRate": 14.4,
+    "jointHitRate": 27.2,
+    "poolCoverageRate": 72
+  },
+  "distribution": {
+    "top5": [
+      22,
+      25,
+      2,
+      1,
+      0,
+      0
+    ],
+    "bulou6": [
+      23,
+      19,
+      7,
+      1,
+      0,
+      0
+    ],
+    "joint": [
+      8,
+      25,
+      9,
+      7,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "bulou6Effect": {
+    "top5OnlyCoverage": 32,
+    "bulou6AddedCoverage": 36,
+    "bulou6AddedRate": 112.5
+  },
+  "detailedResults": [
+    {
+      "issue": "2026069",
+      "targetNumbers": [
+        12,
+        19,
+        21,
+        24,
+        29
+      ],
+      "top5": [
+        12,
+        3,
+        13,
+        21,
+        19
+      ],
+      "top5Hit": 3,
+      "top5HitNumbers": [
+        12,
+        21,
+        19
+      ],
+      "bulou6": [
+        1,
+        2,
+        11,
+        22,
+        23
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        12,
+        21,
+        19
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026068",
+      "targetNumbers": [
+        3,
+        11,
+        12,
+        21,
+        22
+      ],
+      "top5": [
+        13,
+        31,
+        21,
+        19,
+        29
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        21
+      ],
+      "bulou6": [
+        11,
+        12,
+        23,
+        26,
+        33
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        11,
+        12
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        21,
+        11,
+        12
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026067",
+      "targetNumbers": [
+        6,
+        16,
+        18,
+        19,
+        28
+      ],
+      "top5": [
+        13,
+        25,
+        15,
+        34,
+        14
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        11,
+        23,
+        24,
+        33,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 2,
+      "poolCoverage": "40.0"
+    },
+    {
+      "issue": "2026066",
+      "targetNumbers": [
+        10,
+        13,
+        19,
+        21,
+        30
+      ],
+      "top5": [
+        13,
+        3,
+        4,
+        24,
+        12
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        13
+      ],
+      "bulou6": [
+        2,
+        14,
+        15,
+        23,
+        25
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        13
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026065",
+      "targetNumbers": [
+        4,
+        11,
+        12,
+        13,
+        25
+      ],
+      "top5": [
+        3,
+        13,
+        21,
+        17,
+        14
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        13
+      ],
+      "bulou6": [
+        1,
+        4,
+        11,
+        20,
+        23
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        4,
+        11
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        13,
+        4,
+        11
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026064",
+      "targetNumbers": [
+        3,
+        13,
+        15,
+        17,
+        21
+      ],
+      "top5": [
+        7,
+        3,
+        31,
+        14,
+        34
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        3
+      ],
+      "bulou6": [
+        4,
+        13,
+        15,
+        17,
+        33
+      ],
+      "bulou6Hit": 3,
+      "bulou6HitNumbers": [
+        13,
+        15,
+        17
+      ],
+      "jointHit": 4,
+      "jointHitNumbers": [
+        3,
+        13,
+        15,
+        17
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026063",
+      "targetNumbers": [
+        3,
+        15,
+        20,
+        29,
+        31
+      ],
+      "top5": [
+        26,
+        24,
+        14,
+        6,
+        13
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        7,
+        12,
+        22,
+        23,
+        27
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026062",
+      "targetNumbers": [
+        7,
+        15,
+        20,
+        24,
+        29
+      ],
+      "top5": [
+        26,
+        34,
+        13,
+        33,
+        22
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        12,
+        14,
+        23,
+        32,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026061",
+      "targetNumbers": [
+        10,
+        12,
+        26,
+        31,
+        35
+      ],
+      "top5": [
+        22,
+        23,
+        33,
+        34,
+        24
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        13,
+        14,
+        19,
+        26,
+        32
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        26
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        26
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026060",
+      "targetNumbers": [
+        22,
+        28,
+        30,
+        31,
+        34
+      ],
+      "top5": [
+        13,
+        14,
+        12,
+        2,
+        7
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        4,
+        6,
+        11,
+        17
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026059",
+      "targetNumbers": [
+        6,
+        13,
+        17,
+        19,
+        26
+      ],
+      "top5": [
+        33,
+        34,
+        14,
+        23,
+        13
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        13
+      ],
+      "bulou6": [
+        12,
+        18,
+        22,
+        24,
+        32
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        13
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026058",
+      "targetNumbers": [
+        7,
+        12,
+        13,
+        18,
+        34
+      ],
+      "top5": [
+        23,
+        33,
+        21,
+        22,
+        24
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        6,
+        26,
+        31,
+        32,
+        34
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        34
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        34
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026057",
+      "targetNumbers": [
+        23,
+        25,
+        26,
+        27,
+        34
+      ],
+      "top5": [
+        33,
+        21,
+        23,
+        14,
+        22
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        23
+      ],
+      "bulou6": [
+        13,
+        24,
+        31,
+        32,
+        34
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        34
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        23,
+        34
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026056",
+      "targetNumbers": [
+        6,
+        7,
+        18,
+        21,
+        30
+      ],
+      "top5": [
+        33,
+        14,
+        23,
+        22,
+        13
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        12,
+        21,
+        24,
+        32,
+        34
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        21
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        21
+      ],
+      "poolHit": 2,
+      "poolCoverage": "40.0"
+    },
+    {
+      "issue": "2026055",
+      "targetNumbers": [
+        9,
+        10,
+        20,
+        33,
+        35
+      ],
+      "top5": [
+        14,
+        2,
+        22,
+        23,
+        3
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        4,
+        9,
+        12,
+        13,
+        24
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        9
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        9
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026054",
+      "targetNumbers": [
+        2,
+        6,
+        14,
+        22,
+        24
+      ],
+      "top5": [
+        33,
+        2,
+        3,
+        23,
+        32
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        2
+      ],
+      "bulou6": [
+        4,
+        5,
+        15,
+        22,
+        35
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        22
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        2,
+        22
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026053",
+      "targetNumbers": [
+        2,
+        9,
+        14,
+        20,
+        31
+      ],
+      "top5": [
+        33,
+        21,
+        3,
+        1,
+        26
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        23,
+        25,
+        31,
+        32,
+        35
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        31
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        31
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026052",
+      "targetNumbers": [
+        2,
+        3,
+        20,
+        28,
+        33
+      ],
+      "top5": [
+        33,
+        13,
+        14,
+        15,
+        34
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        33
+      ],
+      "bulou6": [
+        11,
+        23,
+        24,
+        25,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        33
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026051",
+      "targetNumbers": [
+        13,
+        18,
+        28,
+        32,
+        33
+      ],
+      "top5": [
+        14,
+        13,
+        15,
+        23,
+        33
+      ],
+      "top5Hit": 2,
+      "top5HitNumbers": [
+        13,
+        33
+      ],
+      "bulou6": [
+        12,
+        22,
+        24,
+        32,
+        34
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        32
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        13,
+        33,
+        32
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026050",
+      "targetNumbers": [
+        6,
+        10,
+        14,
+        23,
+        33
+      ],
+      "top5": [
+        13,
+        15,
+        14,
+        1,
+        11
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        14
+      ],
+      "bulou6": [
+        2,
+        3,
+        4,
+        12,
+        21
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        14
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026049",
+      "targetNumbers": [
+        1,
+        6,
+        14,
+        15,
+        17
+      ],
+      "top5": [
+        21,
+        23,
+        11,
+        12,
+        22
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        13,
+        14,
+        24,
+        25,
+        35
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        14
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        14
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026048",
+      "targetNumbers": [
+        11,
+        17,
+        20,
+        23,
+        35
+      ],
+      "top5": [
+        21,
+        12,
+        13,
+        11,
+        24
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        11
+      ],
+      "bulou6": [
+        14,
+        22,
+        23,
+        25,
+        33
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        23
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        11,
+        23
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026047",
+      "targetNumbers": [
+        9,
+        20,
+        21,
+        23,
+        28
+      ],
+      "top5": [
+        1,
+        33,
+        12,
+        13,
+        2
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        11,
+        14,
+        32,
+        34
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026046",
+      "targetNumbers": [
+        1,
+        13,
+        18,
+        27,
+        33
+      ],
+      "top5": [
+        22,
+        2,
+        33,
+        12,
+        34
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        33
+      ],
+      "bulou6": [
+        3,
+        13,
+        21,
+        23,
+        32
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        13
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        33,
+        13
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026045",
+      "targetNumbers": [
+        1,
+        15,
+        21,
+        26,
+        33
+      ],
+      "top5": [
+        22,
+        12,
+        25,
+        26,
+        3
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        26
+      ],
+      "bulou6": [
+        2,
+        4,
+        13,
+        23,
+        24
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        26
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026044",
+      "targetNumbers": [
+        3,
+        8,
+        22,
+        26,
+        29
+      ],
+      "top5": [
+        12,
+        13,
+        25,
+        22,
+        14
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        22
+      ],
+      "bulou6": [
+        9,
+        15,
+        19,
+        23,
+        24
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        22
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026043",
+      "targetNumbers": [
+        8,
+        12,
+        14,
+        19,
+        22
+      ],
+      "top5": [
+        25,
+        24,
+        13,
+        12,
+        2
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        12
+      ],
+      "bulou6": [
+        3,
+        4,
+        14,
+        22,
+        23
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        14,
+        22
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        12,
+        14,
+        22
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026042",
+      "targetNumbers": [
+        2,
+        7,
+        13,
+        19,
+        24
+      ],
+      "top5": [
+        34,
+        24,
+        25,
+        32,
+        33
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        24
+      ],
+      "bulou6": [
+        12,
+        22,
+        23,
+        26,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        24
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026041",
+      "targetNumbers": [
+        24,
+        25,
+        27,
+        29,
+        34
+      ],
+      "top5": [
+        12,
+        13,
+        34,
+        22,
+        32
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        34
+      ],
+      "bulou6": [
+        11,
+        14,
+        23,
+        33,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        34
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026040",
+      "targetNumbers": [
+        6,
+        12,
+        13,
+        21,
+        34
+      ],
+      "top5": [
+        8,
+        22,
+        12,
+        28,
+        32
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        12
+      ],
+      "bulou6": [
+        13,
+        23,
+        24,
+        33,
+        34
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        13,
+        34
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        12,
+        13,
+        34
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026039",
+      "targetNumbers": [
+        9,
+        11,
+        20,
+        26,
+        27
+      ],
+      "top5": [
+        8,
+        33,
+        34,
+        32,
+        35
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        4,
+        5,
+        12,
+        22
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 2,
+      "poolCoverage": "40.0"
+    },
+    {
+      "issue": "2026038",
+      "targetNumbers": [
+        8,
+        17,
+        21,
+        33,
+        35
+      ],
+      "top5": [
+        32,
+        12,
+        34,
+        28,
+        13
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        14,
+        15,
+        25,
+        33,
+        35
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        33,
+        35
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        33,
+        35
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026037",
+      "targetNumbers": [
+        7,
+        12,
+        13,
+        28,
+        32
+      ],
+      "top5": [
+        32,
+        34,
+        3,
+        22,
+        4
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        32
+      ],
+      "bulou6": [
+        2,
+        5,
+        23,
+        33,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        32
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026036",
+      "targetNumbers": [
+        4,
+        7,
+        16,
+        26,
+        32
+      ],
+      "top5": [
+        22,
+        3,
+        2,
+        23,
+        33
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        5,
+        24,
+        25,
+        32,
+        34
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        32
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        32
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026035",
+      "targetNumbers": [
+        2,
+        22,
+        30,
+        33,
+        34
+      ],
+      "top5": [
+        12,
+        22,
+        8,
+        15,
+        3
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        22
+      ],
+      "bulou6": [
+        2,
+        5,
+        11,
+        13,
+        23
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        2
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        22,
+        2
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026034",
+      "targetNumbers": [
+        11,
+        12,
+        25,
+        26,
+        27
+      ],
+      "top5": [
+        3,
+        5,
+        18,
+        4,
+        2
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        8,
+        15,
+        22,
+        25,
+        28
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        25
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        25
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026033",
+      "targetNumbers": [
+        3,
+        5,
+        7,
+        9,
+        18
+      ],
+      "top5": [
+        3,
+        34,
+        4,
+        28,
+        5
+      ],
+      "top5Hit": 2,
+      "top5HitNumbers": [
+        3,
+        5
+      ],
+      "bulou6": [
+        8,
+        18,
+        25,
+        33,
+        35
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        18
+      ],
+      "jointHit": 3,
+      "jointHitNumbers": [
+        3,
+        5,
+        18
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026032",
+      "targetNumbers": [
+        3,
+        4,
+        19,
+        26,
+        32
+      ],
+      "top5": [
+        28,
+        8,
+        5,
+        3,
+        34
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        3
+      ],
+      "bulou6": [
+        1,
+        4,
+        11,
+        33,
+        35
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        4
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        3,
+        4
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026031",
+      "targetNumbers": [
+        6,
+        8,
+        22,
+        29,
+        34
+      ],
+      "top5": [
+        2,
+        3,
+        5,
+        28,
+        12
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        1,
+        8,
+        11,
+        13,
+        15
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        8
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        8
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026030",
+      "targetNumbers": [
+        2,
+        13,
+        22,
+        28,
+        34
+      ],
+      "top5": [
+        35,
+        15,
+        33,
+        5,
+        18
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        12,
+        13,
+        31,
+        32
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        13
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        13
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026029",
+      "targetNumbers": [
+        3,
+        5,
+        17,
+        33,
+        35
+      ],
+      "top5": [
+        15,
+        12,
+        13,
+        11,
+        18
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        8,
+        21,
+        23,
+        28,
+        31
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026028",
+      "targetNumbers": [
+        15,
+        27,
+        29,
+        30,
+        34
+      ],
+      "top5": [
+        11,
+        13,
+        8,
+        15,
+        12
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        15
+      ],
+      "bulou6": [
+        5,
+        10,
+        18,
+        21,
+        23
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        15
+      ],
+      "poolHit": 1,
+      "poolCoverage": "20.0"
+    },
+    {
+      "issue": "2026027",
+      "targetNumbers": [
+        9,
+        10,
+        11,
+        12,
+        16
+      ],
+      "top5": [
+        11,
+        23,
+        8,
+        28,
+        21
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        11
+      ],
+      "bulou6": [
+        5,
+        13,
+        24,
+        25,
+        31
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        11
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026026",
+      "targetNumbers": [
+        10,
+        11,
+        22,
+        26,
+        32
+      ],
+      "top5": [
+        5,
+        3,
+        12,
+        2,
+        23
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        1,
+        11,
+        13,
+        21,
+        22
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        11,
+        22
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        11,
+        22
+      ],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    },
+    {
+      "issue": "2026025",
+      "targetNumbers": [
+        3,
+        15,
+        24,
+        28,
+        29
+      ],
+      "top5": [
+        8,
+        23,
+        21,
+        5,
+        13
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        11,
+        12,
+        18,
+        25
+      ],
+      "bulou6Hit": 1,
+      "bulou6HitNumbers": [
+        3
+      ],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        3
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026024",
+      "targetNumbers": [
+        2,
+        4,
+        8,
+        10,
+        21
+      ],
+      "top5": [
+        23,
+        25,
+        5,
+        28,
+        9
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        3,
+        8,
+        11,
+        21,
+        31
+      ],
+      "bulou6Hit": 2,
+      "bulou6HitNumbers": [
+        8,
+        21
+      ],
+      "jointHit": 2,
+      "jointHitNumbers": [
+        8,
+        21
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026023",
+      "targetNumbers": [
+        9,
+        25,
+        26,
+        27,
+        28
+      ],
+      "top5": [
+        5,
+        23,
+        13,
+        11,
+        25
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        25
+      ],
+      "bulou6": [
+        3,
+        4,
+        14,
+        15,
+        21
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        25
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026022",
+      "targetNumbers": [
+        5,
+        9,
+        10,
+        18,
+        26
+      ],
+      "top5": [
+        12,
+        5,
+        13,
+        1,
+        23
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        5
+      ],
+      "bulou6": [
+        2,
+        3,
+        11,
+        21,
+        22
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        5
+      ],
+      "poolHit": 5,
+      "poolCoverage": "100.0"
+    },
+    {
+      "issue": "2026021",
+      "targetNumbers": [
+        5,
+        8,
+        12,
+        14,
+        17
+      ],
+      "top5": [
+        23,
+        13,
+        12,
+        31,
+        21
+      ],
+      "top5Hit": 1,
+      "top5HitNumbers": [
+        12
+      ],
+      "bulou6": [
+        11,
+        18,
+        22,
+        32,
+        33
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 1,
+      "jointHitNumbers": [
+        12
+      ],
+      "poolHit": 3,
+      "poolCoverage": "60.0"
+    },
+    {
+      "issue": "2026020",
+      "targetNumbers": [
+        1,
+        10,
+        21,
+        23,
+        29
+      ],
+      "top5": [
+        13,
+        12,
+        31,
+        11,
+        18
+      ],
+      "top5Hit": 0,
+      "top5HitNumbers": [],
+      "bulou6": [
+        8,
+        15,
+        32,
+        33,
+        35
+      ],
+      "bulou6Hit": 0,
+      "bulou6HitNumbers": [],
+      "jointHit": 0,
+      "jointHitNumbers": [],
+      "poolHit": 4,
+      "poolCoverage": "80.0"
+    }
+  ]
+}

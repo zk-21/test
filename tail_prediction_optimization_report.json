@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-07-02T05:51:58.726Z",
+  "optimization": {
+    "predictionCount": 8,
+    "weights": {
+      "transfer": 1,
+      "globalFreq": 35,
+      "overlap1": 8,
+      "arith1": 10,
+      "overlap10": 4,
+      "arith10": 10,
+      "correlation": 5,
+      "pattern": 3
+    },
+    "newFeatures": [
+      "尾号关联性分析",
+      "尾号模式分析",
+      "连续尾号检测"
+    ]
+  },
+  "results": {
+    "avgCoverage": 3.676056338028169,
+    "perfectRate": 0,
+    "highRate": 0,
+    "mediumRate": 0,
+    "lowRate": 0.15492957746478872
+  },
+  "coverageDistribution": {
+    "2": 7,
+    "3": 20,
+    "4": 33,
+    "5": 11
+  },
+  "improvements": [
+    {
+      "metric": "平均覆盖率",
+      "baseline": 2.46,
+      "optimized": 3.676056338028169,
+      "improvement": 1.216056338028169,
+      "improvementRate": "49.43%"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "高",
+      "action": "增加预测尾号数量到8个",
+      "reason": "可显著提高覆盖率，从2.46提升到3.68"
+    },
+    {
+      "priority": "高",
+      "action": "提升全局高频尾号权重到35",
+      "reason": "全局高频尾号对预测准确率有重要影响"
+    },
+    {
+      "priority": "中",
+      "action": "增加尾号关联性分析",
+      "reason": "尾号之间的关联性可提供额外预测信息"
+    },
+    {
+      "priority": "中",
+      "action": "增加尾号模式分析",
+      "reason": "连续尾号等模式对预测有帮助"
+    },
+    {
+      "priority": "低",
+      "action": "保持转移概率权重为1",
+      "reason": "测试显示提升转移概率权重效果不明显"
+    }
+  ],
+  "implementation": {
+    "scriptChanges": [
+      "修改predictLikelyTailsV4Enhanced函数，增加预测尾号数量",
+      "调整权重配置：globalFreq从28提升到35，overlap1从6提升到8",
+      "新增尾号关联性分析函数",
+      "新增尾号模式分析函数"
+    ],
+    "integrationPoints": [
+      "buildSampleNumbersV4函数中的predictedTails变量",
+      "v4ScoreCombo函数中的尾号匹配逻辑",
+      "候选号码池生成中的尾号评分"
+    ]
+  }
+}

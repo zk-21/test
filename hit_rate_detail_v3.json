@@ -1,0 +1,2233 @@
+{
+  "generatedAt": "2026-07-01T02:56:34.369Z",
+  "config": {
+    "poolSize": 24,
+    "interval": 10
+  },
+  "strategy": "优化回退机制",
+  "summary": {
+    "totalPeriods": 20,
+    "strategy": "优化回退机制",
+    "Top1_front": {
+      "totalHits": 12,
+      "totalBalls": 100,
+      "hitRate": "12.00%"
+    },
+    "Top2_front": {
+      "totalHits": 13,
+      "totalBalls": 100,
+      "hitRate": "13.00%"
+    },
+    "Top3_front": {
+      "totalHits": 18,
+      "totalBalls": 100,
+      "hitRate": "18.00%"
+    },
+    "Top4_front": {
+      "totalHits": 11,
+      "totalBalls": 100,
+      "hitRate": "11.00%"
+    },
+    "Top5_front": {
+      "totalHits": 9,
+      "totalBalls": 100,
+      "hitRate": "9.00%"
+    },
+    "bulou6": {
+      "totalHits": 17,
+      "totalBalls": 100,
+      "hitRate": "17.00%"
+    },
+    "back": {
+      "totalHits": 18,
+      "totalBalls": 40,
+      "hitRate": "45.00%"
+    },
+    "pool": {
+      "totalHits": 68,
+      "totalBalls": 100,
+      "hitRate": "68.00%"
+    },
+    "top5Union": {
+      "totalHits": 43,
+      "hitRate": "43.00%"
+    },
+    "top5b6Union": {
+      "totalHits": 60,
+      "hitRate": "60.00%"
+    },
+    "supplementGain": {
+      "gain": 17,
+      "gainPct": "17.00%"
+    }
+  },
+  "perPeriod": [
+    {
+      "sI": "2025101",
+      "tI": "2025111",
+      "targetFront": [
+        2,
+        9,
+        14,
+        21,
+        26
+      ],
+      "targetBack": [
+        2,
+        12
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            5,
+            6,
+            21,
+            30,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            21
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            5,
+            20,
+            22,
+            25,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            5,
+            6,
+            18,
+            22,
+            27
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            5,
+            6,
+            17,
+            32,
+            35
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            5,
+            6,
+            20,
+            28,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          2,
+          7,
+          10,
+          12,
+          15
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          2
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 1,
+      "top5Union": 1,
+      "top5b6Union": 2
+    },
+    {
+      "sI": "2025102",
+      "tI": "2025112",
+      "targetFront": [
+        3,
+        4,
+        21,
+        23,
+        24
+      ],
+      "targetBack": [
+        9,
+        12
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            10,
+            11,
+            13,
+            26,
+            29
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            12,
+            14,
+            26,
+            30,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            4,
+            10,
+            11,
+            22,
+            26
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            4
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            3,
+            10,
+            11,
+            16,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            3
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            2,
+            10,
+            11,
+            20,
+            26
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          6,
+          9,
+          21,
+          23
+        ],
+        "hitCount": 2,
+        "hitNumbers": [
+          21,
+          23
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 0,
+      "top5Union": 2,
+      "top5b6Union": 4
+    },
+    {
+      "sI": "2025103",
+      "tI": "2025113",
+      "targetFront": [
+        1,
+        14,
+        18,
+        28,
+        35
+      ],
+      "targetBack": [
+        2,
+        3
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            4,
+            8,
+            20,
+            32,
+            33
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            5,
+            22,
+            31,
+            33,
+            34
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            4,
+            18,
+            21,
+            30,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            18
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            10,
+            14,
+            32,
+            33,
+            34
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            14
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            4,
+            8,
+            20,
+            32,
+            35
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            35
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          2,
+          3,
+          11,
+          12,
+          24
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 2,
+      "top5Union": 3,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025104",
+      "tI": "2025114",
+      "targetFront": [
+        3,
+        8,
+        9,
+        12,
+        15
+      ],
+      "targetBack": [
+        1,
+        5
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            4,
+            5,
+            8,
+            22,
+            26
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            4,
+            6,
+            20,
+            21,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            2,
+            4,
+            21,
+            30,
+            34
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            4,
+            14,
+            20,
+            31,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            4,
+            6,
+            22,
+            30,
+            35
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          3,
+          10,
+          12,
+          24
+        ],
+        "hitCount": 2,
+        "hitNumbers": [
+          3,
+          12
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 2,
+      "top5Union": 1,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025105",
+      "tI": "2025115",
+      "targetFront": [
+        3,
+        12,
+        14,
+        21,
+        35
+      ],
+      "targetBack": [
+        1,
+        5
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            12,
+            15,
+            18,
+            26,
+            34
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            12
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            11,
+            12,
+            14,
+            28,
+            30
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            12,
+            14
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            12,
+            15,
+            16,
+            24,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            12
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            5,
+            11,
+            12,
+            20,
+            25
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            12
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            12,
+            13,
+            15,
+            28,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            12
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          10,
+          22,
+          23,
+          33,
+          35
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          35
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 2,
+      "top5Union": 2,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025106",
+      "tI": "2025116",
+      "targetFront": [
+        2,
+        6,
+        16,
+        22,
+        29
+      ],
+      "targetBack": [
+        8,
+        12
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            5,
+            10,
+            13,
+            21,
+            26
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            5,
+            11,
+            22,
+            30,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            22
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            1,
+            5,
+            13,
+            29,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            2,
+            5,
+            11,
+            13,
+            28
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            2
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            6,
+            13,
+            21,
+            22,
+            25
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            6,
+            22
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          3,
+          4,
+          9,
+          12,
+          27
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 0,
+      "top5Union": 4,
+      "top5b6Union": 4
+    },
+    {
+      "sI": "2025107",
+      "tI": "2025117",
+      "targetFront": [
+        5,
+        10,
+        18,
+        21,
+        29
+      ],
+      "targetBack": [
+        6,
+        7
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            5,
+            6,
+            18,
+            32,
+            34
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            5,
+            18
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            5,
+            7,
+            13,
+            16,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            5
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            5,
+            6,
+            17,
+            30,
+            33
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            5
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            3,
+            5,
+            8,
+            31,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            5
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            13,
+            20,
+            31,
+            32,
+            35
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          9,
+          10,
+          11,
+          12,
+          15
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          10
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 0,
+      "top5Union": 2,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025108",
+      "tI": "2025118",
+      "targetFront": [
+        2,
+        8,
+        9,
+        12,
+        21
+      ],
+      "targetBack": [
+        4,
+        5
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            11,
+            18,
+            20,
+            32,
+            34
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            10,
+            11,
+            22,
+            24,
+            28
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            11,
+            15,
+            21,
+            29,
+            30
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            21
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            8,
+            10,
+            11,
+            19,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            1,
+            10,
+            11,
+            19,
+            25
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          9,
+          13,
+          14,
+          17,
+          23
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          9
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 2,
+      "top5Union": 2,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025109",
+      "tI": "2025119",
+      "targetFront": [
+        8,
+        15,
+        27,
+        29,
+        31
+      ],
+      "targetBack": [
+        1,
+        7
+      ],
+      "poolHit": 2,
+      "poolRate": "40.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            10,
+            12,
+            14,
+            26,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            31
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            13,
+            18,
+            22,
+            24,
+            30
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            2,
+            8,
+            10,
+            11,
+            20
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            9,
+            10,
+            23,
+            26,
+            28
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            4,
+            5,
+            10,
+            26,
+            28
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          3,
+          6,
+          7,
+          21
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 1,
+      "top5Union": 2,
+      "top5b6Union": 2
+    },
+    {
+      "sI": "2025110",
+      "tI": "2025120",
+      "targetFront": [
+        11,
+        13,
+        22,
+        26,
+        35
+      ],
+      "targetBack": [
+        2,
+        8
+      ],
+      "poolHit": 5,
+      "poolRate": "100.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            2,
+            5,
+            21,
+            30,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            1,
+            11,
+            15,
+            20,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            11
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            13,
+            18,
+            21,
+            22,
+            35
+          ],
+          "hitCount": 3,
+          "hitNumbers": [
+            13,
+            22,
+            35
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            12,
+            21,
+            25,
+            30,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            15,
+            21,
+            28,
+            32,
+            33
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          3,
+          10,
+          26,
+          29,
+          34
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          26
+        ]
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 1,
+      "top5Union": 4,
+      "top5b6Union": 5
+    },
+    {
+      "sI": "2025111",
+      "tI": "2025121",
+      "targetFront": [
+        2,
+        3,
+        8,
+        13,
+        21
+      ],
+      "targetBack": [
+        7,
+        12
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            10,
+            11,
+            14,
+            26,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            1,
+            12,
+            21,
+            22,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            21
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            2,
+            11,
+            13,
+            25,
+            26
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            2,
+            13
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            11,
+            20,
+            24,
+            26,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            3,
+            9,
+            11,
+            26,
+            32
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            3
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          4,
+          15,
+          16,
+          19,
+          23
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "backHit": 0,
+      "top5Union": 4,
+      "top5b6Union": 4
+    },
+    {
+      "sI": "2025112",
+      "tI": "2025122",
+      "targetFront": [
+        2,
+        3,
+        6,
+        16,
+        17
+      ],
+      "targetBack": [
+        4,
+        5
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            1,
+            3,
+            21,
+            22,
+            25
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            3
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            1,
+            2,
+            4,
+            26,
+            28
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            2
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            1,
+            5,
+            21,
+            23,
+            24
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            1,
+            22,
+            23,
+            31,
+            34
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            13,
+            21,
+            22,
+            24,
+            33
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          6,
+          11,
+          14,
+          19,
+          20
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          6
+        ]
+      },
+      "backPred": [
+        1,
+        2,
+        4,
+        6,
+        9,
+        0
+      ],
+      "backHit": 1,
+      "top5Union": 2,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025113",
+      "tI": "2025123",
+      "targetFront": [
+        8,
+        13,
+        24,
+        25,
+        31
+      ],
+      "targetBack": [
+        4,
+        10
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            1,
+            15,
+            17,
+            33,
+            34
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            14,
+            15,
+            16,
+            18,
+            32
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            1,
+            4,
+            15,
+            26,
+            31
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            31
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            1,
+            2,
+            13,
+            15,
+            24
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            13,
+            24
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            1,
+            11,
+            12,
+            15,
+            28
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          5,
+          21,
+          22,
+          25,
+          35
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          25
+        ]
+      },
+      "backPred": [
+        1,
+        4,
+        2,
+        6,
+        9,
+        3
+      ],
+      "backHit": 1,
+      "top5Union": 3,
+      "top5b6Union": 4
+    },
+    {
+      "sI": "2025114",
+      "tI": "2025124",
+      "targetFront": [
+        6,
+        9,
+        14,
+        26,
+        27
+      ],
+      "targetBack": [
+        8,
+        9
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            3,
+            9,
+            14,
+            15,
+            21
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            9,
+            14
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            4,
+            8,
+            9,
+            13,
+            25
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            9,
+            12,
+            15,
+            18,
+            33
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            8,
+            9,
+            11,
+            15,
+            28
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            1,
+            8,
+            9,
+            15,
+            23
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          2,
+          5,
+          10,
+          24,
+          35
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        1,
+        4,
+        5,
+        8,
+        2,
+        6
+      ],
+      "backHit": 1,
+      "top5Union": 2,
+      "top5b6Union": 2
+    },
+    {
+      "sI": "2025115",
+      "tI": "2025125",
+      "targetFront": [
+        10,
+        11,
+        13,
+        19,
+        35
+      ],
+      "targetBack": [
+        4,
+        11
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            3,
+            12,
+            14,
+            15,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            12,
+            13,
+            21,
+            34,
+            35
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            13,
+            35
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            3,
+            5,
+            11,
+            12,
+            24
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            11
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            3,
+            4,
+            12,
+            21,
+            25
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            1,
+            12,
+            14,
+            15,
+            23
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          2,
+          8,
+          9,
+          22,
+          32
+        ],
+        "hitCount": 0,
+        "hitNumbers": []
+      },
+      "backPred": [
+        1,
+        4,
+        5,
+        8,
+        2,
+        9
+      ],
+      "backHit": 1,
+      "top5Union": 3,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025116",
+      "tI": "2025126",
+      "targetFront": [
+        1,
+        8,
+        18,
+        27,
+        30
+      ],
+      "targetBack": [
+        6,
+        7
+      ],
+      "poolHit": 2,
+      "poolRate": "40.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            3,
+            12,
+            16,
+            21,
+            29
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            2,
+            3,
+            15,
+            21,
+            26
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            3,
+            6,
+            14,
+            21,
+            22
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            3,
+            5,
+            9,
+            12,
+            21
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            3,
+            4,
+            12,
+            15,
+            21
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          11,
+          23,
+          31,
+          32
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          1
+        ]
+      },
+      "backPred": [
+        1,
+        4,
+        2,
+        3,
+        5,
+        8
+      ],
+      "backHit": 0,
+      "top5Union": 0,
+      "top5b6Union": 1
+    },
+    {
+      "sI": "2025117",
+      "tI": "2025127",
+      "targetFront": [
+        4,
+        5,
+        19,
+        28,
+        29
+      ],
+      "targetBack": [
+        6,
+        8
+      ],
+      "poolHit": 5,
+      "poolRate": "100.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            3,
+            12,
+            18,
+            21,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            8,
+            10,
+            15,
+            21,
+            31
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            8,
+            11,
+            20,
+            21,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            8,
+            21,
+            22,
+            29,
+            35
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            8,
+            14,
+            21,
+            29,
+            30
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          2,
+          5,
+          9,
+          19
+        ],
+        "hitCount": 2,
+        "hitNumbers": [
+          5,
+          19
+        ]
+      },
+      "backPred": [
+        1,
+        4,
+        2,
+        5,
+        9,
+        3
+      ],
+      "backHit": 0,
+      "top5Union": 1,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025118",
+      "tI": "2025128",
+      "targetFront": [
+        3,
+        6,
+        26,
+        30,
+        33
+      ],
+      "targetBack": [
+        11,
+        12
+      ],
+      "poolHit": 2,
+      "poolRate": "40.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            9,
+            12,
+            18,
+            21,
+            29
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            3,
+            8,
+            11,
+            12,
+            21
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            3
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            10,
+            12,
+            14,
+            28,
+            29
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            1,
+            5,
+            9,
+            12,
+            21
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            9,
+            12,
+            15,
+            21,
+            22
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          2,
+          4,
+          6,
+          19,
+          31
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          6
+        ]
+      },
+      "backPred": [
+        1,
+        2,
+        4,
+        5,
+        9,
+        8
+      ],
+      "backHit": 0,
+      "top5Union": 1,
+      "top5b6Union": 2
+    },
+    {
+      "sI": "2025119",
+      "tI": "2025129",
+      "targetFront": [
+        3,
+        9,
+        14,
+        28,
+        35
+      ],
+      "targetBack": [
+        2,
+        4
+      ],
+      "poolHit": 4,
+      "poolRate": "80.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            8,
+            9,
+            15,
+            21,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            9,
+            12,
+            15,
+            28,
+            31
+          ],
+          "hitCount": 2,
+          "hitNumbers": [
+            9,
+            28
+          ]
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            8,
+            9,
+            21,
+            27,
+            30
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            9,
+            15,
+            18,
+            22,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            2,
+            5,
+            8,
+            9,
+            21
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            9
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          1,
+          3,
+          7,
+          11,
+          19
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          3
+        ]
+      },
+      "backPred": [
+        1,
+        9,
+        2,
+        8,
+        4,
+        5
+      ],
+      "backHit": 2,
+      "top5Union": 2,
+      "top5b6Union": 3
+    },
+    {
+      "sI": "2025120",
+      "tI": "2025130",
+      "targetFront": [
+        1,
+        13,
+        16,
+        27,
+        29
+      ],
+      "targetBack": [
+        2,
+        11
+      ],
+      "poolHit": 3,
+      "poolRate": "60.0%",
+      "top5": [
+        {
+          "rank": 1,
+          "numbers": [
+            8,
+            12,
+            15,
+            21,
+            29
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        },
+        {
+          "rank": 2,
+          "numbers": [
+            3,
+            11,
+            12,
+            22,
+            25
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 3,
+          "numbers": [
+            12,
+            13,
+            21,
+            31,
+            35
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            13
+          ]
+        },
+        {
+          "rank": 4,
+          "numbers": [
+            2,
+            5,
+            9,
+            12,
+            21
+          ],
+          "hitCount": 0,
+          "hitNumbers": []
+        },
+        {
+          "rank": 5,
+          "numbers": [
+            12,
+            21,
+            26,
+            29,
+            33
+          ],
+          "hitCount": 1,
+          "hitNumbers": [
+            29
+          ]
+        }
+      ],
+      "bulou6": {
+        "numbers": [
+          14,
+          16,
+          19,
+          23,
+          32
+        ],
+        "hitCount": 1,
+        "hitNumbers": [
+          16
+        ]
+      },
+      "backPred": [
+        1,
+        9,
+        2,
+        5,
+        8,
+        4
+      ],
+      "backHit": 1,
+      "top5Union": 2,
+      "top5b6Union": 3
+    }
+  ]
+}

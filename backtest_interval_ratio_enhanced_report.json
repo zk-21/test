@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-07-02T05:01:45.559Z",
+  "testConfig": {
+    "testCount": 50,
+    "poolSize": 26,
+    "dataRange": "2025101 ~ 2026069"
+  },
+  "results": [
+    {
+      "label": "基准（无增强预测）",
+      "useEnhanced": false,
+      "top5HitRate": 64,
+      "jointHitRate": 136,
+      "poolCoverage": 72,
+      "ivPredictionAccuracy": 45.3,
+      "patternBoostRate": "N/A"
+    },
+    {
+      "label": "增强区间比预测",
+      "useEnhanced": true,
+      "top5HitRate": 64,
+      "jointHitRate": 136,
+      "poolCoverage": 72,
+      "ivPredictionAccuracy": 45.3,
+      "patternBoostRate": "42.0"
+    }
+  ],
+  "bestConfig": {
+    "useEnhancedPrediction": true,
+    "top5HitRate": 64,
+    "jointHitRate": 136,
+    "poolCoverage": 72,
+    "ivPredictionAccuracy": 45.3,
+    "patternBoostRate": "42.0"
+  },
+  "recommendation": "⚠️ 增强区间比预测效果不明显，建议进一步优化"
+}

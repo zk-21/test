@@ -1,0 +1,184 @@
+[
+  {
+    "name": "基准-当前",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "基准-当前"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "尾号转移30",
+    "params": {
+      "tailTrans": 30,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "尾号转移30"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "32.4",
+    "jointCoverage": "63.0",
+    "status": "成功"
+  },
+  {
+    "name": "尾号转移70",
+    "params": {
+      "tailTrans": 70,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "尾号转移70"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "尾号转移100",
+    "params": {
+      "tailTrans": 100,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "尾号转移100"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "尾号关联60",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 60,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "尾号关联60"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "尾号关联150",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 150,
+      "ivWindow": 60,
+      "hotWindow": 5,
+      "name": "尾号关联150"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "区间窗口40",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 40,
+      "hotWindow": 5,
+      "name": "区间窗口40"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "区间窗口80",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 80,
+      "hotWindow": 5,
+      "name": "区间窗口80"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "63.8",
+    "status": "成功"
+  },
+  {
+    "name": "热号窗口3",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 3,
+      "name": "热号窗口3"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.1",
+    "jointCoverage": "64.0",
+    "status": "成功"
+  },
+  {
+    "name": "热号窗口8",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 8,
+      "name": "热号窗口8"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "32.7",
+    "jointCoverage": "63.6",
+    "status": "成功"
+  },
+  {
+    "name": "热号窗口10",
+    "params": {
+      "tailTrans": 50,
+      "tailCorr": 100,
+      "ivWindow": 60,
+      "hotWindow": 10,
+      "name": "热号窗口10"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "33.7",
+    "jointCoverage": "63.6",
+    "status": "成功"
+  },
+  {
+    "name": "组合-中等",
+    "params": {
+      "tailTrans": 70,
+      "tailCorr": 120,
+      "ivWindow": 70,
+      "hotWindow": 7,
+      "name": "组合-中等"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "31.8",
+    "jointCoverage": "62.7",
+    "status": "成功"
+  },
+  {
+    "name": "组合-大窗口",
+    "params": {
+      "tailTrans": 100,
+      "tailCorr": 150,
+      "ivWindow": 80,
+      "hotWindow": 8,
+      "name": "组合-大窗口"
+    },
+    "poolCoverage": "95.5",
+    "top5Rate": "32.7",
+    "jointCoverage": "63.6",
+    "status": "成功"
+  }
+]

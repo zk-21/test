@@ -1,0 +1,24 @@
+{
+  "v4": {
+    "version": "v4-无额外加分",
+    "testPeriods": 61,
+    "singleHits": 58,
+    "doubleHits": 12,
+    "totalHits": 12,
+    "hitRate": "19.7%",
+    "singleRate": "95.1%"
+  },
+  "v6": {
+    "version": "v6-有额外加分",
+    "testPeriods": 61,
+    "singleHits": 57,
+    "doubleHits": 12,
+    "totalHits": 12,
+    "hitRate": "19.7%",
+    "singleRate": "93.4%"
+  },
+  "improvement": {
+    "doubleRate": "0.0%",
+    "singleRate": "-1.8%"
+  }
+}

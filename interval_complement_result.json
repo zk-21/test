@@ -1,0 +1,2485 @@
+{
+  "summary": {
+    "totalTargets": 95,
+    "avgPool10Size": "24.0",
+    "avgPool12Size": "24.0",
+    "avgUnionSize": "28.1",
+    "pool10Coverage": "70.3%",
+    "pool12Coverage": "67.8%",
+    "unionCoverage": "80.6%",
+    "top5HitRate": "15.6%",
+    "improvement": "+10.3%"
+  },
+  "details": [
+    {
+      "targetIssue": "2025113",
+      "source10": "2025103",
+      "source12": "2025101",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        18,
+        35,
+        8,
+        25,
+        4
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        1,
+        14,
+        18,
+        28,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025114",
+      "source10": "2025104",
+      "source12": "2025102",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        26,
+        9,
+        10,
+        6,
+        16
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        8,
+        9,
+        12,
+        15
+      ]
+    },
+    {
+      "targetIssue": "2025115",
+      "source10": "2025105",
+      "source12": "2025103",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        35,
+        5,
+        34,
+        26,
+        14
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        12,
+        14,
+        21,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025116",
+      "source10": "2025106",
+      "source12": "2025104",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        26,
+        5,
+        9,
+        6,
+        34
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        6,
+        16,
+        22,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025117",
+      "source10": "2025107",
+      "source12": "2025105",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        5,
+        34,
+        26,
+        8,
+        15
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        5,
+        10,
+        18,
+        21,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025118",
+      "source10": "2025108",
+      "source12": "2025106",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 32,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        34,
+        26,
+        5,
+        9,
+        19
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        8,
+        9,
+        12,
+        21
+      ]
+    },
+    {
+      "targetIssue": "2025119",
+      "source10": "2025109",
+      "source12": "2025107",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        34,
+        5,
+        26,
+        8,
+        6
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        8,
+        15,
+        27,
+        29,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2025120",
+      "source10": "2025110",
+      "source12": "2025108",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 5,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        5,
+        34,
+        8,
+        32,
+        15
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        11,
+        13,
+        22,
+        26,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025121",
+      "source10": "2025111",
+      "source12": "2025109",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 5,
+      "pool12Hits": 3,
+      "unionHits": 5,
+      "top5": [
+        26,
+        9,
+        14,
+        2,
+        21
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        2,
+        3,
+        8,
+        13,
+        21
+      ]
+    },
+    {
+      "targetIssue": "2025122",
+      "source10": "2025112",
+      "source12": "2025110",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        21,
+        3,
+        4,
+        23,
+        24
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        3,
+        6,
+        16,
+        17
+      ]
+    },
+    {
+      "targetIssue": "2025123",
+      "source10": "2025113",
+      "source12": "2025111",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        14,
+        26,
+        2,
+        21,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        8,
+        13,
+        24,
+        25,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2025124",
+      "source10": "2025114",
+      "source12": "2025112",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        3,
+        14,
+        21,
+        9,
+        4
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        6,
+        9,
+        14,
+        26,
+        27
+      ]
+    },
+    {
+      "targetIssue": "2025125",
+      "source10": "2025115",
+      "source12": "2025113",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        14,
+        35,
+        1,
+        21,
+        18
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        10,
+        11,
+        13,
+        19,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025126",
+      "source10": "2025116",
+      "source12": "2025114",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        3,
+        9,
+        12,
+        15,
+        8
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        1,
+        8,
+        18,
+        27,
+        30
+      ]
+    },
+    {
+      "targetIssue": "2025127",
+      "source10": "2025117",
+      "source12": "2025115",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        21,
+        14,
+        2,
+        3,
+        29
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        4,
+        5,
+        19,
+        28,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025128",
+      "source10": "2025118",
+      "source12": "2025116",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        2,
+        9,
+        21,
+        3,
+        12
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        6,
+        26,
+        30,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2025129",
+      "source10": "2025119",
+      "source12": "2025117",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 5,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        21,
+        14,
+        18,
+        35,
+        29
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        9,
+        14,
+        28,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025130",
+      "source10": "2025120",
+      "source12": "2025118",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 5,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        21,
+        3,
+        2,
+        29,
+        22
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        1,
+        13,
+        16,
+        27,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025131",
+      "source10": "2025121",
+      "source12": "2025119",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        21,
+        8,
+        29,
+        3,
+        2
+      ],
+      "top5Hits": 3,
+      "targetFront": [
+        3,
+        8,
+        25,
+        29,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2025132",
+      "source10": "2025122",
+      "source12": "2025120",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        21,
+        8,
+        2,
+        12
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        1,
+        9,
+        10,
+        12,
+        19
+      ]
+    },
+    {
+      "targetIssue": "2025133",
+      "source10": "2025123",
+      "source12": "2025121",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 2,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        8,
+        3,
+        21,
+        2,
+        13
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        4,
+        11,
+        23,
+        27,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025134",
+      "source10": "2025124",
+      "source12": "2025122",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        2,
+        8,
+        3,
+        21,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        7,
+        12,
+        18,
+        27,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2025135",
+      "source10": "2025125",
+      "source12": "2025123",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        8,
+        21,
+        13,
+        2
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        10,
+        16,
+        28,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2025136",
+      "source10": "2025126",
+      "source12": "2025124",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 25,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        8,
+        21,
+        13,
+        2,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        7,
+        11,
+        15,
+        16,
+        23
+      ]
+    },
+    {
+      "targetIssue": "2025137",
+      "source10": "2025127",
+      "source12": "2025125",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        8,
+        2,
+        21,
+        3,
+        9
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        7,
+        8,
+        9,
+        11,
+        22
+      ]
+    },
+    {
+      "targetIssue": "2025138",
+      "source10": "2025128",
+      "source12": "2025126",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        3,
+        21,
+        8,
+        2,
+        13
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        1,
+        3,
+        18,
+        21,
+        23
+      ]
+    },
+    {
+      "targetIssue": "2025139",
+      "source10": "2025129",
+      "source12": "2025127",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 2,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        8,
+        3,
+        21,
+        13,
+        35
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        8,
+        16,
+        22,
+        30,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2025140",
+      "source10": "2025130",
+      "source12": "2025128",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        8,
+        3,
+        2,
+        9,
+        29
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        4,
+        5,
+        13,
+        18,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2025141",
+      "source10": "2025131",
+      "source12": "2025129",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        8,
+        3,
+        29,
+        9,
+        14
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        4,
+        9,
+        24,
+        28,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025142",
+      "source10": "2025132",
+      "source12": "2025130",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        3,
+        8,
+        9,
+        13,
+        26
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        10,
+        14,
+        27,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025143",
+      "source10": "2025133",
+      "source12": "2025131",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        8,
+        29,
+        13,
+        35
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        4,
+        18,
+        24,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2025144",
+      "source10": "2025134",
+      "source12": "2025132",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        3,
+        9,
+        8,
+        29,
+        13
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        5,
+        13,
+        15,
+        28
+      ]
+    },
+    {
+      "targetIssue": "2025145",
+      "source10": "2025135",
+      "source12": "2025133",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 2,
+      "pool12Hits": 2,
+      "unionHits": 2,
+      "top5": [
+        8,
+        3,
+        9,
+        29,
+        27
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        7,
+        20,
+        22,
+        25
+      ]
+    },
+    {
+      "targetIssue": "2025146",
+      "source10": "2025136",
+      "source12": "2025134",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 5,
+      "pool12Hits": 3,
+      "unionHits": 5,
+      "top5": [
+        29,
+        27,
+        35,
+        3,
+        14
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        11,
+        13,
+        16,
+        22
+      ]
+    },
+    {
+      "targetIssue": "2025147",
+      "source10": "2025137",
+      "source12": "2025135",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        8,
+        27,
+        29,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        18,
+        21,
+        25,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2025148",
+      "source10": "2025138",
+      "source12": "2025136",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 2,
+      "unionHits": 4,
+      "top5": [
+        3,
+        8,
+        29,
+        2,
+        9
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        4,
+        14,
+        30,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2025149",
+      "source10": "2025139",
+      "source12": "2025137",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        8,
+        27,
+        3,
+        29,
+        1
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        24,
+        26,
+        30,
+        31,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2025150",
+      "source10": "2025140",
+      "source12": "2025138",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 5,
+      "pool12Hits": 3,
+      "unionHits": 5,
+      "top5": [
+        8,
+        9,
+        35,
+        27,
+        3
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        13,
+        14,
+        15,
+        28,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2026013",
+      "source10": "2026003",
+      "source12": "2026001",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        3,
+        6,
+        29,
+        13,
+        8
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        5,
+        6,
+        23,
+        26
+      ]
+    },
+    {
+      "targetIssue": "2026014",
+      "source10": "2026004",
+      "source12": "2026002",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        3,
+        29,
+        8,
+        28,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        16,
+        18,
+        23,
+        34,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026015",
+      "source10": "2026005",
+      "source12": "2026003",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        8,
+        29,
+        9,
+        13
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        1,
+        4,
+        10,
+        13,
+        17
+      ]
+    },
+    {
+      "targetIssue": "2026016",
+      "source10": "2026006",
+      "source12": "2026004",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        14,
+        28,
+        3,
+        29,
+        13
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        8,
+        9,
+        12,
+        19,
+        24
+      ]
+    },
+    {
+      "targetIssue": "2026017",
+      "source10": "2026007",
+      "source12": "2026005",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 2,
+      "unionHits": 4,
+      "top5": [
+        3,
+        4,
+        29,
+        13,
+        27
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        4,
+        5,
+        10,
+        23,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2026018",
+      "source10": "2026008",
+      "source12": "2026006",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        3,
+        4,
+        13,
+        8,
+        9
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        9,
+        11,
+        19,
+        30,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026019",
+      "source10": "2026009",
+      "source12": "2026007",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        13,
+        3,
+        8,
+        4,
+        18
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        12,
+        13,
+        14,
+        16,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2026020",
+      "source10": "2026010",
+      "source12": "2026008",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 2,
+      "unionHits": 4,
+      "top5": [
+        3,
+        13,
+        4,
+        18,
+        27
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        1,
+        10,
+        21,
+        23,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2026021",
+      "source10": "2026011",
+      "source12": "2026009",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        13,
+        8,
+        4,
+        29
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        5,
+        8,
+        12,
+        14,
+        17
+      ]
+    },
+    {
+      "targetIssue": "2026022",
+      "source10": "2026012",
+      "source12": "2026010",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        13,
+        3,
+        18,
+        8,
+        4
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        5,
+        9,
+        10,
+        18,
+        26
+      ]
+    },
+    {
+      "targetIssue": "2026023",
+      "source10": "2026013",
+      "source12": "2026011",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        13,
+        3,
+        29,
+        4,
+        14
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        9,
+        25,
+        26,
+        27,
+        28
+      ]
+    },
+    {
+      "targetIssue": "2026024",
+      "source10": "2026014",
+      "source12": "2026012",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        3,
+        13,
+        16,
+        2,
+        29
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        4,
+        8,
+        10,
+        21
+      ]
+    },
+    {
+      "targetIssue": "2026025",
+      "source10": "2026015",
+      "source12": "2026013",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        13,
+        4,
+        18,
+        8
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        15,
+        24,
+        28,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2026026",
+      "source10": "2026016",
+      "source12": "2026014",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        9,
+        6,
+        3,
+        8,
+        14
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        10,
+        11,
+        22,
+        26,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2026027",
+      "source10": "2026017",
+      "source12": "2026015",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        13,
+        2,
+        4,
+        9
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        9,
+        10,
+        11,
+        12,
+        16
+      ]
+    },
+    {
+      "targetIssue": "2026028",
+      "source10": "2026018",
+      "source12": "2026016",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        13,
+        16,
+        29,
+        3,
+        8
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        15,
+        27,
+        29,
+        30,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026029",
+      "source10": "2026019",
+      "source12": "2026017",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        13,
+        3,
+        8,
+        4,
+        2
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        5,
+        17,
+        33,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026030",
+      "source10": "2026020",
+      "source12": "2026018",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        3,
+        4,
+        13,
+        9,
+        8
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        13,
+        22,
+        28,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026031",
+      "source10": "2026021",
+      "source12": "2026019",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        13,
+        9,
+        3,
+        4,
+        14
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        8,
+        22,
+        29,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026032",
+      "source10": "2026022",
+      "source12": "2026020",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        13,
+        14,
+        23,
+        9,
+        3
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        4,
+        19,
+        26,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2026033",
+      "source10": "2026023",
+      "source12": "2026021",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 5,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        23,
+        9,
+        18,
+        13,
+        4
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        5,
+        7,
+        9,
+        18
+      ]
+    },
+    {
+      "targetIssue": "2026034",
+      "source10": "2026024",
+      "source12": "2026022",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 5,
+      "top5": [
+        9,
+        13,
+        3,
+        4,
+        5
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        11,
+        12,
+        25,
+        26,
+        27
+      ]
+    },
+    {
+      "targetIssue": "2026035",
+      "source10": "2026025",
+      "source12": "2026023",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 2,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        9,
+        23,
+        13,
+        3,
+        4
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        2,
+        22,
+        30,
+        33,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026036",
+      "source10": "2026026",
+      "source12": "2026024",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        23,
+        18,
+        5,
+        4,
+        13
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        4,
+        7,
+        16,
+        26,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2026037",
+      "source10": "2026027",
+      "source12": "2026025",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        4,
+        9,
+        5,
+        10,
+        23
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        7,
+        12,
+        13,
+        28,
+        32
+      ]
+    },
+    {
+      "targetIssue": "2026038",
+      "source10": "2026028",
+      "source12": "2026026",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        3,
+        9,
+        4,
+        13,
+        23
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        8,
+        17,
+        21,
+        33,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026039",
+      "source10": "2026029",
+      "source12": "2026027",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        9,
+        13,
+        10,
+        3,
+        4
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        9,
+        11,
+        20,
+        26,
+        27
+      ]
+    },
+    {
+      "targetIssue": "2026040",
+      "source10": "2026030",
+      "source12": "2026028",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 2,
+      "unionHits": 4,
+      "top5": [
+        23,
+        3,
+        18,
+        5,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        12,
+        13,
+        21,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026041",
+      "source10": "2026031",
+      "source12": "2026029",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        9,
+        4,
+        10,
+        23,
+        5
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        24,
+        25,
+        27,
+        29,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026042",
+      "source10": "2026032",
+      "source12": "2026030",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 2,
+      "pool12Hits": 2,
+      "unionHits": 2,
+      "top5": [
+        9,
+        10,
+        4,
+        23,
+        5
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        2,
+        7,
+        13,
+        19,
+        24
+      ]
+    },
+    {
+      "targetIssue": "2026043",
+      "source10": "2026033",
+      "source12": "2026031",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        23,
+        9,
+        4,
+        3,
+        18
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        8,
+        12,
+        14,
+        19,
+        22
+      ]
+    },
+    {
+      "targetIssue": "2026044",
+      "source10": "2026034",
+      "source12": "2026032",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 25,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        5,
+        4,
+        18,
+        3,
+        23
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        8,
+        22,
+        26,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2026045",
+      "source10": "2026035",
+      "source12": "2026033",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 2,
+      "unionHits": 4,
+      "top5": [
+        5,
+        4,
+        23,
+        3,
+        13
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        1,
+        15,
+        21,
+        26,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2026046",
+      "source10": "2026036",
+      "source12": "2026034",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        5,
+        4,
+        3,
+        13,
+        23
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        1,
+        13,
+        18,
+        27,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2026047",
+      "source10": "2026037",
+      "source12": "2026035",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        5,
+        13,
+        23,
+        18,
+        4
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        9,
+        20,
+        21,
+        23,
+        28
+      ]
+    },
+    {
+      "targetIssue": "2026048",
+      "source10": "2026038",
+      "source12": "2026036",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        3,
+        4,
+        26,
+        5,
+        13
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        11,
+        17,
+        20,
+        23,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026049",
+      "source10": "2026039",
+      "source12": "2026037",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        5,
+        4,
+        3,
+        9,
+        26
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        1,
+        6,
+        14,
+        15,
+        17
+      ]
+    },
+    {
+      "targetIssue": "2026050",
+      "source10": "2026040",
+      "source12": "2026038",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 5,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        13,
+        5,
+        4,
+        12,
+        3
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        10,
+        14,
+        23,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2026051",
+      "source10": "2026041",
+      "source12": "2026039",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        13,
+        26,
+        9,
+        4,
+        2
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        13,
+        18,
+        28,
+        32,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2026052",
+      "source10": "2026042",
+      "source12": "2026040",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 26,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        13,
+        5,
+        12,
+        6,
+        10
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        2,
+        3,
+        20,
+        28,
+        33
+      ]
+    },
+    {
+      "targetIssue": "2026053",
+      "source10": "2026043",
+      "source12": "2026041",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        13,
+        12,
+        26,
+        6,
+        5
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        2,
+        9,
+        14,
+        20,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2026054",
+      "source10": "2026044",
+      "source12": "2026042",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        26,
+        13,
+        5,
+        2,
+        4
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        2,
+        6,
+        14,
+        22,
+        24
+      ]
+    },
+    {
+      "targetIssue": "2026055",
+      "source10": "2026045",
+      "source12": "2026043",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 3,
+      "pool12Hits": 1,
+      "unionHits": 3,
+      "top5": [
+        26,
+        13,
+        5,
+        3,
+        9
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        9,
+        10,
+        20,
+        33,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026056",
+      "source10": "2026046",
+      "source12": "2026044",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 2,
+      "pool12Hits": 3,
+      "unionHits": 3,
+      "top5": [
+        13,
+        26,
+        3,
+        12,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        7,
+        18,
+        21,
+        30
+      ]
+    },
+    {
+      "targetIssue": "2026057",
+      "source10": "2026047",
+      "source12": "2026045",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 5,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        13,
+        12,
+        26,
+        9,
+        3
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        23,
+        25,
+        26,
+        27,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026058",
+      "source10": "2026048",
+      "source12": "2026046",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 3,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        12,
+        13,
+        26,
+        9,
+        23
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        7,
+        12,
+        13,
+        18,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026059",
+      "source10": "2026049",
+      "source12": "2026047",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 31,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        26,
+        3,
+        13,
+        9,
+        2
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        6,
+        13,
+        17,
+        19,
+        26
+      ]
+    },
+    {
+      "targetIssue": "2026060",
+      "source10": "2026050",
+      "source12": "2026048",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 2,
+      "pool12Hits": 4,
+      "unionHits": 4,
+      "top5": [
+        13,
+        26,
+        12,
+        3,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        22,
+        28,
+        30,
+        31,
+        34
+      ]
+    },
+    {
+      "targetIssue": "2026061",
+      "source10": "2026051",
+      "source12": "2026049",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        23,
+        13,
+        12,
+        9,
+        21
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        10,
+        12,
+        26,
+        31,
+        35
+      ]
+    },
+    {
+      "targetIssue": "2026062",
+      "source10": "2026052",
+      "source12": "2026050",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 30,
+      "pool10Hits": 1,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        26,
+        23,
+        9,
+        12,
+        3
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        7,
+        15,
+        20,
+        24,
+        29
+      ]
+    },
+    {
+      "targetIssue": "2026063",
+      "source10": "2026053",
+      "source12": "2026051",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 2,
+      "unionHits": 3,
+      "top5": [
+        12,
+        26,
+        9,
+        5,
+        14
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        3,
+        15,
+        20,
+        29,
+        31
+      ]
+    },
+    {
+      "targetIssue": "2026064",
+      "source10": "2026054",
+      "source12": "2026052",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 29,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        13,
+        26,
+        33,
+        12,
+        23
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        3,
+        13,
+        15,
+        17,
+        21
+      ]
+    },
+    {
+      "targetIssue": "2026065",
+      "source10": "2026055",
+      "source12": "2026053",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        26,
+        9,
+        13,
+        2,
+        3
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        4,
+        11,
+        12,
+        13,
+        25
+      ]
+    },
+    {
+      "targetIssue": "2026066",
+      "source10": "2026056",
+      "source12": "2026054",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 3,
+      "unionHits": 4,
+      "top5": [
+        23,
+        3,
+        26,
+        13,
+        9
+      ],
+      "top5Hits": 1,
+      "targetFront": [
+        10,
+        13,
+        19,
+        21,
+        30
+      ]
+    },
+    {
+      "targetIssue": "2026067",
+      "source10": "2026057",
+      "source12": "2026055",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 3,
+      "pool12Hits": 1,
+      "unionHits": 3,
+      "top5": [
+        26,
+        33,
+        13,
+        9,
+        10
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        6,
+        16,
+        18,
+        19,
+        28
+      ]
+    },
+    {
+      "targetIssue": "2026068",
+      "source10": "2026058",
+      "source12": "2026056",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 28,
+      "pool10Hits": 4,
+      "pool12Hits": 5,
+      "unionHits": 5,
+      "top5": [
+        33,
+        21,
+        13,
+        12,
+        14
+      ],
+      "top5Hits": 2,
+      "targetFront": [
+        3,
+        11,
+        12,
+        21,
+        22
+      ]
+    },
+    {
+      "targetIssue": "2026069",
+      "source10": "2026059",
+      "source12": "2026057",
+      "pool10Size": 24,
+      "pool12Size": 24,
+      "unionSize": 27,
+      "pool10Hits": 5,
+      "pool12Hits": 4,
+      "unionHits": 5,
+      "top5": [
+        13,
+        33,
+        26,
+        3,
+        9
+      ],
+      "top5Hits": 0,
+      "targetFront": [
+        12,
+        19,
+        21,
+        24,
+        29
+      ]
+    }
+  ]
+}

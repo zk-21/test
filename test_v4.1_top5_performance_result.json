@@ -1,0 +1,437 @@
+{
+  "testPeriod": "22-121",
+  "evalCount": 100,
+  "statistics": {
+    "maxHitsAvg": "1.03",
+    "avgHitsAvg": "0.66",
+    "hit3PlusRate": "3.0",
+    "hit2PlusRate": "29.0",
+    "hit1PlusRate": "71.0",
+    "coverageRate": "24.0"
+  },
+  "bestCombo": {
+    "sourceRow": 27,
+    "nextRow": 28,
+    "numbers": [
+      3,
+      6,
+      18,
+      27,
+      30
+    ],
+    "hits": 3,
+    "hitNumbers": [
+      3,
+      6,
+      30
+    ]
+  },
+  "sampleResults": [
+    {
+      "sourceRow": 22,
+      "nextRow": 23,
+      "actualNumbers": [
+        8,
+        13,
+        24,
+        25,
+        31
+      ],
+      "top5Combos": [
+        {
+          "numbers": [
+            1,
+            7,
+            8,
+            15,
+            18
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "numbers": [
+            5,
+            7,
+            8,
+            15,
+            18
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "numbers": [
+            7,
+            8,
+            12,
+            15,
+            18
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "numbers": [
+            7,
+            8,
+            13,
+            15,
+            18
+          ],
+          "hits": 2,
+          "hitNumbers": [
+            8,
+            13
+          ]
+        },
+        {
+          "numbers": [
+            7,
+            8,
+            14,
+            15,
+            18
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            8
+          ]
+        }
+      ],
+      "maxHits": 2,
+      "avgHits": 1.2,
+      "coverageRate": 0.4,
+      "coveredNumbers": [
+        8,
+        13
+      ]
+    },
+    {
+      "sourceRow": 23,
+      "nextRow": 24,
+      "actualNumbers": [
+        6,
+        9,
+        14,
+        26,
+        27
+      ],
+      "top5Combos": [
+        {
+          "numbers": [
+            11,
+            12,
+            14,
+            15,
+            23
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            14
+          ]
+        },
+        {
+          "numbers": [
+            11,
+            14,
+            15,
+            23,
+            33
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            14
+          ]
+        },
+        {
+          "numbers": [
+            9,
+            11,
+            14,
+            15,
+            23
+          ],
+          "hits": 2,
+          "hitNumbers": [
+            9,
+            14
+          ]
+        },
+        {
+          "numbers": [
+            11,
+            14,
+            15,
+            21,
+            23
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            14
+          ]
+        },
+        {
+          "numbers": [
+            11,
+            14,
+            15,
+            23,
+            29
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            14
+          ]
+        }
+      ],
+      "maxHits": 2,
+      "avgHits": 1.2,
+      "coverageRate": 0.4,
+      "coveredNumbers": [
+        9,
+        14
+      ]
+    },
+    {
+      "sourceRow": 24,
+      "nextRow": 25,
+      "actualNumbers": [
+        10,
+        11,
+        13,
+        19,
+        35
+      ],
+      "top5Combos": [
+        {
+          "numbers": [
+            7,
+            8,
+            16,
+            24,
+            29
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            7,
+            13,
+            16,
+            24,
+            29
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            13
+          ]
+        },
+        {
+          "numbers": [
+            4,
+            7,
+            16,
+            24,
+            29
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            5,
+            7,
+            16,
+            24,
+            29
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            7,
+            10,
+            16,
+            24,
+            29
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            10
+          ]
+        }
+      ],
+      "maxHits": 1,
+      "avgHits": 0.4,
+      "coverageRate": 0.4,
+      "coveredNumbers": [
+        10,
+        13
+      ]
+    },
+    {
+      "sourceRow": 25,
+      "nextRow": 26,
+      "actualNumbers": [
+        1,
+        8,
+        18,
+        27,
+        30
+      ],
+      "top5Combos": [
+        {
+          "numbers": [
+            9,
+            15,
+            20,
+            21,
+            33
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            8,
+            9,
+            15,
+            20,
+            21
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            8
+          ]
+        },
+        {
+          "numbers": [
+            9,
+            12,
+            15,
+            20,
+            21
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            9,
+            14,
+            15,
+            20,
+            21
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            9,
+            15,
+            18,
+            20,
+            21
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            18
+          ]
+        }
+      ],
+      "maxHits": 1,
+      "avgHits": 0.4,
+      "coverageRate": 0.4,
+      "coveredNumbers": [
+        8,
+        18
+      ]
+    },
+    {
+      "sourceRow": 26,
+      "nextRow": 27,
+      "actualNumbers": [
+        4,
+        5,
+        19,
+        28,
+        29
+      ],
+      "top5Combos": [
+        {
+          "numbers": [
+            7,
+            10,
+            17,
+            28,
+            31
+          ],
+          "hits": 1,
+          "hitNumbers": [
+            28
+          ]
+        },
+        {
+          "numbers": [
+            2,
+            7,
+            10,
+            17,
+            31
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            7,
+            10,
+            17,
+            20,
+            31
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            7,
+            9,
+            10,
+            17,
+            31
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        },
+        {
+          "numbers": [
+            7,
+            10,
+            17,
+            21,
+            31
+          ],
+          "hits": 0,
+          "hitNumbers": []
+        }
+      ],
+      "maxHits": 1,
+      "avgHits": 0.2,
+      "coverageRate": 0.2,
+      "coveredNumbers": [
+        28
+      ]
+    }
+  ]
+}
