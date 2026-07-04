@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-07-03T08:29:37.843Z",
+  "testConfigs": 11,
+  "results": [
+    {
+      "config": "围绕目标: N+10/N+9/N+8 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "100.0",
+      "unionRate": "100.0",
+      "poolRate": "100.0",
+      "avgTop5Max": "5.00",
+      "avgUnion": "5.00",
+      "avgPool": "5.00"
+    },
+    {
+      "config": "主源N+10: N+10/N+9/N [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "100.0",
+      "unionRate": "100.0",
+      "poolRate": "100.0",
+      "avgTop5Max": "5.00",
+      "avgUnion": "5.00",
+      "avgPool": "5.00"
+    },
+    {
+      "config": "等间隔: N+9/N+6/N+3 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "25.3",
+      "unionRate": "44.7",
+      "poolRate": "86.7",
+      "avgTop5Max": "1.27",
+      "avgUnion": "2.23",
+      "avgPool": "4.33"
+    },
+    {
+      "config": "中等间隔: N+9/N+5/N+4 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "24.0",
+      "unionRate": "40.7",
+      "poolRate": "84.7",
+      "avgTop5Max": "1.20",
+      "avgUnion": "2.03",
+      "avgPool": "4.23"
+    },
+    {
+      "config": "主源N+8: N+8/N+9/N+7 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "28.7",
+      "unionRate": "45.3",
+      "poolRate": "84.0",
+      "avgTop5Max": "1.43",
+      "avgUnion": "2.27",
+      "avgPool": "4.20"
+    },
+    {
+      "config": "基线: N+9/N/N-1 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "23.3",
+      "unionRate": "46.0",
+      "poolRate": "83.3",
+      "avgTop5Max": "1.17",
+      "avgUnion": "2.30",
+      "avgPool": "4.17"
+    },
+    {
+      "config": "近源辅助: N+9/N+2/N+1 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "23.3",
+      "unionRate": "41.3",
+      "poolRate": "83.3",
+      "avgTop5Max": "1.17",
+      "avgUnion": "2.07",
+      "avgPool": "4.17"
+    },
+    {
+      "config": "高主源权重: N+9/N/N-1 [0.6,0.25,0.15]",
+      "cnt": 30,
+      "top5Rate": "23.3",
+      "unionRate": "43.3",
+      "poolRate": "83.3",
+      "avgTop5Max": "1.17",
+      "avgUnion": "2.17",
+      "avgPool": "4.17"
+    },
+    {
+      "config": "均匀权重: N+9/N/N-1 [0.4,0.35,0.25]",
+      "cnt": 30,
+      "top5Rate": "25.3",
+      "unionRate": "43.3",
+      "poolRate": "83.3",
+      "avgTop5Max": "1.27",
+      "avgUnion": "2.17",
+      "avgPool": "4.17"
+    },
+    {
+      "config": "混合间隔: N+9/N+8/N+1 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "24.0",
+      "unionRate": "47.3",
+      "poolRate": "82.0",
+      "avgTop5Max": "1.20",
+      "avgUnion": "2.37",
+      "avgPool": "4.10"
+    },
+    {
+      "config": "连续近源: N+9/N+8/N+7 [0.5,0.3,0.2]",
+      "cnt": 30,
+      "top5Rate": "26.0",
+      "unionRate": "46.7",
+      "poolRate": "81.3",
+      "avgTop5Max": "1.30",
+      "avgUnion": "2.33",
+      "avgPool": "4.07"
+    }
+  ]
+}

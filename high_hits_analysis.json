@@ -1,0 +1,40 @@
+{
+  "totalPeriods": 168,
+  "top5HitDistribution": [
+    0,
+    82,
+    73,
+    13,
+    0,
+    0
+  ],
+  "backup6HitDistribution": [
+    58,
+    82,
+    20,
+    8,
+    0,
+    0,
+    0
+  ],
+  "combinedHitDistribution": [
+    0,
+    15,
+    37,
+    58,
+    41,
+    16,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "highHitPeriods": 58,
+  "highUnionPeriods": 58,
+  "averages": {
+    "top5": "1.59",
+    "backup6": "0.87",
+    "combined": "3.35"
+  }
+}

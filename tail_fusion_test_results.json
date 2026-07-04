@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-07-03T08:35:51.634Z",
+  "sourceConfig": {
+    "mainOffset": 9,
+    "auxOffsets": [
+      6,
+      3
+    ]
+  },
+  "results": [
+    {
+      "strategy": "尾号转移模式融合",
+      "cnt": 50,
+      "top5Rate": "27.2",
+      "unionRate": "32.0",
+      "poolRate": "65.2"
+    },
+    {
+      "strategy": "频率统计融合",
+      "cnt": 50,
+      "top5Rate": "26.8",
+      "unionRate": "33.6",
+      "poolRate": "63.6"
+    },
+    {
+      "strategy": "基线: 简单加权合并",
+      "cnt": 50,
+      "top5Rate": "26.8",
+      "unionRate": "32.8",
+      "poolRate": "62.8"
+    },
+    {
+      "strategy": "综合融合（推荐）",
+      "cnt": 50,
+      "top5Rate": "26.0",
+      "unionRate": "32.4",
+      "poolRate": "62.8"
+    },
+    {
+      "strategy": "尾号关联性融合",
+      "cnt": 50,
+      "top5Rate": "26.4",
+      "unionRate": "29.6",
+      "poolRate": "62.4"
+    }
+  ]
+}

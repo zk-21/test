@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-07-03T08:33:10.172Z",
+  "results": [
+    {
+      "config": "基线: N+9/N/N-1",
+      "cnt": 30,
+      "top5Rate": "24.7",
+      "unionRate": "29.3",
+      "poolRate": "77.3"
+    },
+    {
+      "config": "优化: N+9/N+6/N+3",
+      "cnt": 30,
+      "top5Rate": "23.3",
+      "unionRate": "29.3",
+      "poolRate": "74.7"
+    }
+  ]
+}

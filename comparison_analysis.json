@@ -1,0 +1,63 @@
+{
+  "baseline": {
+    "totalPeriods": 168,
+    "avgTop5MaxHit": 1.59,
+    "avgTop5Union": 2.76,
+    "avgBackup6Hit": 0.82,
+    "avgCombinedUnion": 3.07,
+    "avgPoolCover": 4.39,
+    "top5HitRate": 31.8,
+    "combinedCoverageRate": 61.4,
+    "poolCoverageRate": 87.9,
+    "top5HitDistribution": {
+      "hit3": 11,
+      "hit2": 79,
+      "hit1": 76,
+      "hit0": 2
+    },
+    "combinedDistribution": {
+      "cover5": 16,
+      "cover4": 41,
+      "cover3": 61,
+      "cover2": 40,
+      "cover1": 9,
+      "cover0": 1
+    }
+  },
+  "crossRow": {
+    "totalPeriods": 168,
+    "avgTop5MaxHit": 1.59,
+    "avgTop5Union": 2.87,
+    "avgBackup6Hit": 0.87,
+    "avgCombinedUnion": 3.02,
+    "avgPoolCover": 4.4,
+    "top5HitRate": 31.8,
+    "combinedCoverageRate": 60.5,
+    "poolCoverageRate": 88,
+    "top5HitDistribution": {
+      "hit3": 13,
+      "hit2": 73,
+      "hit1": 82,
+      "hit0": 0
+    },
+    "combinedDistribution": {
+      "cover5": 16,
+      "cover4": 41,
+      "cover3": 58,
+      "cover2": 37,
+      "cover1": 16,
+      "cover0": 0
+    }
+  },
+  "improvements": [
+    "候选池覆盖率提升0.1%"
+  ],
+  "declines": [
+    "联合覆盖率下降0.9%"
+  ],
+  "summary": {
+    "top5HitImproved": false,
+    "combinedCoverageImproved": false,
+    "poolCoverageImproved": true
+  }
+}
