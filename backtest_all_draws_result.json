@@ -1,0 +1,6965 @@
+{
+  "summary": {
+    "totalPeriods": 169,
+    "tailHitRate": 0.4532544378698225,
+    "avgTop5Hits": 2.2662721893491122,
+    "avgTop6Hits": 2.727810650887574,
+    "avgBallHits": 2.6272189349112427,
+    "top5HitCounts": [
+      4,
+      23,
+      79,
+      50,
+      13,
+      0
+    ],
+    "top6HitCounts": [
+      1,
+      12,
+      50,
+      76,
+      29,
+      1,
+      0
+    ],
+    "ballHitCounts": [
+      4,
+      17,
+      58,
+      55,
+      29,
+      6
+    ]
+  },
+  "details": [
+    {
+      "issue": "2026062",
+      "actualTails": [
+        7,
+        5,
+        0,
+        4,
+        9
+      ],
+      "predictedTop5": [
+        1,
+        0,
+        3,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        1,
+        0,
+        3,
+        9,
+        2,
+        5
+      ],
+      "top5Hits": [
+        0,
+        9
+      ],
+      "top6Hits": [
+        0,
+        9,
+        5
+      ],
+      "ballHits": [
+        20,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026061",
+      "actualTails": [
+        0,
+        2,
+        6,
+        1,
+        5
+      ],
+      "predictedTop5": [
+        5,
+        9,
+        0,
+        4,
+        7
+      ],
+      "predictedTop6": [
+        5,
+        9,
+        0,
+        4,
+        7,
+        6
+      ],
+      "top5Hits": [
+        5,
+        0
+      ],
+      "top6Hits": [
+        5,
+        0,
+        6
+      ],
+      "ballHits": [
+        10,
+        35
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026060",
+      "actualTails": [
+        2,
+        8,
+        0,
+        1,
+        4
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        5,
+        6
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        5,
+        6,
+        3
+      ],
+      "top5Hits": [
+        1,
+        2,
+        0
+      ],
+      "top6Hits": [
+        1,
+        2,
+        0
+      ],
+      "ballHits": [
+        22,
+        30,
+        31
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026059",
+      "actualTails": [
+        6,
+        3,
+        7,
+        9
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        3,
+        4
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        3,
+        4,
+        9
+      ],
+      "top5Hits": [
+        3
+      ],
+      "top6Hits": [
+        3,
+        9
+      ],
+      "ballHits": [
+        13
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2026058",
+      "actualTails": [
+        7,
+        2,
+        3,
+        8,
+        4
+      ],
+      "predictedTop5": [
+        7,
+        6,
+        9,
+        3,
+        8
+      ],
+      "predictedTop6": [
+        7,
+        6,
+        9,
+        3,
+        8,
+        2
+      ],
+      "top5Hits": [
+        7,
+        3,
+        8
+      ],
+      "top6Hits": [
+        7,
+        3,
+        8,
+        2
+      ],
+      "ballHits": [
+        7,
+        13,
+        18
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026057",
+      "actualTails": [
+        3,
+        5,
+        6,
+        7,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        7,
+        8
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        7,
+        8,
+        1
+      ],
+      "top5Hits": [
+        3,
+        4,
+        7
+      ],
+      "top6Hits": [
+        3,
+        4,
+        7
+      ],
+      "ballHits": [
+        23,
+        27,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026056",
+      "actualTails": [
+        6,
+        7,
+        8,
+        1,
+        0
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        4,
+        3,
+        7
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        4,
+        3,
+        7,
+        2
+      ],
+      "top5Hits": [
+        6,
+        7
+      ],
+      "top6Hits": [
+        6,
+        7
+      ],
+      "ballHits": [
+        6,
+        7
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026055",
+      "actualTails": [
+        9,
+        0,
+        3,
+        5
+      ],
+      "predictedTop5": [
+        7,
+        6,
+        1,
+        8,
+        0
+      ],
+      "predictedTop6": [
+        7,
+        6,
+        1,
+        8,
+        0,
+        9
+      ],
+      "top5Hits": [
+        0
+      ],
+      "top6Hits": [
+        0,
+        9
+      ],
+      "ballHits": [
+        10,
+        20
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026054",
+      "actualTails": [
+        2,
+        6,
+        4
+      ],
+      "predictedTop5": [
+        0,
+        9,
+        3,
+        5,
+        4
+      ],
+      "predictedTop6": [
+        0,
+        9,
+        3,
+        5,
+        4,
+        1
+      ],
+      "top5Hits": [
+        4
+      ],
+      "top6Hits": [
+        4
+      ],
+      "ballHits": [
+        14,
+        24
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026053",
+      "actualTails": [
+        2,
+        9,
+        4,
+        0,
+        1
+      ],
+      "predictedTop5": [
+        4,
+        2,
+        3,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        4,
+        2,
+        3,
+        6,
+        5,
+        1
+      ],
+      "top5Hits": [
+        4,
+        2
+      ],
+      "top6Hits": [
+        4,
+        2,
+        1
+      ],
+      "ballHits": [
+        2,
+        14
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026052",
+      "actualTails": [
+        2,
+        3,
+        0,
+        8
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        2,
+        9,
+        3
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        2,
+        9,
+        3,
+        4
+      ],
+      "top5Hits": [
+        0,
+        2,
+        3
+      ],
+      "top6Hits": [
+        0,
+        2,
+        3
+      ],
+      "ballHits": [
+        2,
+        3,
+        20,
+        33
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026051",
+      "actualTails": [
+        3,
+        8,
+        2
+      ],
+      "predictedTop5": [
+        2,
+        3,
+        0,
+        1,
+        9
+      ],
+      "predictedTop6": [
+        2,
+        3,
+        0,
+        1,
+        9,
+        8
+      ],
+      "top5Hits": [
+        2,
+        3
+      ],
+      "top6Hits": [
+        2,
+        3,
+        8
+      ],
+      "ballHits": [
+        13,
+        32,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026050",
+      "actualTails": [
+        6,
+        0,
+        4,
+        3
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        8,
+        1,
+        4
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        8,
+        1,
+        4,
+        9
+      ],
+      "top5Hits": [
+        3,
+        4
+      ],
+      "top6Hits": [
+        3,
+        4
+      ],
+      "ballHits": [
+        14,
+        23,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026049",
+      "actualTails": [
+        1,
+        6,
+        4,
+        5,
+        7
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        6,
+        5,
+        0
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        6,
+        5,
+        0,
+        2
+      ],
+      "top5Hits": [
+        4,
+        6,
+        5
+      ],
+      "top6Hits": [
+        4,
+        6,
+        5
+      ],
+      "ballHits": [
+        6,
+        14,
+        15
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026048",
+      "actualTails": [
+        1,
+        7,
+        0,
+        3,
+        5
+      ],
+      "predictedTop5": [
+        6,
+        5,
+        4,
+        7,
+        1
+      ],
+      "predictedTop6": [
+        6,
+        5,
+        4,
+        7,
+        1,
+        3
+      ],
+      "top5Hits": [
+        5,
+        7,
+        1
+      ],
+      "top6Hits": [
+        5,
+        7,
+        1,
+        3
+      ],
+      "ballHits": [
+        11,
+        17,
+        35
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026047",
+      "actualTails": [
+        9,
+        0,
+        1,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        1,
+        3,
+        5,
+        0,
+        2
+      ],
+      "predictedTop6": [
+        1,
+        3,
+        5,
+        0,
+        2,
+        4
+      ],
+      "top5Hits": [
+        1,
+        3,
+        0
+      ],
+      "top6Hits": [
+        1,
+        3,
+        0
+      ],
+      "ballHits": [
+        20,
+        21,
+        23
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026046",
+      "actualTails": [
+        1,
+        3,
+        8,
+        7
+      ],
+      "predictedTop5": [
+        0,
+        9,
+        1,
+        3,
+        8
+      ],
+      "predictedTop6": [
+        0,
+        9,
+        1,
+        3,
+        8,
+        2
+      ],
+      "top5Hits": [
+        1,
+        3,
+        8
+      ],
+      "top6Hits": [
+        1,
+        3,
+        8
+      ],
+      "ballHits": [
+        1,
+        13,
+        18,
+        33
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026045",
+      "actualTails": [
+        1,
+        5,
+        6,
+        3
+      ],
+      "predictedTop5": [
+        3,
+        1,
+        8,
+        7,
+        2
+      ],
+      "predictedTop6": [
+        3,
+        1,
+        8,
+        7,
+        2,
+        0
+      ],
+      "top5Hits": [
+        3,
+        1
+      ],
+      "top6Hits": [
+        3,
+        1
+      ],
+      "ballHits": [
+        1,
+        21,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026044",
+      "actualTails": [
+        3,
+        8,
+        2,
+        6,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        5,
+        6,
+        1,
+        2
+      ],
+      "predictedTop6": [
+        3,
+        5,
+        6,
+        1,
+        2,
+        4
+      ],
+      "top5Hits": [
+        3,
+        6,
+        2
+      ],
+      "top6Hits": [
+        3,
+        6,
+        2
+      ],
+      "ballHits": [
+        3,
+        22,
+        26
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026043",
+      "actualTails": [
+        8,
+        2,
+        4,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        8,
+        2,
+        9,
+        6
+      ],
+      "predictedTop6": [
+        3,
+        8,
+        2,
+        9,
+        6,
+        7
+      ],
+      "top5Hits": [
+        8,
+        2,
+        9
+      ],
+      "top6Hits": [
+        8,
+        2,
+        9
+      ],
+      "ballHits": [
+        8,
+        12,
+        19,
+        22
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026042",
+      "actualTails": [
+        2,
+        7,
+        3,
+        9,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        9,
+        8,
+        2,
+        4
+      ],
+      "predictedTop6": [
+        3,
+        9,
+        8,
+        2,
+        4,
+        1
+      ],
+      "top5Hits": [
+        3,
+        9,
+        2,
+        4
+      ],
+      "top6Hits": [
+        3,
+        9,
+        2,
+        4
+      ],
+      "ballHits": [
+        2,
+        13,
+        19,
+        24
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026041",
+      "actualTails": [
+        4,
+        5,
+        7,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        9,
+        7
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        9,
+        7,
+        8
+      ],
+      "top5Hits": [
+        4,
+        9,
+        7
+      ],
+      "top6Hits": [
+        4,
+        9,
+        7
+      ],
+      "ballHits": [
+        24,
+        27,
+        29,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026040",
+      "actualTails": [
+        6,
+        2,
+        3,
+        1,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        7,
+        9,
+        6
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        7,
+        9,
+        6,
+        8
+      ],
+      "top5Hits": [
+        4,
+        6
+      ],
+      "top6Hits": [
+        4,
+        6
+      ],
+      "ballHits": [
+        6,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026039",
+      "actualTails": [
+        9,
+        1,
+        0,
+        6,
+        7
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        1,
+        6
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        1,
+        6,
+        5
+      ],
+      "top5Hits": [
+        1,
+        6
+      ],
+      "top6Hits": [
+        1,
+        6
+      ],
+      "ballHits": [
+        11,
+        26
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026038",
+      "actualTails": [
+        8,
+        7,
+        1,
+        3,
+        5
+      ],
+      "predictedTop5": [
+        0,
+        9,
+        7,
+        1,
+        6
+      ],
+      "predictedTop6": [
+        0,
+        9,
+        7,
+        1,
+        6,
+        8
+      ],
+      "top5Hits": [
+        7,
+        1
+      ],
+      "top6Hits": [
+        7,
+        1,
+        8
+      ],
+      "ballHits": [
+        17,
+        21
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026037",
+      "actualTails": [
+        7,
+        2,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        2,
+        3,
+        7,
+        5,
+        1
+      ],
+      "predictedTop6": [
+        2,
+        3,
+        7,
+        5,
+        1,
+        8
+      ],
+      "top5Hits": [
+        2,
+        3,
+        7
+      ],
+      "top6Hits": [
+        2,
+        3,
+        7,
+        8
+      ],
+      "ballHits": [
+        7,
+        12,
+        13,
+        32
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026036",
+      "actualTails": [
+        4,
+        7,
+        6,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        7,
+        8,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        7,
+        8,
+        1,
+        4
+      ],
+      "top5Hits": [
+        2,
+        7
+      ],
+      "top6Hits": [
+        2,
+        7,
+        4
+      ],
+      "ballHits": [
+        7,
+        32
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026035",
+      "actualTails": [
+        2,
+        0,
+        3,
+        4
+      ],
+      "predictedTop5": [
+        6,
+        4,
+        3,
+        7,
+        2
+      ],
+      "predictedTop6": [
+        6,
+        4,
+        3,
+        7,
+        2,
+        5
+      ],
+      "top5Hits": [
+        4,
+        3,
+        2
+      ],
+      "top6Hits": [
+        4,
+        3,
+        2
+      ],
+      "ballHits": [
+        2,
+        22,
+        33,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026034",
+      "actualTails": [
+        1,
+        2,
+        5,
+        6,
+        7
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        1,
+        0
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        1,
+        0,
+        9
+      ],
+      "top5Hits": [
+        2,
+        1
+      ],
+      "top6Hits": [
+        2,
+        1
+      ],
+      "ballHits": [
+        11,
+        12
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026033",
+      "actualTails": [
+        3,
+        5,
+        7,
+        9,
+        8
+      ],
+      "predictedTop5": [
+        6,
+        5,
+        7,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        6,
+        5,
+        7,
+        2,
+        1,
+        3
+      ],
+      "top5Hits": [
+        5,
+        7
+      ],
+      "top6Hits": [
+        5,
+        7,
+        3
+      ],
+      "ballHits": [
+        5,
+        7
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026032",
+      "actualTails": [
+        3,
+        4,
+        9,
+        6,
+        2
+      ],
+      "predictedTop5": [
+        4,
+        8,
+        7,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        4,
+        8,
+        7,
+        9,
+        5,
+        3
+      ],
+      "top5Hits": [
+        4,
+        9
+      ],
+      "top6Hits": [
+        4,
+        9,
+        3
+      ],
+      "ballHits": [
+        4,
+        19
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026031",
+      "actualTails": [
+        6,
+        8,
+        2,
+        9,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        6,
+        5,
+        9
+      ],
+      "top5Hits": [
+        4,
+        2,
+        6
+      ],
+      "top6Hits": [
+        4,
+        2,
+        6,
+        9
+      ],
+      "ballHits": [
+        6,
+        22,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026030",
+      "actualTails": [
+        2,
+        3,
+        8,
+        4
+      ],
+      "predictedTop5": [
+        8,
+        4,
+        6,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        8,
+        4,
+        6,
+        9,
+        2,
+        3
+      ],
+      "top5Hits": [
+        8,
+        4,
+        2
+      ],
+      "top6Hits": [
+        8,
+        4,
+        2,
+        3
+      ],
+      "ballHits": [
+        2,
+        22,
+        28,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026029",
+      "actualTails": [
+        3,
+        5,
+        7
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        8,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        8,
+        1,
+        9
+      ],
+      "top5Hits": [
+        3
+      ],
+      "top6Hits": [
+        3
+      ],
+      "ballHits": [
+        3,
+        33
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026028",
+      "actualTails": [
+        5,
+        7,
+        9,
+        0,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        3,
+        4,
+        7,
+        6
+      ],
+      "predictedTop6": [
+        5,
+        3,
+        4,
+        7,
+        6,
+        2
+      ],
+      "top5Hits": [
+        5,
+        4,
+        7
+      ],
+      "top6Hits": [
+        5,
+        4,
+        7
+      ],
+      "ballHits": [
+        15,
+        27,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026027",
+      "actualTails": [
+        9,
+        0,
+        1,
+        2,
+        6
+      ],
+      "predictedTop5": [
+        5,
+        9,
+        7,
+        4,
+        0
+      ],
+      "predictedTop6": [
+        5,
+        9,
+        7,
+        4,
+        0,
+        6
+      ],
+      "top5Hits": [
+        9,
+        0
+      ],
+      "top6Hits": [
+        9,
+        0,
+        6
+      ],
+      "ballHits": [
+        9,
+        10
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026026",
+      "actualTails": [
+        0,
+        1,
+        2,
+        6
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        2,
+        9,
+        6
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        2,
+        9,
+        6,
+        3
+      ],
+      "top5Hits": [
+        0,
+        1,
+        2,
+        6
+      ],
+      "top6Hits": [
+        0,
+        1,
+        2,
+        6
+      ],
+      "ballHits": [
+        10,
+        11,
+        22,
+        26,
+        32
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2026025",
+      "actualTails": [
+        3,
+        5,
+        4,
+        8,
+        9
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        6,
+        3
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        6,
+        3,
+        9
+      ],
+      "top5Hits": [
+        3
+      ],
+      "top6Hits": [
+        3,
+        9
+      ],
+      "ballHits": [
+        3
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2026024",
+      "actualTails": [
+        2,
+        4,
+        8,
+        0,
+        1
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        5,
+        9,
+        8
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        5,
+        9,
+        8,
+        2
+      ],
+      "top5Hits": [
+        4,
+        8
+      ],
+      "top6Hits": [
+        4,
+        8,
+        2
+      ],
+      "ballHits": [
+        4,
+        8
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026023",
+      "actualTails": [
+        9,
+        5,
+        6,
+        7,
+        8
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        0,
+        3,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        0,
+        3,
+        4,
+        9
+      ],
+      "top5Hits": [],
+      "top6Hits": [
+        9
+      ],
+      "ballHits": [],
+      "top5HitCount": 0,
+      "top6HitCount": 1,
+      "ballHitCount": 0
+    },
+    {
+      "issue": "2026022",
+      "actualTails": [
+        5,
+        9,
+        0,
+        8,
+        6
+      ],
+      "predictedTop5": [
+        7,
+        6,
+        8,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        7,
+        6,
+        8,
+        9,
+        5,
+        4
+      ],
+      "top5Hits": [
+        6,
+        8,
+        9,
+        5
+      ],
+      "top6Hits": [
+        6,
+        8,
+        9,
+        5
+      ],
+      "ballHits": [
+        5,
+        9,
+        18,
+        26
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026021",
+      "actualTails": [
+        5,
+        8,
+        2,
+        4,
+        7
+      ],
+      "predictedTop5": [
+        9,
+        6,
+        8,
+        5,
+        0
+      ],
+      "predictedTop6": [
+        9,
+        6,
+        8,
+        5,
+        0,
+        7
+      ],
+      "top5Hits": [
+        8,
+        5
+      ],
+      "top6Hits": [
+        8,
+        5,
+        7
+      ],
+      "ballHits": [
+        5,
+        8
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026020",
+      "actualTails": [
+        1,
+        0,
+        3,
+        9
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        7,
+        2,
+        8
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        7,
+        2,
+        8,
+        3
+      ],
+      "top5Hits": [],
+      "top6Hits": [
+        3
+      ],
+      "ballHits": [],
+      "top5HitCount": 0,
+      "top6HitCount": 1,
+      "ballHitCount": 0
+    },
+    {
+      "issue": "2026019",
+      "actualTails": [
+        2,
+        3,
+        4,
+        6,
+        1
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        9,
+        3,
+        2
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        9,
+        3,
+        2,
+        4
+      ],
+      "top5Hits": [
+        1,
+        3,
+        2
+      ],
+      "top6Hits": [
+        1,
+        3,
+        2,
+        4
+      ],
+      "ballHits": [
+        12,
+        13,
+        31
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026018",
+      "actualTails": [
+        9,
+        1,
+        0,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        1,
+        6
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        1,
+        6,
+        5
+      ],
+      "top5Hits": [
+        1
+      ],
+      "top6Hits": [
+        1,
+        5
+      ],
+      "ballHits": [
+        11
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2026017",
+      "actualTails": [
+        4,
+        5,
+        0,
+        3,
+        1
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        9,
+        5,
+        2
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        9,
+        5,
+        2,
+        4
+      ],
+      "top5Hits": [
+        0,
+        1,
+        5
+      ],
+      "top6Hits": [
+        0,
+        1,
+        5,
+        4
+      ],
+      "ballHits": [
+        5,
+        10,
+        31
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026016",
+      "actualTails": [
+        8,
+        9,
+        2,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        1,
+        5,
+        0
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        1,
+        5,
+        0,
+        2
+      ],
+      "top5Hits": [
+        4
+      ],
+      "top6Hits": [
+        4,
+        2
+      ],
+      "ballHits": [
+        24
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2026015",
+      "actualTails": [
+        1,
+        4,
+        0,
+        3,
+        7
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        2,
+        3,
+        4
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        2,
+        3,
+        4,
+        1
+      ],
+      "top5Hits": [
+        3,
+        4
+      ],
+      "top6Hits": [
+        3,
+        4,
+        1
+      ],
+      "ballHits": [
+        4,
+        13
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026014",
+      "actualTails": [
+        6,
+        8,
+        3,
+        4,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        1,
+        4,
+        0,
+        2
+      ],
+      "predictedTop6": [
+        3,
+        1,
+        4,
+        0,
+        2,
+        7
+      ],
+      "top5Hits": [
+        3,
+        4
+      ],
+      "top6Hits": [
+        3,
+        4
+      ],
+      "ballHits": [
+        23,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026013",
+      "actualTails": [
+        3,
+        5,
+        6
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        6,
+        3,
+        8
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        6,
+        3,
+        8,
+        7
+      ],
+      "top5Hits": [
+        5,
+        6,
+        3
+      ],
+      "top6Hits": [
+        5,
+        6,
+        3
+      ],
+      "ballHits": [
+        3,
+        5,
+        6,
+        23,
+        26
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2026012",
+      "actualTails": [
+        1,
+        2,
+        9,
+        5
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        3,
+        4,
+        2
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        3,
+        4,
+        2,
+        7
+      ],
+      "top5Hits": [
+        5,
+        2
+      ],
+      "top6Hits": [
+        5,
+        2
+      ],
+      "ballHits": [
+        2,
+        22,
+        25
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026011",
+      "actualTails": [
+        4,
+        1,
+        3,
+        9
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        0,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        0,
+        9,
+        5,
+        3
+      ],
+      "top5Hits": [
+        1,
+        9
+      ],
+      "top6Hits": [
+        1,
+        9,
+        3
+      ],
+      "ballHits": [
+        21,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026010",
+      "actualTails": [
+        2,
+        3,
+        8,
+        6
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        1,
+        9
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        1,
+        9,
+        0
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2
+      ],
+      "ballHits": [
+        2,
+        3,
+        13
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026009",
+      "actualTails": [
+        5,
+        2,
+        3,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        6,
+        8,
+        7
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        6,
+        8,
+        7,
+        4
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2,
+        4
+      ],
+      "ballHits": [
+        12,
+        13,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026008",
+      "actualTails": [
+        3,
+        6,
+        7,
+        1
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        5,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        5,
+        1,
+        6
+      ],
+      "top5Hits": [
+        3,
+        1
+      ],
+      "top6Hits": [
+        3,
+        1,
+        6
+      ],
+      "ballHits": [
+        3,
+        21,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2026007",
+      "actualTails": [
+        1,
+        3,
+        0,
+        6
+      ],
+      "predictedTop5": [
+        3,
+        6,
+        7,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        6,
+        7,
+        2,
+        1,
+        4
+      ],
+      "top5Hits": [
+        3,
+        6,
+        1
+      ],
+      "top6Hits": [
+        3,
+        6,
+        1
+      ],
+      "ballHits": [
+        1,
+        3,
+        13,
+        26
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026006",
+      "actualTails": [
+        5,
+        2,
+        8,
+        3
+      ],
+      "predictedTop5": [
+        1,
+        3,
+        0,
+        2,
+        6
+      ],
+      "predictedTop6": [
+        1,
+        3,
+        0,
+        2,
+        6,
+        4
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2
+      ],
+      "ballHits": [
+        12,
+        23
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026005",
+      "actualTails": [
+        2,
+        4,
+        6,
+        3,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        5,
+        4,
+        8
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        5,
+        4,
+        8,
+        1
+      ],
+      "top5Hits": [
+        3,
+        2,
+        5,
+        4
+      ],
+      "top6Hits": [
+        3,
+        2,
+        5,
+        4
+      ],
+      "ballHits": [
+        2,
+        4,
+        23,
+        35
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026004",
+      "actualTails": [
+        5,
+        8,
+        3,
+        2
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        5,
+        2,
+        6
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        5,
+        2,
+        6,
+        1
+      ],
+      "top5Hits": [
+        3,
+        5,
+        2
+      ],
+      "top6Hits": [
+        3,
+        5,
+        2
+      ],
+      "ballHits": [
+        5,
+        23,
+        25,
+        32
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2026003",
+      "actualTails": [
+        2,
+        9,
+        1,
+        5,
+        6
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        5,
+        4,
+        8
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        5,
+        4,
+        8,
+        1
+      ],
+      "top5Hits": [
+        2,
+        5
+      ],
+      "top6Hits": [
+        2,
+        5,
+        1
+      ],
+      "ballHits": [
+        2,
+        15
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026002",
+      "actualTails": [
+        4,
+        8,
+        5,
+        0,
+        1
+      ],
+      "predictedTop5": [
+        2,
+        5,
+        1,
+        6,
+        9
+      ],
+      "predictedTop6": [
+        2,
+        5,
+        1,
+        6,
+        9,
+        0
+      ],
+      "top5Hits": [
+        5,
+        1
+      ],
+      "top6Hits": [
+        5,
+        1,
+        0
+      ],
+      "ballHits": [
+        15,
+        31
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2026001",
+      "actualTails": [
+        7,
+        9,
+        3,
+        2
+      ],
+      "predictedTop5": [
+        5,
+        1,
+        4,
+        0,
+        9
+      ],
+      "predictedTop6": [
+        5,
+        1,
+        4,
+        0,
+        9,
+        8
+      ],
+      "top5Hits": [
+        9
+      ],
+      "top6Hits": [
+        9
+      ],
+      "ballHits": [
+        9
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025150",
+      "actualTails": [
+        3,
+        4,
+        5,
+        8,
+        1
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        9,
+        7,
+        8
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        9,
+        7,
+        8,
+        1
+      ],
+      "top5Hits": [
+        3,
+        8
+      ],
+      "top6Hits": [
+        3,
+        8,
+        1
+      ],
+      "ballHits": [
+        13,
+        28
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025149",
+      "actualTails": [
+        4,
+        6,
+        0,
+        1,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        5,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        5,
+        2,
+        1,
+        8
+      ],
+      "top5Hits": [
+        4,
+        2,
+        1
+      ],
+      "top6Hits": [
+        4,
+        2,
+        1
+      ],
+      "ballHits": [
+        24,
+        31,
+        32
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025148",
+      "actualTails": [
+        3,
+        4,
+        0,
+        2
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        0,
+        4,
+        3
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        0,
+        4,
+        3,
+        5
+      ],
+      "top5Hits": [
+        2,
+        0,
+        4,
+        3
+      ],
+      "top6Hits": [
+        2,
+        0,
+        4,
+        3
+      ],
+      "ballHits": [
+        3,
+        4,
+        14,
+        30,
+        32
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2025147",
+      "actualTails": [
+        6,
+        8,
+        1,
+        5,
+        3
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        1,
+        0
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        1,
+        0,
+        5
+      ],
+      "top5Hits": [
+        3,
+        1
+      ],
+      "top6Hits": [
+        3,
+        1,
+        5
+      ],
+      "ballHits": [
+        21,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025146",
+      "actualTails": [
+        6,
+        1,
+        3,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        5,
+        6,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        5,
+        6,
+        2,
+        1,
+        4
+      ],
+      "top5Hits": [
+        3,
+        6,
+        2,
+        1
+      ],
+      "top6Hits": [
+        3,
+        6,
+        2,
+        1
+      ],
+      "ballHits": [
+        6,
+        11,
+        13,
+        16,
+        22
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2025145",
+      "actualTails": [
+        6,
+        7,
+        0,
+        2,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        3,
+        1,
+        6,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        3,
+        1,
+        6,
+        4,
+        5
+      ],
+      "top5Hits": [
+        2,
+        6
+      ],
+      "top6Hits": [
+        2,
+        6,
+        5
+      ],
+      "ballHits": [
+        6,
+        22
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025144",
+      "actualTails": [
+        2,
+        5,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        6,
+        5,
+        7,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        6,
+        5,
+        7,
+        2,
+        1,
+        0
+      ],
+      "top5Hits": [
+        5,
+        2
+      ],
+      "top6Hits": [
+        5,
+        2
+      ],
+      "ballHits": [
+        2,
+        5,
+        15
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025143",
+      "actualTails": [
+        3,
+        4,
+        8,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        5,
+        4,
+        8
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        5,
+        4,
+        8,
+        6
+      ],
+      "top5Hits": [
+        3,
+        4,
+        8
+      ],
+      "top6Hits": [
+        3,
+        4,
+        8
+      ],
+      "ballHits": [
+        3,
+        4,
+        18,
+        24
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025142",
+      "actualTails": [
+        6,
+        0,
+        4,
+        7,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        9,
+        8,
+        2
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        9,
+        8,
+        2,
+        5
+      ],
+      "top5Hits": [
+        4,
+        9
+      ],
+      "top6Hits": [
+        4,
+        9
+      ],
+      "ballHits": [
+        14,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025141",
+      "actualTails": [
+        4,
+        9,
+        8
+      ],
+      "predictedTop5": [
+        6,
+        9,
+        7,
+        0,
+        4
+      ],
+      "predictedTop6": [
+        6,
+        9,
+        7,
+        0,
+        4,
+        5
+      ],
+      "top5Hits": [
+        9,
+        4
+      ],
+      "top6Hits": [
+        9,
+        4
+      ],
+      "ballHits": [
+        4,
+        9,
+        24,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025140",
+      "actualTails": [
+        4,
+        5,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        4,
+        3,
+        5
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        4,
+        3,
+        5,
+        0
+      ],
+      "top5Hits": [
+        8,
+        4,
+        3,
+        5
+      ],
+      "top6Hits": [
+        8,
+        4,
+        3,
+        5
+      ],
+      "ballHits": [
+        4,
+        5,
+        13,
+        18,
+        34
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2025139",
+      "actualTails": [
+        8,
+        6,
+        2,
+        0,
+        5
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        5,
+        8,
+        2
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        5,
+        8,
+        2,
+        6
+      ],
+      "top5Hits": [
+        5,
+        8,
+        2
+      ],
+      "top6Hits": [
+        5,
+        8,
+        2,
+        6
+      ],
+      "ballHits": [
+        8,
+        22,
+        35
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025138",
+      "actualTails": [
+        1,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        6,
+        5,
+        2,
+        8,
+        1
+      ],
+      "predictedTop6": [
+        6,
+        5,
+        2,
+        8,
+        1,
+        0
+      ],
+      "top5Hits": [
+        8,
+        1
+      ],
+      "top6Hits": [
+        8,
+        1
+      ],
+      "ballHits": [
+        1,
+        18,
+        21
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025137",
+      "actualTails": [
+        7,
+        8,
+        9,
+        1,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        1,
+        8,
+        4
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        1,
+        8,
+        4,
+        9
+      ],
+      "top5Hits": [
+        2,
+        1,
+        8
+      ],
+      "top6Hits": [
+        2,
+        1,
+        8,
+        9
+      ],
+      "ballHits": [
+        8,
+        11,
+        22
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025136",
+      "actualTails": [
+        7,
+        1,
+        5,
+        6,
+        3
+      ],
+      "predictedTop5": [
+        8,
+        9,
+        7,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        8,
+        9,
+        7,
+        2,
+        1,
+        0
+      ],
+      "top5Hits": [
+        7,
+        1
+      ],
+      "top6Hits": [
+        7,
+        1
+      ],
+      "ballHits": [
+        7,
+        11
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025135",
+      "actualTails": [
+        2,
+        0,
+        6,
+        8
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        3,
+        7,
+        2
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        3,
+        7,
+        2,
+        4
+      ],
+      "top5Hits": [
+        6,
+        2
+      ],
+      "top6Hits": [
+        6,
+        2
+      ],
+      "ballHits": [
+        2,
+        16,
+        32
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025134",
+      "actualTails": [
+        7,
+        2,
+        8,
+        3
+      ],
+      "predictedTop5": [
+        2,
+        6,
+        8,
+        1,
+        0
+      ],
+      "predictedTop6": [
+        2,
+        6,
+        8,
+        1,
+        0,
+        7
+      ],
+      "top5Hits": [
+        2,
+        8
+      ],
+      "top6Hits": [
+        2,
+        8,
+        7
+      ],
+      "ballHits": [
+        12,
+        18
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025133",
+      "actualTails": [
+        4,
+        1,
+        3,
+        7,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        8,
+        7,
+        4
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        8,
+        7,
+        4,
+        6
+      ],
+      "top5Hits": [
+        3,
+        7,
+        4
+      ],
+      "top6Hits": [
+        3,
+        7,
+        4
+      ],
+      "ballHits": [
+        4,
+        23,
+        27
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025132",
+      "actualTails": [
+        1,
+        9,
+        0,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        5,
+        2,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        5,
+        2,
+        1,
+        6
+      ],
+      "top5Hits": [
+        2,
+        1
+      ],
+      "top6Hits": [
+        2,
+        1
+      ],
+      "ballHits": [
+        1,
+        12
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025131",
+      "actualTails": [
+        3,
+        8,
+        5,
+        9,
+        2
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        2,
+        9,
+        3
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        2,
+        9,
+        3,
+        8
+      ],
+      "top5Hits": [
+        2,
+        9,
+        3
+      ],
+      "top6Hits": [
+        2,
+        9,
+        3,
+        8
+      ],
+      "ballHits": [
+        3,
+        29,
+        32
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025130",
+      "actualTails": [
+        1,
+        3,
+        6,
+        7,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        8,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        8,
+        9,
+        5,
+        4
+      ],
+      "top5Hits": [
+        3,
+        9
+      ],
+      "top6Hits": [
+        3,
+        9
+      ],
+      "ballHits": [
+        13,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025129",
+      "actualTails": [
+        3,
+        9,
+        4,
+        8,
+        5
+      ],
+      "predictedTop5": [
+        7,
+        3,
+        6,
+        1,
+        2
+      ],
+      "predictedTop6": [
+        7,
+        3,
+        6,
+        1,
+        2,
+        9
+      ],
+      "top5Hits": [
+        3
+      ],
+      "top6Hits": [
+        3,
+        9
+      ],
+      "ballHits": [
+        3
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025128",
+      "actualTails": [
+        3,
+        6,
+        0
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        5,
+        8,
+        9
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        5,
+        8,
+        9,
+        2
+      ],
+      "top5Hits": [
+        3
+      ],
+      "top6Hits": [
+        3
+      ],
+      "ballHits": [
+        3,
+        33
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025127",
+      "actualTails": [
+        4,
+        5,
+        9,
+        8
+      ],
+      "predictedTop5": [
+        3,
+        6,
+        0,
+        2,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        6,
+        0,
+        2,
+        5,
+        1
+      ],
+      "top5Hits": [
+        5
+      ],
+      "top6Hits": [
+        5
+      ],
+      "ballHits": [
+        5
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025126",
+      "actualTails": [
+        1,
+        8,
+        7,
+        0
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        8,
+        9,
+        3
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        8,
+        9,
+        3,
+        6
+      ],
+      "top5Hits": [
+        8
+      ],
+      "top6Hits": [
+        8
+      ],
+      "ballHits": [
+        8,
+        18
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025125",
+      "actualTails": [
+        0,
+        1,
+        3,
+        9,
+        5
+      ],
+      "predictedTop5": [
+        8,
+        1,
+        0,
+        7,
+        9
+      ],
+      "predictedTop6": [
+        8,
+        1,
+        0,
+        7,
+        9,
+        2
+      ],
+      "top5Hits": [
+        1,
+        0,
+        9
+      ],
+      "top6Hits": [
+        1,
+        0,
+        9
+      ],
+      "ballHits": [
+        10,
+        11,
+        19
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025124",
+      "actualTails": [
+        6,
+        9,
+        4,
+        7
+      ],
+      "predictedTop5": [
+        2,
+        0,
+        3,
+        1,
+        9
+      ],
+      "predictedTop6": [
+        2,
+        0,
+        3,
+        1,
+        9,
+        5
+      ],
+      "top5Hits": [
+        9
+      ],
+      "top6Hits": [
+        9
+      ],
+      "ballHits": [
+        9
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025123",
+      "actualTails": [
+        8,
+        3,
+        4,
+        5,
+        1
+      ],
+      "predictedTop5": [
+        6,
+        7,
+        5,
+        4,
+        9
+      ],
+      "predictedTop6": [
+        6,
+        7,
+        5,
+        4,
+        9,
+        8
+      ],
+      "top5Hits": [
+        5,
+        4
+      ],
+      "top6Hits": [
+        5,
+        4,
+        8
+      ],
+      "ballHits": [
+        24,
+        25
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025122",
+      "actualTails": [
+        2,
+        3,
+        6,
+        7
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        5,
+        1,
+        2
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        5,
+        1,
+        2,
+        8
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2
+      ],
+      "ballHits": [
+        2,
+        3
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025121",
+      "actualTails": [
+        2,
+        3,
+        8,
+        1
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        6,
+        7,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        6,
+        7,
+        5,
+        1
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2,
+        1
+      ],
+      "ballHits": [
+        2,
+        3,
+        13
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025120",
+      "actualTails": [
+        1,
+        3,
+        2,
+        6,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        3,
+        1,
+        8,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        3,
+        1,
+        8,
+        4,
+        9
+      ],
+      "top5Hits": [
+        2,
+        3,
+        1
+      ],
+      "top6Hits": [
+        2,
+        3,
+        1
+      ],
+      "ballHits": [
+        11,
+        13,
+        22
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025119",
+      "actualTails": [
+        8,
+        5,
+        7,
+        9,
+        1
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        5,
+        1,
+        6
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        5,
+        1,
+        6,
+        4
+      ],
+      "top5Hits": [
+        5,
+        1
+      ],
+      "top6Hits": [
+        5,
+        1
+      ],
+      "ballHits": [
+        15,
+        31
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025118",
+      "actualTails": [
+        2,
+        8,
+        9,
+        1
+      ],
+      "predictedTop5": [
+        8,
+        7,
+        9,
+        5,
+        6
+      ],
+      "predictedTop6": [
+        8,
+        7,
+        9,
+        5,
+        6,
+        1
+      ],
+      "top5Hits": [
+        8,
+        9
+      ],
+      "top6Hits": [
+        8,
+        9,
+        1
+      ],
+      "ballHits": [
+        8,
+        9
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025117",
+      "actualTails": [
+        5,
+        0,
+        8,
+        1,
+        9
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        8,
+        9,
+        0
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        8,
+        9,
+        0,
+        3
+      ],
+      "top5Hits": [
+        1,
+        8,
+        9,
+        0
+      ],
+      "top6Hits": [
+        1,
+        8,
+        9,
+        0
+      ],
+      "ballHits": [
+        10,
+        18,
+        21,
+        29
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025116",
+      "actualTails": [
+        2,
+        6,
+        9
+      ],
+      "predictedTop5": [
+        9,
+        0,
+        8,
+        1,
+        5
+      ],
+      "predictedTop6": [
+        9,
+        0,
+        8,
+        1,
+        5,
+        2
+      ],
+      "top5Hits": [
+        9
+      ],
+      "top6Hits": [
+        9,
+        2
+      ],
+      "ballHits": [
+        29
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025115",
+      "actualTails": [
+        3,
+        2,
+        4,
+        1,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        6,
+        9,
+        3,
+        5
+      ],
+      "predictedTop6": [
+        2,
+        6,
+        9,
+        3,
+        5,
+        1
+      ],
+      "top5Hits": [
+        2,
+        3,
+        5
+      ],
+      "top6Hits": [
+        2,
+        3,
+        5,
+        1
+      ],
+      "ballHits": [
+        3,
+        12,
+        35
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025114",
+      "actualTails": [
+        3,
+        8,
+        9,
+        2,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        5,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        5,
+        1,
+        6
+      ],
+      "top5Hits": [
+        3,
+        2,
+        5
+      ],
+      "top6Hits": [
+        3,
+        2,
+        5
+      ],
+      "ballHits": [
+        3,
+        12,
+        15
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025113",
+      "actualTails": [
+        1,
+        4,
+        8,
+        5
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        8,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        8,
+        9,
+        5,
+        4
+      ],
+      "top5Hits": [
+        8,
+        5
+      ],
+      "top6Hits": [
+        8,
+        5,
+        4
+      ],
+      "ballHits": [
+        18,
+        28,
+        35
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025112",
+      "actualTails": [
+        3,
+        4,
+        1
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        8,
+        1,
+        3
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        8,
+        1,
+        3,
+        2
+      ],
+      "top5Hits": [
+        4,
+        1,
+        3
+      ],
+      "top6Hits": [
+        4,
+        1,
+        3
+      ],
+      "ballHits": [
+        3,
+        4,
+        21,
+        23,
+        24
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 5
+    },
+    {
+      "issue": "2025111",
+      "actualTails": [
+        2,
+        9,
+        4,
+        1,
+        6
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        1,
+        2,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        1,
+        2,
+        5,
+        0
+      ],
+      "top5Hits": [
+        4,
+        1,
+        2
+      ],
+      "top6Hits": [
+        4,
+        1,
+        2
+      ],
+      "ballHits": [
+        2,
+        14,
+        21
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025110",
+      "actualTails": [
+        1,
+        5,
+        2,
+        0
+      ],
+      "predictedTop5": [
+        2,
+        4,
+        1,
+        3,
+        6
+      ],
+      "predictedTop6": [
+        2,
+        4,
+        1,
+        3,
+        6,
+        5
+      ],
+      "top5Hits": [
+        2,
+        1
+      ],
+      "top6Hits": [
+        2,
+        1,
+        5
+      ],
+      "ballHits": [
+        1,
+        22,
+        31
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025109",
+      "actualTails": [
+        4,
+        8,
+        0,
+        3,
+        6
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        5,
+        3
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        5,
+        3,
+        4
+      ],
+      "top5Hits": [
+        0,
+        3
+      ],
+      "top6Hits": [
+        0,
+        3,
+        4
+      ],
+      "ballHits": [
+        10,
+        13
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025108",
+      "actualTails": [
+        4,
+        8,
+        1,
+        9
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        6,
+        8,
+        5
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        6,
+        8,
+        5,
+        7
+      ],
+      "top5Hits": [
+        4,
+        8
+      ],
+      "top6Hits": [
+        4,
+        8
+      ],
+      "ballHits": [
+        14,
+        18,
+        24
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025107",
+      "actualTails": [
+        5,
+        7,
+        8,
+        3
+      ],
+      "predictedTop5": [
+        8,
+        9,
+        1,
+        4,
+        0
+      ],
+      "predictedTop6": [
+        8,
+        9,
+        1,
+        4,
+        0,
+        3
+      ],
+      "top5Hits": [
+        8
+      ],
+      "top6Hits": [
+        8,
+        3
+      ],
+      "ballHits": [
+        8
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025106",
+      "actualTails": [
+        5,
+        6,
+        1,
+        9
+      ],
+      "predictedTop5": [
+        5,
+        7,
+        8,
+        3,
+        4
+      ],
+      "predictedTop6": [
+        5,
+        7,
+        8,
+        3,
+        4,
+        6
+      ],
+      "top5Hits": [
+        5
+      ],
+      "top6Hits": [
+        5,
+        6
+      ],
+      "ballHits": [
+        5
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025105",
+      "actualTails": [
+        5,
+        6,
+        8,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        1,
+        9,
+        0
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        1,
+        9,
+        0,
+        8
+      ],
+      "top5Hits": [
+        5,
+        6
+      ],
+      "top6Hits": [
+        5,
+        6,
+        8
+      ],
+      "ballHits": [
+        15,
+        16,
+        26
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025104",
+      "actualTails": [
+        2,
+        6,
+        9,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        4,
+        8,
+        7
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        4,
+        8,
+        7,
+        3
+      ],
+      "top5Hits": [
+        6,
+        4
+      ],
+      "top6Hits": [
+        6,
+        4
+      ],
+      "ballHits": [
+        6,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025103",
+      "actualTails": [
+        5,
+        8,
+        9,
+        2,
+        4
+      ],
+      "predictedTop5": [
+        4,
+        2,
+        3,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        4,
+        2,
+        3,
+        6,
+        5,
+        9
+      ],
+      "top5Hits": [
+        4,
+        2,
+        5
+      ],
+      "top6Hits": [
+        4,
+        2,
+        5,
+        9
+      ],
+      "ballHits": [
+        5,
+        32,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025102",
+      "actualTails": [
+        9,
+        0,
+        3,
+        6,
+        8
+      ],
+      "predictedTop5": [
+        4,
+        8,
+        5,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        4,
+        8,
+        5,
+        9,
+        2,
+        3
+      ],
+      "top5Hits": [
+        8,
+        9
+      ],
+      "top6Hits": [
+        8,
+        9,
+        3
+      ],
+      "ballHits": [
+        9,
+        28
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025101",
+      "actualTails": [
+        5,
+        7,
+        9,
+        6,
+        2
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        6,
+        0,
+        3
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        6,
+        0,
+        3,
+        7
+      ],
+      "top5Hits": [
+        9,
+        6
+      ],
+      "top6Hits": [
+        9,
+        6,
+        7
+      ],
+      "ballHits": [
+        19,
+        26
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025100",
+      "actualTails": [
+        6,
+        8,
+        2,
+        4,
+        5
+      ],
+      "predictedTop5": [
+        6,
+        7,
+        5,
+        8,
+        9
+      ],
+      "predictedTop6": [
+        6,
+        7,
+        5,
+        8,
+        9,
+        2
+      ],
+      "top5Hits": [
+        6,
+        5,
+        8
+      ],
+      "top6Hits": [
+        6,
+        5,
+        8,
+        2
+      ],
+      "ballHits": [
+        26,
+        28,
+        35
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025099",
+      "actualTails": [
+        6,
+        2,
+        0,
+        1
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        4,
+        8,
+        2
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        4,
+        8,
+        2,
+        3
+      ],
+      "top5Hits": [
+        6,
+        2
+      ],
+      "top6Hits": [
+        6,
+        2
+      ],
+      "ballHits": [
+        6,
+        12,
+        26
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025098",
+      "actualTails": [
+        1,
+        7,
+        9,
+        0,
+        3
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        6,
+        3
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        6,
+        3,
+        5
+      ],
+      "top5Hits": [
+        1,
+        0,
+        3
+      ],
+      "top6Hits": [
+        1,
+        0,
+        3
+      ],
+      "ballHits": [
+        1,
+        10,
+        23
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025097",
+      "actualTails": [
+        5,
+        4,
+        2
+      ],
+      "predictedTop5": [
+        1,
+        9,
+        0,
+        3,
+        8
+      ],
+      "predictedTop6": [
+        1,
+        9,
+        0,
+        3,
+        8,
+        2
+      ],
+      "top5Hits": [],
+      "top6Hits": [
+        2
+      ],
+      "ballHits": [],
+      "top5HitCount": 0,
+      "top6HitCount": 1,
+      "ballHitCount": 0
+    },
+    {
+      "issue": "2025096",
+      "actualTails": [
+        2,
+        1,
+        7,
+        4
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        2,
+        3,
+        6
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        2,
+        3,
+        6,
+        1
+      ],
+      "top5Hits": [
+        4,
+        2
+      ],
+      "top6Hits": [
+        4,
+        2,
+        1
+      ],
+      "ballHits": [
+        2,
+        22,
+        24
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025095",
+      "actualTails": [
+        7,
+        3,
+        4,
+        9
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        4,
+        3,
+        7
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        4,
+        3,
+        7,
+        8
+      ],
+      "top5Hits": [
+        4,
+        3,
+        7
+      ],
+      "top6Hits": [
+        4,
+        3,
+        7
+      ],
+      "ballHits": [
+        7,
+        13,
+        14,
+        27
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025094",
+      "actualTails": [
+        4,
+        9,
+        7,
+        0,
+        3
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        9,
+        8,
+        7
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        9,
+        8,
+        7,
+        2
+      ],
+      "top5Hits": [
+        3,
+        4,
+        9,
+        7
+      ],
+      "top6Hits": [
+        3,
+        4,
+        9,
+        7
+      ],
+      "ballHits": [
+        4,
+        9,
+        17,
+        33
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025093",
+      "actualTails": [
+        1,
+        7,
+        9,
+        6,
+        0
+      ],
+      "predictedTop5": [
+        9,
+        4,
+        3,
+        8,
+        0
+      ],
+      "predictedTop6": [
+        9,
+        4,
+        3,
+        8,
+        0,
+        7
+      ],
+      "top5Hits": [
+        9,
+        0
+      ],
+      "top6Hits": [
+        9,
+        0,
+        7
+      ],
+      "ballHits": [
+        9,
+        30
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025092",
+      "actualTails": [
+        4,
+        0,
+        7,
+        5,
+        2
+      ],
+      "predictedTop5": [
+        9,
+        0,
+        7,
+        1,
+        6
+      ],
+      "predictedTop6": [
+        9,
+        0,
+        7,
+        1,
+        6,
+        8
+      ],
+      "top5Hits": [
+        0,
+        7
+      ],
+      "top6Hits": [
+        0,
+        7
+      ],
+      "ballHits": [
+        10,
+        17
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025091",
+      "actualTails": [
+        1,
+        9,
+        2,
+        5,
+        7
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        2,
+        1,
+        3
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        2,
+        1,
+        3,
+        6
+      ],
+      "top5Hits": [
+        5,
+        2,
+        1
+      ],
+      "top6Hits": [
+        5,
+        2,
+        1
+      ],
+      "ballHits": [
+        1,
+        22,
+        25
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025090",
+      "actualTails": [
+        6,
+        4,
+        9,
+        2,
+        7
+      ],
+      "predictedTop5": [
+        6,
+        2,
+        1,
+        7,
+        5
+      ],
+      "predictedTop6": [
+        6,
+        2,
+        1,
+        7,
+        5,
+        9
+      ],
+      "top5Hits": [
+        6,
+        2,
+        7
+      ],
+      "top6Hits": [
+        6,
+        2,
+        7,
+        9
+      ],
+      "ballHits": [
+        6,
+        22,
+        27
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025089",
+      "actualTails": [
+        2,
+        1,
+        4
+      ],
+      "predictedTop5": [
+        6,
+        7,
+        4,
+        2,
+        9
+      ],
+      "predictedTop6": [
+        6,
+        7,
+        4,
+        2,
+        9,
+        3
+      ],
+      "top5Hits": [
+        4,
+        2
+      ],
+      "top6Hits": [
+        4,
+        2
+      ],
+      "ballHits": [
+        2,
+        12,
+        32,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025088",
+      "actualTails": [
+        8,
+        9,
+        0,
+        1,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        4,
+        3,
+        5
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        4,
+        3,
+        5,
+        0
+      ],
+      "top5Hits": [
+        1,
+        5
+      ],
+      "top6Hits": [
+        1,
+        5,
+        0
+      ],
+      "ballHits": [
+        11,
+        35
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025087",
+      "actualTails": [
+        5,
+        3,
+        4,
+        6,
+        0
+      ],
+      "predictedTop5": [
+        9,
+        0,
+        1,
+        8,
+        5
+      ],
+      "predictedTop6": [
+        9,
+        0,
+        1,
+        8,
+        5,
+        2
+      ],
+      "top5Hits": [
+        0,
+        5
+      ],
+      "top6Hits": [
+        0,
+        5
+      ],
+      "ballHits": [
+        5,
+        20
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025086",
+      "actualTails": [
+        2,
+        6,
+        3,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        6,
+        3,
+        0
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        6,
+        3,
+        0,
+        2
+      ],
+      "top5Hits": [
+        4,
+        6,
+        3
+      ],
+      "top6Hits": [
+        4,
+        6,
+        3,
+        2
+      ],
+      "ballHits": [
+        6,
+        23,
+        24,
+        33
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025085",
+      "actualTails": [
+        2,
+        5,
+        9,
+        4,
+        3
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        6,
+        5,
+        1
+      ],
+      "top5Hits": [
+        3,
+        4,
+        2,
+        5
+      ],
+      "top6Hits": [
+        3,
+        4,
+        2,
+        5
+      ],
+      "ballHits": [
+        2,
+        5,
+        14,
+        33
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025084",
+      "actualTails": [
+        9,
+        1,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        4,
+        3,
+        2,
+        5,
+        9
+      ],
+      "predictedTop6": [
+        4,
+        3,
+        2,
+        5,
+        9,
+        1
+      ],
+      "top5Hits": [
+        3,
+        9
+      ],
+      "top6Hits": [
+        3,
+        9,
+        1
+      ],
+      "ballHits": [
+        9,
+        13,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025083",
+      "actualTails": [
+        2,
+        7,
+        8,
+        0,
+        4
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        1,
+        3,
+        2
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        1,
+        3,
+        2,
+        0
+      ],
+      "top5Hits": [
+        8,
+        2
+      ],
+      "top6Hits": [
+        8,
+        2,
+        0
+      ],
+      "ballHits": [
+        12,
+        18
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025082",
+      "actualTails": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "predictedTop5": [
+        2,
+        8,
+        4,
+        7,
+        1
+      ],
+      "predictedTop6": [
+        2,
+        8,
+        4,
+        7,
+        1,
+        3
+      ],
+      "top5Hits": [
+        2,
+        4
+      ],
+      "top6Hits": [
+        2,
+        4,
+        3
+      ],
+      "ballHits": [
+        2,
+        4,
+        12
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025081",
+      "actualTails": [
+        1,
+        4,
+        6,
+        5,
+        8
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        6,
+        5,
+        1
+      ],
+      "top5Hits": [
+        4,
+        6,
+        5
+      ],
+      "top6Hits": [
+        4,
+        6,
+        5,
+        1
+      ],
+      "ballHits": [
+        4,
+        6,
+        15
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025080",
+      "actualTails": [
+        9,
+        0,
+        8,
+        2,
+        4
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        4,
+        8,
+        7
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        4,
+        8,
+        7,
+        1
+      ],
+      "top5Hits": [
+        4,
+        8
+      ],
+      "top6Hits": [
+        4,
+        8
+      ],
+      "ballHits": [
+        18,
+        24
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025079",
+      "actualTails": [
+        2,
+        4,
+        5
+      ],
+      "predictedTop5": [
+        9,
+        2,
+        0,
+        8,
+        4
+      ],
+      "predictedTop6": [
+        9,
+        2,
+        0,
+        8,
+        4,
+        1
+      ],
+      "top5Hits": [
+        2,
+        4
+      ],
+      "top6Hits": [
+        2,
+        4
+      ],
+      "ballHits": [
+        2,
+        14,
+        32,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025078",
+      "actualTails": [
+        7,
+        0,
+        5,
+        1,
+        4
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        2,
+        3,
+        6
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        2,
+        3,
+        6,
+        1
+      ],
+      "top5Hits": [
+        4,
+        5
+      ],
+      "top6Hits": [
+        4,
+        5,
+        1
+      ],
+      "ballHits": [
+        15,
+        24
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025077",
+      "actualTails": [
+        2,
+        4,
+        6,
+        9,
+        8
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        1,
+        0,
+        6
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        1,
+        0,
+        6,
+        7
+      ],
+      "top5Hits": [
+        4,
+        6
+      ],
+      "top6Hits": [
+        4,
+        6
+      ],
+      "ballHits": [
+        14,
+        16
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025076",
+      "actualTails": [
+        1,
+        8,
+        2,
+        5,
+        9
+      ],
+      "predictedTop5": [
+        8,
+        4,
+        6,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        8,
+        4,
+        6,
+        9,
+        2,
+        5
+      ],
+      "top5Hits": [
+        8,
+        9,
+        2
+      ],
+      "top6Hits": [
+        8,
+        9,
+        2,
+        5
+      ],
+      "ballHits": [
+        18,
+        22,
+        29
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 4,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025075",
+      "actualTails": [
+        8,
+        2,
+        6,
+        9,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        9,
+        1,
+        8,
+        5
+      ],
+      "predictedTop6": [
+        2,
+        9,
+        1,
+        8,
+        5,
+        0
+      ],
+      "top5Hits": [
+        2,
+        9,
+        8,
+        5
+      ],
+      "top6Hits": [
+        2,
+        9,
+        8,
+        5
+      ],
+      "ballHits": [
+        8,
+        12,
+        19,
+        35
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025074",
+      "actualTails": [
+        2,
+        1,
+        5,
+        8
+      ],
+      "predictedTop5": [
+        6,
+        8,
+        5,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        6,
+        8,
+        5,
+        9,
+        2,
+        7
+      ],
+      "top5Hits": [
+        8,
+        5,
+        2
+      ],
+      "top6Hits": [
+        8,
+        5,
+        2
+      ],
+      "ballHits": [
+        2,
+        15,
+        18
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025073",
+      "actualTails": [
+        1,
+        4,
+        7,
+        3
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        5,
+        8,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        5,
+        8,
+        4,
+        9
+      ],
+      "top5Hits": [
+        1,
+        4
+      ],
+      "top6Hits": [
+        1,
+        4
+      ],
+      "ballHits": [
+        1,
+        4,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025072",
+      "actualTails": [
+        4,
+        7,
+        5,
+        9
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        1,
+        7
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        1,
+        7,
+        5
+      ],
+      "top5Hits": [
+        4,
+        7
+      ],
+      "top6Hits": [
+        4,
+        7,
+        5
+      ],
+      "ballHits": [
+        4,
+        7,
+        24
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025071",
+      "actualTails": [
+        1,
+        8,
+        5,
+        3
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        7,
+        9,
+        6
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        7,
+        9,
+        6,
+        8
+      ],
+      "top5Hits": [
+        5
+      ],
+      "top6Hits": [
+        5,
+        8
+      ],
+      "ballHits": [
+        25
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025070",
+      "actualTails": [
+        8,
+        9,
+        5,
+        0,
+        2
+      ],
+      "predictedTop5": [
+        3,
+        2,
+        4,
+        5,
+        1
+      ],
+      "predictedTop6": [
+        3,
+        2,
+        4,
+        5,
+        1,
+        8
+      ],
+      "top5Hits": [
+        2,
+        5
+      ],
+      "top6Hits": [
+        2,
+        5,
+        8
+      ],
+      "ballHits": [
+        15,
+        22
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025069",
+      "actualTails": [
+        4,
+        6,
+        7,
+        3
+      ],
+      "predictedTop5": [
+        9,
+        0,
+        2,
+        8,
+        1
+      ],
+      "predictedTop6": [
+        9,
+        0,
+        2,
+        8,
+        1,
+        5
+      ],
+      "top5Hits": [],
+      "top6Hits": [],
+      "ballHits": [],
+      "top5HitCount": 0,
+      "top6HitCount": 0,
+      "ballHitCount": 0
+    },
+    {
+      "issue": "2025068",
+      "actualTails": [
+        1,
+        4,
+        7,
+        0,
+        2
+      ],
+      "predictedTop5": [
+        4,
+        6,
+        3,
+        7,
+        5
+      ],
+      "predictedTop6": [
+        4,
+        6,
+        3,
+        7,
+        5,
+        2
+      ],
+      "top5Hits": [
+        4,
+        7
+      ],
+      "top6Hits": [
+        4,
+        7,
+        2
+      ],
+      "ballHits": [
+        4,
+        17
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025067",
+      "actualTails": [
+        6,
+        0,
+        2,
+        1
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        0,
+        4,
+        3
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        0,
+        4,
+        3,
+        7
+      ],
+      "top5Hits": [
+        2,
+        1,
+        0
+      ],
+      "top6Hits": [
+        2,
+        1,
+        0
+      ],
+      "ballHits": [
+        10,
+        12,
+        21,
+        22
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025066",
+      "actualTails": [
+        5,
+        8,
+        7,
+        4
+      ],
+      "predictedTop5": [
+        1,
+        2,
+        0,
+        6,
+        5
+      ],
+      "predictedTop6": [
+        1,
+        2,
+        0,
+        6,
+        5,
+        9
+      ],
+      "top5Hits": [
+        5
+      ],
+      "top6Hits": [
+        5
+      ],
+      "ballHits": [
+        15
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025065",
+      "actualTails": [
+        7,
+        5,
+        2,
+        3
+      ],
+      "predictedTop5": [
+        5,
+        4,
+        7,
+        8,
+        6
+      ],
+      "predictedTop6": [
+        5,
+        4,
+        7,
+        8,
+        6,
+        9
+      ],
+      "top5Hits": [
+        5,
+        7
+      ],
+      "top6Hits": [
+        5,
+        7
+      ],
+      "ballHits": [
+        7,
+        25,
+        35
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025064",
+      "actualTails": [
+        5,
+        0,
+        8,
+        4
+      ],
+      "predictedTop5": [
+        3,
+        5,
+        2,
+        4,
+        7
+      ],
+      "predictedTop6": [
+        3,
+        5,
+        2,
+        4,
+        7,
+        6
+      ],
+      "top5Hits": [
+        5,
+        4
+      ],
+      "top6Hits": [
+        5,
+        4
+      ],
+      "ballHits": [
+        5,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025063",
+      "actualTails": [
+        5,
+        8,
+        6,
+        9,
+        2
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        9,
+        8,
+        0
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        9,
+        8,
+        0,
+        1
+      ],
+      "top5Hits": [
+        5,
+        9,
+        8
+      ],
+      "top6Hits": [
+        5,
+        9,
+        8
+      ],
+      "ballHits": [
+        5,
+        18,
+        29
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025062",
+      "actualTails": [
+        4,
+        0,
+        7,
+        8,
+        9
+      ],
+      "predictedTop5": [
+        6,
+        8,
+        5,
+        9,
+        2
+      ],
+      "predictedTop6": [
+        6,
+        8,
+        5,
+        9,
+        2,
+        7
+      ],
+      "top5Hits": [
+        8,
+        9
+      ],
+      "top6Hits": [
+        8,
+        9,
+        7
+      ],
+      "ballHits": [
+        28,
+        29
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025061",
+      "actualTails": [
+        2,
+        1,
+        6,
+        3,
+        8
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        7,
+        0,
+        4
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        7,
+        0,
+        4,
+        5
+      ],
+      "top5Hits": [
+        8
+      ],
+      "top6Hits": [
+        8
+      ],
+      "ballHits": [
+        28
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 1,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025060",
+      "actualTails": [
+        2,
+        4,
+        9,
+        3
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        3,
+        8,
+        6
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        3,
+        8,
+        6,
+        7
+      ],
+      "top5Hits": [
+        2,
+        3
+      ],
+      "top6Hits": [
+        2,
+        3
+      ],
+      "ballHits": [
+        12,
+        33
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025059",
+      "actualTails": [
+        3,
+        9,
+        0,
+        1,
+        6
+      ],
+      "predictedTop5": [
+        3,
+        4,
+        2,
+        9,
+        5
+      ],
+      "predictedTop6": [
+        3,
+        4,
+        2,
+        9,
+        5,
+        8
+      ],
+      "top5Hits": [
+        3,
+        9
+      ],
+      "top6Hits": [
+        3,
+        9
+      ],
+      "ballHits": [
+        3,
+        9
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025058",
+      "actualTails": [
+        6,
+        1,
+        5,
+        3
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        9,
+        2,
+        3
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        9,
+        2,
+        3,
+        6
+      ],
+      "top5Hits": [
+        1,
+        3
+      ],
+      "top6Hits": [
+        1,
+        3,
+        6
+      ],
+      "ballHits": [
+        11,
+        21,
+        23
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025057",
+      "actualTails": [
+        9,
+        0,
+        1,
+        2
+      ],
+      "predictedTop5": [
+        5,
+        3,
+        6,
+        2,
+        4
+      ],
+      "predictedTop6": [
+        5,
+        3,
+        6,
+        2,
+        4,
+        1
+      ],
+      "top5Hits": [
+        2
+      ],
+      "top6Hits": [
+        2,
+        1
+      ],
+      "ballHits": [
+        12
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025056",
+      "actualTails": [
+        2,
+        5,
+        8,
+        9
+      ],
+      "predictedTop5": [
+        0,
+        1,
+        2,
+        9,
+        8
+      ],
+      "predictedTop6": [
+        0,
+        1,
+        2,
+        9,
+        8,
+        3
+      ],
+      "top5Hits": [
+        2,
+        9,
+        8
+      ],
+      "top6Hits": [
+        2,
+        9,
+        8
+      ],
+      "ballHits": [
+        12,
+        28,
+        29,
+        32
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025055",
+      "actualTails": [
+        8,
+        0,
+        5,
+        9
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        2,
+        5,
+        4
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        2,
+        5,
+        4,
+        1
+      ],
+      "top5Hits": [
+        9,
+        8,
+        5
+      ],
+      "top6Hits": [
+        9,
+        8,
+        5
+      ],
+      "ballHits": [
+        8,
+        25,
+        29
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    },
+    {
+      "issue": "2025054",
+      "actualTails": [
+        3,
+        2,
+        6,
+        1,
+        9
+      ],
+      "predictedTop5": [
+        9,
+        8,
+        0,
+        5,
+        4
+      ],
+      "predictedTop6": [
+        9,
+        8,
+        0,
+        5,
+        4,
+        1
+      ],
+      "top5Hits": [
+        9
+      ],
+      "top6Hits": [
+        9,
+        1
+      ],
+      "ballHits": [
+        29
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025053",
+      "actualTails": [
+        4,
+        3,
+        9,
+        0
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        3,
+        9,
+        0
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        3,
+        9,
+        0,
+        6
+      ],
+      "top5Hits": [
+        3,
+        9,
+        0
+      ],
+      "top6Hits": [
+        3,
+        9,
+        0
+      ],
+      "ballHits": [
+        23,
+        29,
+        30,
+        33
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025052",
+      "actualTails": [
+        2,
+        4,
+        1,
+        9,
+        0
+      ],
+      "predictedTop5": [
+        4,
+        9,
+        0,
+        3,
+        2
+      ],
+      "predictedTop6": [
+        4,
+        9,
+        0,
+        3,
+        2,
+        5
+      ],
+      "top5Hits": [
+        4,
+        9,
+        0,
+        2
+      ],
+      "top6Hits": [
+        4,
+        9,
+        0,
+        2
+      ],
+      "ballHits": [
+        2,
+        4,
+        29,
+        30
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 4,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025051",
+      "actualTails": [
+        2,
+        4,
+        3,
+        9,
+        1
+      ],
+      "predictedTop5": [
+        2,
+        0,
+        1,
+        9,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        0,
+        1,
+        9,
+        4,
+        3
+      ],
+      "top5Hits": [
+        2,
+        1,
+        9,
+        4
+      ],
+      "top6Hits": [
+        2,
+        1,
+        9,
+        4,
+        3
+      ],
+      "ballHits": [
+        2,
+        4,
+        29,
+        31
+      ],
+      "top5HitCount": 4,
+      "top6HitCount": 5,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025050",
+      "actualTails": [
+        5,
+        8,
+        0,
+        1,
+        4
+      ],
+      "predictedTop5": [
+        2,
+        3,
+        4,
+        1,
+        9
+      ],
+      "predictedTop6": [
+        2,
+        3,
+        4,
+        1,
+        9,
+        0
+      ],
+      "top5Hits": [
+        4,
+        1
+      ],
+      "top6Hits": [
+        4,
+        1,
+        0
+      ],
+      "ballHits": [
+        21,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 3,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025049",
+      "actualTails": [
+        9,
+        0,
+        2,
+        4
+      ],
+      "predictedTop5": [
+        4,
+        1,
+        5,
+        0,
+        9
+      ],
+      "predictedTop6": [
+        4,
+        1,
+        5,
+        0,
+        9,
+        8
+      ],
+      "top5Hits": [
+        4,
+        0,
+        9
+      ],
+      "top6Hits": [
+        4,
+        0,
+        9
+      ],
+      "ballHits": [
+        9,
+        20,
+        29,
+        34
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025048",
+      "actualTails": [
+        2,
+        6,
+        7,
+        3,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        0,
+        9,
+        4,
+        1
+      ],
+      "predictedTop6": [
+        2,
+        0,
+        9,
+        4,
+        1,
+        3
+      ],
+      "top5Hits": [
+        2
+      ],
+      "top6Hits": [
+        2,
+        3
+      ],
+      "ballHits": [
+        2
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 1
+    },
+    {
+      "issue": "2025047",
+      "actualTails": [
+        3,
+        0,
+        1,
+        2
+      ],
+      "predictedTop5": [
+        5,
+        6,
+        3,
+        2,
+        7
+      ],
+      "predictedTop6": [
+        5,
+        6,
+        3,
+        2,
+        7,
+        4
+      ],
+      "top5Hits": [
+        3,
+        2
+      ],
+      "top6Hits": [
+        3,
+        2
+      ],
+      "ballHits": [
+        3,
+        12
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025046",
+      "actualTails": [
+        4,
+        0,
+        5
+      ],
+      "predictedTop5": [
+        2,
+        1,
+        0,
+        3,
+        4
+      ],
+      "predictedTop6": [
+        2,
+        1,
+        0,
+        3,
+        4,
+        9
+      ],
+      "top5Hits": [
+        0,
+        4
+      ],
+      "top6Hits": [
+        0,
+        4
+      ],
+      "ballHits": [
+        4,
+        10,
+        20,
+        34
+      ],
+      "top5HitCount": 2,
+      "top6HitCount": 2,
+      "ballHitCount": 4
+    },
+    {
+      "issue": "2025045",
+      "actualTails": [
+        8,
+        1,
+        3,
+        7
+      ],
+      "predictedTop5": [
+        4,
+        5,
+        0,
+        9,
+        1
+      ],
+      "predictedTop6": [
+        4,
+        5,
+        0,
+        9,
+        1,
+        3
+      ],
+      "top5Hits": [
+        1
+      ],
+      "top6Hits": [
+        1,
+        3
+      ],
+      "ballHits": [
+        11,
+        21
+      ],
+      "top5HitCount": 1,
+      "top6HitCount": 2,
+      "ballHitCount": 2
+    },
+    {
+      "issue": "2025044",
+      "actualTails": [
+        5,
+        7,
+        1,
+        2,
+        6
+      ],
+      "predictedTop5": [
+        2,
+        8,
+        1,
+        7,
+        3
+      ],
+      "predictedTop6": [
+        2,
+        8,
+        1,
+        7,
+        3,
+        4
+      ],
+      "top5Hits": [
+        2,
+        1,
+        7
+      ],
+      "top6Hits": [
+        2,
+        1,
+        7
+      ],
+      "ballHits": [
+        17,
+        21,
+        22
+      ],
+      "top5HitCount": 3,
+      "top6HitCount": 3,
+      "ballHitCount": 3
+    }
+  ]
+}

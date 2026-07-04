@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>选号 Agent</title>
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="选号Agent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="shortcut icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css?v=20260611-layout-9" />
+  </head>
+  <body>
+    <section id="appLock" class="app-lock">
+      <div class="lock-panel">
+        <span class="brand-mark"></span>
+        <h1>选号模拟</h1>
+        <p>请输入密码打开页面。</p>
+        <div class="lock-form">
+          <input id="appPassword" type="password" maxlength="32" placeholder="页面密码" autocomplete="current-password" />
+          <button id="toggleAppPasswordButton" type="button">显示</button>
+          <button id="unlockAppButton" type="button">进入</button>
+        </div>
+        <p id="appAuthMessage" class="auth-message"></p>
+      </div>
+    </section>
+
+    <main id="appRoot" class="app" hidden>
+      <section id="agentHomePanel" class="agent-shell" data-agent-section aria-label="手机 Agent 工作台">
+        <div class="agent-shell-top">
+          <div class="agent-copy">
+            <span class="agent-badge">Mobile Agent</span>
+            <h2>选号 Agent</h2>
+            <p>为手机单手操作重新包装，支持桌面安装、离线打开和快速跳转到核心工作区。</p>
+          </div>
+          <div class="agent-sidecard">
+            <span class="agent-sidecard-title">Runtime Status</span>
+            <div class="agent-status">
+              <span id="displayModeBadge" class="agent-pill">浏览器模式</span>
+              <span id="networkStatusBadge" class="agent-pill">在线</span>
+              <span class="agent-pill">草稿自动保存在本机</span>
+            </div>
+            <p id="installHint" class="agent-hint">在浏览器菜单里也可以选择“添加到主屏幕”。</p>
+          </div>
+        </div>
+        <div class="agent-actions">
+          <button id="installAppButton" class="agent-primary-action" type="button" hidden data-accent="ruby" data-nav-tag="APP">安装到手机</button>
+          <button class="agent-jump" type="button" data-target="#agentBoardPanel" data-accent="cobalt" data-nav-tag="BOARD">打开选号盘</button>
+          <button id="openComparePageFromHome" class="agent-jump" type="button" data-accent="violet" data-nav-tag="LAB">180行对比页</button>
+          <button id="openCompare90PageFromHome" class="agent-jump" type="button" data-accent="mint" data-nav-tag="90">90行对比页</button>
+          <button class="agent-jump" type="button" data-target="#agentVersionPanel" data-accent="amber" data-nav-tag="VAULT">查看版本库</button>
+          <button class="agent-jump" type="button" data-target="#agentImportPanel" data-accent="mint" data-nav-tag="DRAW">导入开奖号</button>
+        </div>
+      </section>
+
+      <section id="agentControlPanel" class="toolbar" data-agent-section aria-label="操作栏">
+        <div class="toolbar-top">
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <div>
+              <h1>选号模拟</h1>
+              <p>点击格子添加球，颜色和编号都可以自定义。</p>
+            </div>
+          </div>
+          <div class="toolbar-note">
+            <span class="toolbar-kicker">Quick Control</span>
+            <strong>顶部控制台</strong>
+            <p>行、区、号码、颜色、缩放都集中在这里，单手切换更快。</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <label>
+            <span>行</span>
+            <input id="rowInput" type="number" min="1" max="45" value="1" />
+          </label>
+          <label>
+            <span>区</span>
+            <select id="zoneInput">
+              <option value="front">前区</option>
+              <option value="back">后区</option>
+            </select>
+          </label>
+          <label>
+            <span>号码</span>
+            <input id="numberInput" type="number" min="1" max="35" value="1" />
+          </label>
+          <label>
+            <span>球色</span>
+            <input id="colorInput" type="color" value="#d6202a" />
+          </label>
+          <label>
+            <span>大小</span>
+            <input id="sizeInput" type="range" min="20" max="34" value="25" />
+          </label>
+          <label>
+            <span>缩放</span>
+            <input id="zoomInput" type="range" min="30" max="130" value="100" />
+          </label>
+          <button id="addBallButton" type="button">添加球</button>
+          <button id="eraseButton" type="button" aria-pressed="false">擦除</button>
+          <button id="deleteColorButton" type="button">删此颜色</button>
+          <button id="addDividerButton" type="button">添加线条</button>
+          <button id="clearButton" type="button">清空</button>
+        </div>
+        <div class="text-add">
+          <div class="text-add-wrapper">
+            <textarea
+              id="descInput"
+              rows="3"
+              placeholder="如：前区1行 8,10,15红球，或粘贴 Markdown 表格批量添加"
+            ></textarea>
+            <label class="file-import-button text-file-import">
+              <input id="descFileInput" type="file" accept=".xlsx,.xls,.csv,.tsv" />
+              导入Excel
+            </label>
+            <button id="descAddButton" type="button">按描述添加</button>
+            <button id="descHelpButton" type="button" class="help-btn" title="查看语法规则">?</button>
+          </div>
+          <div id="descHelpTip" class="desc-help-tip" hidden>
+            <strong>语法规则：</strong><br />
+            <code>前区/后区</code> + <code>行号</code> + <code>号码</code> + <code>颜色</code><br /><br />
+            <strong>单条示例：</strong><br />
+            <code>前区1行 8,10,15红球</code><br />
+            <code>后区3行 2蓝球</code><br />
+            <code>前区第5行 13号红</code><br /><br />
+            <strong>表格批量导入（先选颜色）：</strong><br />
+            <code>| 顺序 | 前区号码 | 后区号码 |</code><br />
+            <code>| 1 | 12 17 20 26 35 | 04 09 |</code><br />
+            <code>| 2 | 04 10 15 22 27 | 06 10 |</code><br /><br />
+            <strong>制表符分隔格式（如从Excel复制）：</strong><br />
+            <code>顺序 前区号码 后区号码</code><br />
+            <code>1 12 17 20 26 35 04 09</code><br />
+            <code>2 04 10 15 22 27 06 10</code><br /><br />
+            <strong>Excel导入：</strong>读取前区/后区列，按倒序添加，表格最下面一行放到第1行。<br /><br />
+            <strong>彩虹球：</strong>同位置多颜色显示彩虹。<br /><br />
+            <strong>支持：</strong>中文数字、多行、分号分隔。
+          </div>
+        </div>
+      </section>
+
+      <section id="agentPalettePanel" class="palette" data-agent-section aria-label="颜色选择">
+        <button class="swatch active" type="button" data-color="#d6202a" style="--swatch: #d6202a">红</button>
+        <button class="swatch" type="button" data-color="#1768b7" style="--swatch: #1768b7">蓝</button>
+        <button class="swatch" type="button" data-color="#14a365" style="--swatch: #14a365">绿</button>
+        <button class="swatch" type="button" data-color="#f59e0b" style="--swatch: #f59e0b">橙</button>
+        <button class="swatch" type="button" data-color="#7c3aed" style="--swatch: #7c3aed">紫</button>
+        <button class="swatch" type="button" data-color="#111827" style="--swatch: #111827">黑</button>
+      </section>
+
+      <section id="agentBoardPanel" class="board-shell" data-agent-section aria-label="选号面板">
+        <div class="board-top">
+          <div class="status">
+            <strong id="ballCount">0</strong>
+            <span>个球</span>
+          </div>
+          <div class="board-actions">
+            <label class="board-option" for="sampleRatioModeInput">
+              <span>区间比</span>
+              <select id="sampleRatioModeInput">
+                <option value="">请选择区间比</option>
+                <option value="0-0-5">0:0:5</option>
+                <option value="0-1-4">0:1:4</option>
+                <option value="0-2-3">0:2:3</option>
+                <option value="0-3-2">0:3:2</option>
+                <option value="0-4-1">0:4:1</option>
+                <option value="0-5-0">0:5:0</option>
+                <option value="1-0-4">1:0:4</option>
+                <option value="1-1-3">1:1:3</option>
+                <option value="1-2-2">1:2:2</option>
+                <option value="1-3-1">1:3:1</option>
+                <option value="1-4-0">1:4:0</option>
+                <option value="2-0-3">2:0:3</option>
+                <option value="2-1-2">2:1:2</option>
+                <option value="2-2-1">2:2:1</option>
+                <option value="2-3-0">2:3:0</option>
+                <option value="3-0-2">3:0:2</option>
+                <option value="3-1-1">3:1:1</option>
+                <option value="3-2-0">3:2:0</option>
+                <option value="4-0-1">4:0:1</option>
+                <option value="4-1-0">4:1:0</option>
+                <option value="5-0-0">5:0:0</option>
+                <option value="break1">断一区</option>
+                <option value="break2">断二区</option>
+                <option value="break3">断三区</option>
+              </select>
+            </label>
+            <label class="board-option" for="sampleVersionInput">
+              <span>版本</span>
+              <select id="sampleVersionInput">
+                <option value="v3">v3</option>
+                <option value="v4">v4.1</option>
+              </select>
+            </label>
+            <label class="board-option" for="sampleDisplayModeInput">
+              <span>展示</span>
+              <select id="sampleDisplayModeInput">
+                <option value="single">单组五行</option>
+                <option value="variants">五组候选</option>
+              </select>
+            </label>
+            <label class="board-option tail-selector" for="tailSelectorWrap">
+              <span>尾号</span>
+              <div id="tailSelectorWrap" class="tail-selector-wrap">
+                <button class="tail-btn" type="button" data-tail="0">0</button>
+                <button class="tail-btn" type="button" data-tail="1">1</button>
+                <button class="tail-btn" type="button" data-tail="2">2</button>
+                <button class="tail-btn" type="button" data-tail="3">3</button>
+                <button class="tail-btn" type="button" data-tail="4">4</button>
+                <button class="tail-btn" type="button" data-tail="5">5</button>
+                <button class="tail-btn" type="button" data-tail="6">6</button>
+                <button class="tail-btn" type="button" data-tail="7">7</button>
+                <button class="tail-btn" type="button" data-tail="8">8</button>
+                <button class="tail-btn" type="button" data-tail="9">9</button>
+              </div>
+            </label>
+            <span id="tailPoolInfo" class="tail-pool-info"></span>
+            <button id="sampleButton" class="ghost" type="button">生成示例</button>
+            <button id="clearSampleButton" class="ghost" type="button">清空示例球</button>
+            <button id="exportSampleExcelButton" class="ghost" type="button" style="display:none;">导出Excel</button>
+            <button id="saveVersionButton" class="ghost" type="button">保存版本</button>
+            <button id="openComparePageButton" class="ghost" type="button">180行对比页</button>
+            <button id="openCompare90PageButton" class="ghost" type="button">90行对比页</button>
+            <button id="captureBoardButton" class="ghost" type="button">截图</button>
+            <button id="clearMainBoardButton" class="ghost" type="button">清空主选号区</button>
+          </div>
+          <span id="currentBaseLabel" class="base-label">当前编辑：空白画面</span>
+        </div>
+        <div id="predictionPanel" class="prediction-panel">
+          <div class="prediction-header">
+            <h3>智能预测</h3>
+            <button id="refreshPredictionButton" class="ghost" type="button">刷新预测</button>
+          </div>
+          <div class="prediction-content">
+            <div class="prediction-section">
+              <h4>区间比预测</h4>
+              <div id="intervalRatioPrediction" class="prediction-display">
+                <span class="prediction-placeholder">点击"生成示例"后显示预测结果</span>
+              </div>
+            </div>
+            <div class="prediction-section prediction-section-wide">
+              <h4>尾号预测</h4>
+              <div id="tailPrediction" class="prediction-display">
+                <span class="prediction-placeholder">点击"生成示例"后显示预测结果</span>
+              </div>
+              <button id="backtestTailModesBtn" class="ghost btn-sm" type="button" style="margin-top:6px;">模式回测对比</button>
+              <div id="tailModeBacktest" class="backtest-container"></div>
+            </div>
+            <div class="prediction-section">
+              <h4>首位球预测</h4>
+              <div id="firstBallPrediction" class="prediction-display">
+                <span class="prediction-placeholder">点击"生成示例"后显示预测结果</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="versionBanner" class="version-banner" hidden>
+          <span class="version-banner-label">版本</span>
+          <span id="versionBannerText" class="version-banner-text"></span>
+        </div>
+        <div class="board-wrap">
+          <div id="board" class="board" aria-label="选号走势表">
+            <div>
+              <div class="zone-title front-title">前区 1-35</div>
+              <div id="frontBoard" class="zone-board front-board" aria-label="前区 1 到 35"></div>
+            </div>
+            <div>
+              <div class="zone-title back-title">后区 1-12</div>
+              <div id="backBoard" class="zone-board back-board" aria-label="后区 1 到 12"></div>
+            </div>
+          </div>
+        </div>
+        <div id="agentPoolPanel" class="pool-panel" data-agent-section aria-label="候选号码池" hidden>
+          <div class="pool-header">
+            <h2>候选号码池</h2>
+            <span id="poolStats" class="pool-stats"></span>
+          </div>
+          <div id="poolDisplay" class="pool-display"></div>
+          <div id="poolCoverageInfo" class="pool-coverage-info"></div>
+        </div>
+      </section>
+
+      <section id="agentVersionPanel" class="version-shell" data-agent-section aria-label="历史版本">
+        <div class="history-top">
+          <h2>历史版本</h2>
+          <div class="version-tools">
+            <input id="versionPassword" type="password" placeholder="输入密码查看版本" autocomplete="current-password" />
+            <button id="unlockVersionsButton" type="button">验证</button>
+            <button id="lockVersionsButton" type="button" hidden>锁定</button>
+            <input id="versionSearch" type="search" placeholder="查找时间、号码、颜色" />
+            <button id="downloadVersionsButton" type="button">下载版本信息</button>
+            <label class="file-import-button">
+              <input id="importVersionsInput" type="file" accept=".json,application/json" />
+              导入版本信息
+            </label>
+            <button id="compareVersionsButton" type="button">三版本对比图</button>
+            <button id="clearVersionsButton" type="button">清空版本</button>
+          </div>
+        </div>
+        <p id="versionAuthMessage" class="version-auth-message">请输入密码后查看历史版本。</p>
+        <div class="version-layout">
+          <ol id="versionList" class="version-list"></ol>
+          <div class="version-preview">
+            <h3 id="versionPreviewTitle">未选择版本</h3>
+            <div id="versionPreview" class="history-balls"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="agentImportPanel" class="draw-import-shell" data-agent-section aria-label="生成开奖号版本">
+        <div class="history-top">
+          <h2>生成开奖号版本</h2>
+          <div class="draw-version-actions">
+            <label class="file-import-button">
+              <input id="drawFileInput" type="file" accept=".xlsx,.xls,.csv,.tsv" />
+              导入Excel
+            </label>
+            <button id="generateDrawVersionButton" type="button">生成版本</button>
+            <button id="cancelEditDrawVersionButton" type="button" hidden>取消修改</button>
+          </div>
+        </div>
+        <div class="draw-import-body">
+          <label>
+            <span>开奖日期</span>
+            <input id="drawDateInput" type="date" />
+          </label>
+          <textarea
+            id="drawDataInput"
+            placeholder="粘贴开奖数据，每行一期。例如：&#10;2026052 2026-05-13 前区 01 02 03 04 05 后区 06 07&#10;2026051 2026-05-11 13 18 28 32 33 02 11"
+          ></textarea>
+          <p id="drawImportMessage" class="version-auth-message">支持粘贴或导入 Excel：读取期号、序号、前区号码、后区号码后生成版本。</p>
+        </div>
+      </section>
+
+      <nav id="mobileDock" class="mobile-dock" aria-label="手机快捷导航">
+        <button class="dock-item" type="button" data-target="#agentHomePanel" data-accent="cobalt">
+          <span class="dock-item-icon" aria-hidden="true">⌂</span>
+          <span class="dock-item-kicker">首页</span>
+          <strong>Agent</strong>
+        </button>
+        <button class="dock-item" type="button" data-target="#agentControlPanel" data-accent="ruby">
+          <span class="dock-item-icon" aria-hidden="true">◎</span>
+          <span class="dock-item-kicker">控制</span>
+          <strong>工作台</strong>
+        </button>
+        <button class="dock-item active" type="button" data-target="#agentBoardPanel" data-accent="violet">
+          <span class="dock-item-icon" aria-hidden="true">●</span>
+          <span class="dock-item-kicker">核心</span>
+          <strong>选号盘</strong>
+        </button>
+        <button class="dock-item" type="button" data-target="#agentVersionPanel" data-accent="amber">
+          <span class="dock-item-icon" aria-hidden="true">▣</span>
+          <span class="dock-item-kicker">记录</span>
+          <strong>版本库</strong>
+        </button>
+        <button class="dock-item" type="button" data-target="#agentImportPanel" data-accent="mint">
+          <span class="dock-item-icon" aria-hidden="true">↥</span>
+          <span class="dock-item-kicker">数据</span>
+          <strong>开奖号</strong>
+        </button>
+      </nav>
+
+      <div id="versionModal" class="version-modal" hidden>
+        <div class="version-dialog" role="dialog" aria-modal="true" aria-labelledby="versionModalTitle">
+          <div class="version-dialog-top">
+            <h2 id="versionModalTitle">版本详情</h2>
+            <button id="closeVersionModalButton" type="button">关闭</button>
+          </div>
+          <div id="versionModalBody" class="version-detail-list"></div>
+        </div>
+      </div>
+
+      <div id="compareModal" class="version-modal" hidden>
+        <div class="version-dialog compare-dialog" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle">
+          <div class="version-dialog-top">
+            <h2 id="compareModalTitle">三版本对比图</h2>
+            <button id="closeCompareModalButton" type="button">关闭</button>
+          </div>
+          <div class="compare-form">
+            <label>
+              <span>版本一</span>
+              <select id="compareVersionOne"></select>
+            </label>
+            <label>
+              <span>版本二</span>
+              <select id="compareVersionTwo"></select>
+            </label>
+            <label>
+              <span>版本三</span>
+              <select id="compareVersionThree"></select>
+            </label>
+          </div>
+          <p id="compareHint" class="version-auth-message">将每个版本的第 16-30 行映射到主选号区行 1-15、16-30、31-45，前区和后区的选球都会按原号码落位。</p>
+          <div class="compare-actions">
+            <button id="applyCompareButton" type="button">加载到主选号区</button>
+            <button id="saveCompareButton" class="ghost" type="button">一键保存为版本</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="vendor/html2canvas.min.js"></script>
+    <script src="all_draws.js"></script>
+    <script src="script.js?v=20260701-back-v6"></script>
+  </body>
+</html>
