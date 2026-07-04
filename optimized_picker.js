@@ -1,0 +1,4709 @@
+/**
+ * 优化选号脚本 v4 —— 融合 script.js 的锚点/连号/重复号/等差/桥梁/结构策略
+ *
+ * 原有 4 层策略：
+ *   L1 - 锚点直接保留（偏移0）: +20分
+ *   L2 - 锚点 ±1 偏移            : +15分
+ *   L3 - 锚点 ±3 偏移            : +12分
+ *   L4 - 锚点 ±5 偏移            : +10分
+ *
+ * 🆕 v4 新增策略（来自 script.js 生成示例规则）：
+ *   S1 - +10期历史模式匹配: 加权预测目标号码 +30分 (最高影响)
+ *   S2 - 桥梁分析: 锚点间隙(2-4)内号码 +24分 + gap填充命中
+ *   S3 - 等距端点分析: 锚点对称位置 +10分
+ *   S4 - 增强扩散惩罚: 区间覆盖+密集窗口+跨度三元评分
+ *   S5 - 参考行增强匹配: 尾号+等差+桥梁+结构+最强尾号
+ *   S6 - 区间比驱动: 按历史最频区间比加权筛选组合
+ *   S7 - 锚点变换评分: 锚点保留/偏移/覆盖多面性（组合级）
+ *   S8 - 连号惩罚: 锚点支撑折扣的三连/四连惩罚
+ *   S9 - 重复号惩罚: 与源行号码重叠惩罚
+ *   S10 - 尾号模式评分: 连续尾号/等差尾号模式奖励
+ *
+ *
+ * 辅助过滤：
+ *   - 尾号关联（相同尾号 +25分, ±1尾号 +12分）
+ *   - 区间保底（至少覆盖2个区间，全3区间 +30分）
+ *   - 结构约束（和值 90±25，奇偶比 1-4，跨度 24±10）
+ *   - 极端期检测（和值暴跌/奇偶翻转 → 放宽约束）
+ */
+
+// ===================== 配置 ============================
+const CONFIG = {
+  frontMax: 35,
+  backMax: 12,
+  poolSize: 24,           // 24球池：覆盖率98.2%，Top5=26.3%，效率最高
+  pickCount: 5,           // 实际选号数量
+
+  // 偏移评分权重（距离 → 分数）— 网格搜索最优: "全距离平权"
+  offsetScore: {
+    0: 20,                // 锚点直接命中
+    1: 15,
+    2: 13,
+    3: 12,
+    4: 10,
+    5: 8,
+    6: 6,
+    7: 5,
+    8: 4,
+    9: 3,
+    10: 2,
+  },
+
+  // 尾号关联分数 — 尾号是最关键的过滤因子
+  tailSameScore: 35,      // 和目标行尾号相同（网格搜索最优：25→35）
+  tailNeighborScore: 15,  // 和目标行尾号±1（网格搜索最优：12→15）
+  tailWithinSource: 5,    // 在选中行尾号集合内（v6.1: 8→5，降低敏感度）
+
+  // 区间相关
+  intervalMatchScore: 30, // 3个区间都覆盖
+  intervalTwoScore: 15,   // 至少2个区间
+
+  // 结构约束
+  targetSum: 87.5,        // 期望和值（优化：20→17.5，范围[70,105]回测最优）
+  sumTolerance: 17.5,     // 和值容忍度（优化：25→20→17.5，范围[70,105]）
+  targetSpan: 24,         // 期望跨度
+  spanTolerance: 8,       // 跨度容忍度（优化：10→8，范围[16,32]回测最优）
+
+  // 极端期检测阈值
+  extremeSumDrop: 30,     // 和值暴跌阈值
+  extremeParityFlip: 4,   // 奇偶翻转阈值
+
+  // 惩罚
+  anchorOverusePenalty: 8,    // 锚点被过度依赖
+  extremeZonePenalty: 200,    // 某区间≥5个
+  sumOutlierPenalty: 15,      // 和值超出范围
+
+  // ===== 新增优化配置 =====
+  comboPoolTop: 20,          // v4.1最优：Top20已足够，再扩大引入噪声
+  comboSampleMax: 500,       // 保留（当前未使用，全量回溯）
+  hotBoostWeight: 8,         // 热号加分（降低以减少池质量干扰）
+  tailPatternBonus: 10,      // 尾号模式匹配加分
+  comboDiversityMin: 0.3,    // 保留
+  
+  // 🆕 基于历史频率的权重调整
+  historyFreqWeight: 0.15,   // 历史频率权重（v6.2: 阶梯函数已降低敏感度，恢复原值）
+  recentFreqWeight: 0.10,    // 近期频率权重（0-1）
+  repeatRateWeight: 0.05,    // 重复率权重（0-1）
+
+  // 🆕 目标行上一期尾号加权（网格搜索最优：权重=2）
+  prevDrawTailsWeight: 2,    // targetRow-1 尾号匹配加分
+
+  // 🆕 v6: 组合级评分参数（从硬编码提取到CONFIG，支持敏感度分析）
+  runPenaltyScale: 0.3,        // 连号惩罚缩放系数（0.7→0.3）
+  repeatPenaltyScale: 0.8,     // 重复号惩罚缩放系数（基准值）
+  tailPatternWeight: 0.6,      // 尾号模式评分权重（0.4→0.6）
+  diversityScoreWeight: 0.65,  // 多样性选择中分数权重（0.75→0.65）
+  diversityMinScoreRatio: 0.65, // 多样性选择中最低分数比例（相对Top1）
+};
+
+// ===================== 数据 ============================
+const ALL_DRAWS = [
+  { issue: "2025101", front: [5, 7, 18, 26, 32], back: [8, 9] },
+  { issue: "2025102", front: [3, 9, 10, 13, 26], back: [2, 4] },
+  { issue: "2025103", front: [5, 8, 19, 32, 34], back: [4, 5] },
+  { issue: "2025104", front: [2, 6, 9, 22, 34], back: [2, 8] },
+  { issue: "2025105", front: [15, 16, 26, 28, 34], back: [10, 12] },
+  { issue: "2025106", front: [5, 6, 11, 26, 29], back: [5, 10] },
+  { issue: "2025107", front: [5, 7, 8, 15, 33], back: [6, 10] },
+  { issue: "2025108", front: [14, 18, 21, 24, 29], back: [3, 6] },
+  { issue: "2025109", front: [4, 8, 10, 13, 26], back: [9, 10] },
+  { issue: "2025110", front: [1, 15, 22, 30, 31], back: [2, 8] },
+  { issue: "2025111", front: [2, 9, 14, 21, 26], back: [2, 12] },
+  { issue: "2025112", front: [3, 4, 21, 23, 24], back: [9, 12] },
+  { issue: "2025113", front: [1, 14, 18, 28, 35], back: [2, 3] },
+  { issue: "2025114", front: [3, 8, 9, 12, 15], back: [1, 5] },
+  { issue: "2025115", front: [3, 12, 14, 21, 35], back: [1, 5] },
+  { issue: "2025116", front: [2, 6, 16, 22, 29], back: [8, 12] },
+  { issue: "2025117", front: [5, 10, 18, 21, 29], back: [6, 7] },
+  { issue: "2025118", front: [2, 8, 9, 12, 21], back: [4, 5] },
+  { issue: "2025119", front: [8, 15, 27, 29, 31], back: [1, 7] },
+  { issue: "2025120", front: [11, 13, 22, 26, 35], back: [2, 8] },
+  { issue: "2025121", front: [2, 3, 8, 13, 21], back: [7, 12] },
+  { issue: "2025122", front: [2, 3, 6, 16, 17], back: [4, 5] },
+  { issue: "2025123", front: [8, 13, 24, 25, 31], back: [4, 10] },
+  { issue: "2025124", front: [6, 9, 14, 26, 27], back: [8, 9] },
+  { issue: "2025125", front: [10, 11, 13, 19, 35], back: [4, 11] },
+  { issue: "2025126", front: [1, 8, 18, 27, 30], back: [6, 7] },
+  { issue: "2025127", front: [4, 5, 19, 28, 29], back: [6, 8] },
+  { issue: "2025128", front: [3, 6, 26, 30, 33], back: [11, 12] },
+  { issue: "2025129", front: [3, 9, 14, 28, 35], back: [2, 4] },
+  { issue: "2025130", front: [1, 13, 16, 27, 29], back: [2, 11] },
+  { issue: "2025131", front: [3, 8, 25, 29, 32], back: [9, 12] },
+  { issue: "2025132", front: [1, 9, 10, 12, 19], back: [6, 7] },
+  { issue: "2025133", front: [4, 11, 23, 27, 35], back: [7, 11] },
+  { issue: "2025134", front: [7, 12, 18, 27, 33], back: [9, 10] },
+  { issue: "2025135", front: [2, 10, 16, 28, 32], back: [1, 7] },
+  { issue: "2025136", front: [7, 11, 15, 16, 23], back: [9, 11] },
+  { issue: "2025137", front: [7, 8, 9, 11, 22], back: [5, 11] },
+  { issue: "2025138", front: [1, 3, 18, 21, 23], back: [7, 11] },
+  { issue: "2025139", front: [8, 16, 22, 30, 35], back: [1, 4] },
+  { issue: "2025140", front: [4, 5, 13, 18, 34], back: [2, 8] },
+  { issue: "2025141", front: [4, 9, 24, 28, 29], back: [2, 10] },
+  { issue: "2025142", front: [6, 10, 14, 27, 29], back: [2, 8] },
+  { issue: "2025143", front: [3, 4, 18, 24, 29], back: [7, 12] },
+  { issue: "2025144", front: [2, 5, 13, 15, 28], back: [5, 8] },
+  { issue: "2025145", front: [6, 7, 20, 22, 25], back: [4, 5] },
+  { issue: "2025146", front: [6, 11, 13, 16, 22], back: [2, 3] },
+  { issue: "2025147", front: [6, 18, 21, 25, 33], back: [7, 8] },
+  { issue: "2025148", front: [3, 4, 14, 30, 32], back: [8, 12] },
+  { issue: "2025149", front: [24, 26, 30, 31, 32], back: [5, 12] },
+  { issue: "2025150", front: [13, 14, 15, 28, 31], back: [1, 5] },
+  { issue: "2026001", front: [7, 9, 23, 27, 32], back: [2, 8] },
+  { issue: "2026002", front: [4, 8, 15, 20, 31], back: [7, 8] },
+  { issue: "2026003", front: [2, 9, 11, 15, 16], back: [2, 4] },
+  { issue: "2026004", front: [5, 18, 23, 25, 32], back: [5, 9] },
+  { issue: "2026005", front: [2, 4, 16, 23, 35], back: [6, 11] },
+  { issue: "2026006", front: [5, 12, 18, 23, 35], back: [6, 12] },
+  { issue: "2026007", front: [1, 3, 13, 20, 26], back: [3, 10] },
+  { issue: "2026008", front: [3, 6, 17, 21, 33], back: [5, 11] },
+  { issue: "2026009", front: [5, 12, 13, 14, 33], back: [5, 8] },
+  { issue: "2026010", front: [2, 3, 13, 18, 26], back: [2, 9] },
+  { issue: "2026011", front: [14, 21, 23, 29, 33], back: [2, 10] },
+  { issue: "2026012", front: [1, 2, 9, 22, 25], back: [1, 6] },
+  { issue: "2026013", front: [3, 5, 6, 23, 26], back: [1, 4] },
+  { issue: "2026014", front: [16, 18, 23, 34, 35], back: [1, 6] },
+  { issue: "2026015", front: [1, 4, 10, 13, 17], back: [3, 11] },
+  { issue: "2026016", front: [8, 9, 12, 19, 24], back: [1, 6] },
+  { issue: "2026017", front: [4, 5, 10, 23, 31], back: [7, 12] },
+  { issue: "2026018", front: [9, 11, 19, 30, 35], back: [1, 12] },
+  { issue: "2026019", front: [12, 13, 14, 16, 31], back: [4, 12] },
+  { issue: "2026020", front: [1, 10, 21, 23, 29], back: [10, 12] },
+  { issue: "2026021", front: [5, 8, 12, 14, 17], back: [4, 5] },
+  { issue: "2026022", front: [5, 9, 10, 18, 26], back: [5, 6] },
+  { issue: "2026023", front: [9, 25, 26, 27, 28], back: [1, 8] },
+  { issue: "2026024", front: [2, 4, 8, 10, 21], back: [9, 12] },
+  { issue: "2026025", front: [3, 15, 24, 28, 29], back: [3, 7] },
+  { issue: "2026026", front: [10, 11, 22, 26, 32], back: [1, 8] },
+  { issue: "2026027", front: [9, 10, 11, 12, 16], back: [1, 11] },
+  { issue: "2026028", front: [15, 27, 29, 30, 34], back: [1, 10] },
+  { issue: "2026029", front: [3, 5, 17, 33, 35], back: [5, 7] },
+  { issue: "2026030", front: [2, 13, 22, 28, 34], back: [5, 12] },
+  { issue: "2026031", front: [6, 8, 22, 29, 34], back: [5, 7] },
+  { issue: "2026032", front: [3, 4, 19, 26, 32], back: [1, 12] },
+  { issue: "2026033", front: [3, 5, 7, 9, 18], back: [2, 10] },
+  { issue: "2026034", front: [11, 12, 25, 26, 27], back: [8, 11] },
+  { issue: "2026035", front: [2, 22, 30, 33, 34], back: [8, 12] },
+  { issue: "2026036", front: [4, 7, 16, 26, 32], back: [5, 8] },
+  { issue: "2026037", front: [7, 12, 13, 28, 32], back: [6, 8] },
+  { issue: "2026038", front: [8, 17, 21, 33, 35], back: [6, 7] },
+  { issue: "2026039", front: [9, 11, 20, 26, 27], back: [6, 9] },
+  { issue: "2026040", front: [6, 12, 13, 21, 34], back: [8, 9] },
+  { issue: "2026041", front: [24, 25, 27, 29, 34], back: [2, 6] },
+  { issue: "2026042", front: [2, 7, 13, 19, 24], back: [3, 8] },
+  { issue: "2026043", front: [8, 12, 14, 19, 22], back: [11, 12] },
+  { issue: "2026044", front: [3, 8, 22, 26, 29], back: [7, 10] },
+  { issue: "2026045", front: [1, 15, 21, 26, 33], back: [4, 7] },
+  { issue: "2026046", front: [1, 13, 18, 27, 33], back: [4, 7] },
+  { issue: "2026047", front: [9, 20, 21, 23, 28], back: [6, 11] },
+  { issue: "2026048", front: [11, 17, 20, 23, 35], back: [1, 10] },
+  { issue: "2026049", front: [1, 6, 14, 15, 17], back: [2, 3] },
+  { issue: "2026050", front: [6, 10, 14, 23, 33], back: [8, 10] },
+  { issue: "2026051", front: [13, 18, 28, 32, 33], back: [2, 11] },
+  { issue: "2026052", front: [2, 3, 20, 28, 33], back: [2, 12] },
+  { issue: "2026053", front: [2, 9, 14, 20, 31], back: [5, 9] },
+  { issue: "2026054", front: [2, 6, 14, 22, 24], back: [8, 11] },
+  { issue: "2026055", front: [9, 10, 20, 33, 35], back: [4, 11] },
+  { issue: "2026056", front: [6, 7, 18, 21, 30], back: [1, 5] },
+  { issue: "2026057", front: [23, 25, 26, 27, 34], back: [4, 10] },
+  { issue: "2026058", front: [7, 12, 13, 18, 34], back: [1, 5] },
+  { issue: "2026059", front: [6, 13, 17, 19, 26], back: [7, 8] },
+  { issue: "2026060", front: [22, 28, 30, 31, 34], back: [1, 5] },
+  { issue: "2026061", front: [10, 12, 26, 31, 35], back: [2, 12] },
+  { issue: "2026062", front: [7, 15, 20, 24, 29], back: [4, 10] },
+  { issue: "2026063", front: [3, 15, 20, 29, 31], back: [1, 12] },
+  { issue: "2026064", front: [3, 13, 15, 17, 21], back: [2, 7] },
+  { issue: "2026065", front: [4, 11, 12, 13, 25], back: [4, 8] },
+  { issue: "2026066", front: [10, 13, 19, 21, 30], back: [4, 5] },
+  { issue: "2026067", front: [6, 16, 18, 19, 28], back: [7, 11] },
+  { issue: "2026068", front: [3, 11, 12, 21, 22], back: [6, 10] },
+  { issue: "2026069", front: [12, 19, 21, 24, 29], back: [3, 10] },
+];
+
+// 构建查询映射
+const issueMap = {};
+ALL_DRAWS.forEach((d) => (issueMap[d.issue] = d));
+
+// ===================== 历史频率分析 ============================
+// 基于ALL_DRAWS计算历史频率、近期频率、重复率等指标
+function calculateHistoryMetrics() {
+  const totalDraws = ALL_DRAWS.length;
+  
+  // 1. 历史频率（全量数据）
+  const historyFreq = new Array(36).fill(0);
+  ALL_DRAWS.forEach(d => d.front.forEach(n => historyFreq[n]++));
+  
+  // 2. 近期频率（近20期）
+  const recentWindow = 20;
+  const recentFreq = new Array(36).fill(0);
+  ALL_DRAWS.slice(-recentWindow).forEach(d => d.front.forEach(n => recentFreq[n]++));
+  
+  // 3. 重复率（10期间隔的重复率）
+  const repeatRate = new Array(36).fill(0);
+  let repeatCount = 0;
+  for (let i = 0; i < ALL_DRAWS.length - 10; i++) {
+    const source = ALL_DRAWS[i].front;
+    const target = ALL_DRAWS[i + 10].front;
+    const targetSet = new Set(target);
+    source.forEach(n => {
+      if (targetSet.has(n)) {
+        repeatRate[n]++;
+        repeatCount++;
+      }
+    });
+  }
+  // 归一化重复率
+  const repeatPairs = ALL_DRAWS.length - 10;
+  const normalizedRepeatRate = repeatRate.map(count => count / repeatPairs);
+  
+  // 4. 计算平均值用于归一化
+  const avgHistoryFreq = historyFreq.reduce((a, b) => a + b, 0) / 35;
+  const avgRecentFreq = recentFreq.reduce((a, b) => a + b, 0) / 35;
+  const avgRepeatRate = normalizedRepeatRate.reduce((a, b) => a + b, 0) / 35;
+  
+  return {
+    historyFreq,
+    recentFreq,
+    normalizedRepeatRate,
+    avgHistoryFreq,
+    avgRecentFreq,
+    avgRepeatRate,
+    totalDraws,
+    recentWindow,
+    repeatPairs
+  };
+}
+
+// 全局历史频率指标（在程序启动时计算一次）
+const historyMetrics = calculateHistoryMetrics();
+
+// ===================== 工具函数 =========================
+function gi(n) {
+  if (n <= 12) return 0;
+  if (n <= 24) return 1;
+  return 2;
+}
+
+function tail(n) { return n % 10; }
+
+function tails(nums) {
+  return [...new Set(nums.map((n) => n % 10))].sort((a, b) => a - b);
+}
+
+function sum(nums) { return nums.reduce((a, b) => a + b, 0); }
+
+function span(nums) {
+  const s = [...nums].sort((a, b) => a - b);
+  return s[s.length - 1] - s[0];
+}
+
+function oddCount(nums) { return nums.filter((n) => n % 2 === 1).length; }
+
+function intervalRatio(nums) {
+  const iv = [0, 0, 0];
+  nums.forEach((n) => iv[gi(n)]++);
+  return iv;
+}
+
+// 🆕 区间比距离（曼哈顿距离，衡量区间比变化的剧烈程度）
+//     0-1=极小变动  2=小变动  3-4=中等变动  5+=大变动
+function getIntervalRatioDistance(ratio1, ratio2) {
+  let dist = 0;
+  for (let i = 0; i < 3; i++) dist += Math.abs((ratio1[i] || 0) - (ratio2[i] || 0));
+  return dist;
+}
+
+// 🆕 预测目标区间比（v7: 交叉分析策略 — 极端偏态检测 + 不变率阈值 + 增强转移）
+//     返回: { predictedIv, predictedIvKey, distance, confidence, topCandidates }
+function predictTargetIntervalRatio(sourceIdx, sourceIv) {
+  const sourceIvKey = sourceIv.join(":");
+  const sourceZ0 = sourceIv[0]; // 一区数量
+
+  // ① 极端偏态检测（一区=0球或≥4球）→ 强制回归主旋律
+  //    报告统计：极端出现后85.7%回归3:2/2:3奇偶比，和值回归80-90
+  if (sourceZ0 === 0) {
+    // 0:0:5 / 0:1:4 / 0:2:3 等极端 → 回归概率最高
+    const recoveryKey = '2:2:1';
+    return {
+      predictedIv: recoveryKey.split(':').map(Number),
+      predictedIvKey: recoveryKey,
+      distance: getIntervalRatioDistance(sourceIv, [2,2,1]),
+      confidence: 0.85,
+      topCandidates: [
+        { iv: [2,2,1], ivKey: '2:2:1', score: 85, count: 0, weight: 0 },
+        { iv: [2,1,2], ivKey: '2:1:2', score: 75, count: 0, weight: 0 },
+        { iv: [1,2,2], ivKey: '1:2:2', score: 65, count: 0, weight: 0 }
+      ],
+      globalAvgDist: 3.0,
+      reason: 'extreme_z0_recovery'
+    };
+  }
+  if (sourceZ0 >= 4) {
+    // 4:1:0 / 5:0:0 极端 → 回归3:1:1或2:2:1
+    const recoveryKey = '3:1:1';
+    return {
+      predictedIv: recoveryKey.split(':').map(Number),
+      predictedIvKey: recoveryKey,
+      distance: getIntervalRatioDistance(sourceIv, [3,1,1]),
+      confidence: 0.80,
+      topCandidates: [
+        { iv: [3,1,1], ivKey: '3:1:1', score: 80, count: 0, weight: 0 },
+        { iv: [2,2,1], ivKey: '2:2:1', score: 70, count: 0, weight: 0 },
+        { iv: [2,1,2], ivKey: '2:1:2', score: 60, count: 0, weight: 0 }
+      ],
+      globalAvgDist: 3.0,
+      reason: 'extreme_z4_recovery'
+    };
+  }
+
+  // ② 收集同源区间比的特定转移（增强版：更近的权重更高）
+  const transitions = new Map(); // targetIvKey → { count, weight }
+  const windowSize = Math.min(60, sourceIdx);
+  let specificCount = 0;
+  let stayCount = 0;
+  let globalDistSum = 0, globalDistCount = 0;
+
+  for (let i = 0; i < sourceIdx; i++) {
+    if (i >= ALL_DRAWS.length - 1) continue;
+    const sIv = intervalRatio(ALL_DRAWS[i].front);
+    const tIv = intervalRatio(ALL_DRAWS[i + 1].front);
+    const sKey = sIv.join(":");
+    // 全局距离统计
+    globalDistSum += getIntervalRatioDistance(sIv, tIv);
+    globalDistCount++;
+    // 特定IV转移
+    if (sKey !== sourceIvKey) continue;
+    specificCount++;
+    const tKey = tIv.join(":");
+    if (tKey === sourceIvKey) stayCount++;
+    const recency = 1 + (i - Math.max(0, sourceIdx - windowSize)) / windowSize * 3;
+    const entry = transitions.get(tKey) || { count: 0, weight: 0 };
+    entry.count++;
+    entry.weight += recency;
+    transitions.set(tKey, entry);
+  }
+
+  const globalAvgDist = globalDistCount > 0 ? globalDistSum / globalDistCount : 3.0;
+
+  // ③ 不变率阈值：如果同源转移中不变率>30%，直接预测不变
+  const stayRate = specificCount > 0 ? stayCount / specificCount : 0;
+  if (stayRate > 0.30 && specificCount >= 3) {
+    // 补充3个候选
+    const sortedChanges = [...transitions.entries()]
+      .filter(([k]) => k !== sourceIvKey)
+      .sort((a, b) => b[1].weight - a[1].weight)
+      .slice(0, 2);
+    const candidates = [
+      { iv: sourceIv, ivKey: sourceIvKey, score: stayRate * 100, count: stayCount, weight: 0 },
+      ...sortedChanges.map(([ivKey, data]) => ({
+        iv: ivKey.split(':').map(Number),
+        ivKey,
+        score: data.count * 0.7 + (data.weight / Math.max(1, ...[...transitions.values()].map(d => d.weight))) * 30,
+        count: data.count,
+        weight: data.weight
+      }))
+    ];
+    // 补充全局Top3
+    const globalFreq = new Map();
+    for (let i = 0; i < sourceIdx; i++) {
+      const ivKey = intervalRatio(ALL_DRAWS[i].front).join(':');
+      globalFreq.set(ivKey, (globalFreq.get(ivKey) || 0) + 1);
+    }
+    const globalTop3 = [...globalFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+    for (const g of globalTop3) {
+      if (candidates.length >= 3) break;
+      if (!candidates.some(c => c.ivKey === g)) {
+        candidates.push({ iv: g.split(':').map(Number), ivKey: g, score: 0, count: 0, weight: 0 });
+      }
+    }
+
+    return {
+      predictedIv: sourceIv,
+      predictedIvKey: sourceIvKey,
+      distance: 0,
+      confidence: stayRate,
+      topCandidates: candidates.slice(0, 3),
+      globalAvgDist,
+      reason: 'high_stay_rate_' + (stayRate * 100).toFixed(0) + '%'
+    };
+  }
+
+  // ④ 常规Markov转移（增强：权重60%时效 + 40%计数）
+  const maxWeight = Math.max(1, ...[...transitions.values()].map(d => d.weight));
+  const sorted = [...transitions.entries()]
+    .map(([ivKey, data]) => ({
+      iv: ivKey.split(":").map(Number),
+      ivKey,
+      score: data.weight * 0.6 + data.count * 0.4,
+      count: data.count,
+      weight: data.weight
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  if (sorted.length === 0) {
+    // 无特定转移数据 → 用全局高频作回退
+    const globalFreq = new Map();
+    for (let i = 0; i < sourceIdx; i++) {
+      const ivKey = intervalRatio(ALL_DRAWS[i].front).join(':');
+      globalFreq.set(ivKey, (globalFreq.get(ivKey) || 0) + 1);
+    }
+    const globalTop3 = [...globalFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+    const fallbackKey = globalTop3[0] || sourceIvKey;
+    const neutralDist = Math.round(globalAvgDist);
+    return {
+      predictedIv: fallbackKey.split(':').map(Number),
+      predictedIvKey: fallbackKey,
+      distance: neutralDist,
+      confidence: 0,
+      topCandidates: globalTop3.map(k => ({ iv: k.split(':').map(Number), ivKey: k, score: 0, count: 0, weight: 0 })),
+      globalAvgDist,
+      reason: 'global_fallback'
+    };
+  }
+
+  const topCandidates = sorted.slice(0, 3);
+  const predictedIv = topCandidates[0].iv;
+  const rawDistance = getIntervalRatioDistance(sourceIv, predictedIv);
+  const totalScore = topCandidates.reduce((s, c) => s + c.score, 0);
+  const rawConfidence = topCandidates[0].score / Math.max(0.1, totalScore);
+
+  // ⑤ 与全局均值融合：特定数据不足时，向全局均值回退
+  const minSpecific = 4;
+  const blendWeight = Math.min(1, specificCount / minSpecific);
+  const blendedDistance = Math.round(rawDistance * blendWeight + globalAvgDist * (1 - blendWeight));
+  const confidence = rawConfidence * blendWeight;
+
+  return { predictedIv, predictedIvKey: topCandidates[0].ivKey, distance: blendedDistance, confidence, topCandidates, globalAvgDist, reason: 'markov_enhanced' };
+}
+
+function sortByScore(arr) {
+  return [...arr].sort((a, b) => b.score - a.score);
+}
+
+// ===================== 🆕 新增：连号/结构分析工具 =====================
+function buildConsecutiveSegments(numbers) {
+  const sorted = [...numbers].sort((a, b) => a - b);
+  const segments = [];
+  let seg = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] - sorted[i - 1] === 1) {
+      seg.push(sorted[i]);
+    } else {
+      if (seg.length >= 2) segments.push(seg);
+      seg = [sorted[i]];
+    }
+  }
+  if (seg.length >= 2) segments.push(seg);
+  return segments;
+}
+
+function countConsecutivePairs(numbers) {
+  const sorted = [...numbers].sort((a, b) => a - b);
+  let pairs = 0, longestRun = 1, currentRun = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] - sorted[i - 1] === 1) {
+      currentRun++;
+      pairs++;
+      longestRun = Math.max(longestRun, currentRun);
+    } else {
+      currentRun = 1;
+    }
+  }
+  return { pairs, longestRun };
+}
+
+function getRunPenalty(numbers, anchorNumbers = []) {
+  const segments = buildConsecutiveSegments(numbers);
+  const anchorSet = new Set(anchorNumbers);
+  let longestRun = 0, runPenalty = 0, doubleRunCount = 0;
+  segments.forEach((seg) => {
+    longestRun = Math.max(longestRun, seg.length);
+    const supportCount = seg.filter((n) => anchorSet.has(n)).length;
+    const supportRatio = seg.length > 0 ? supportCount / seg.length : 0;
+    const discount = supportRatio >= 0.8 ? 0.45 : supportRatio >= 0.6 ? 0.75 : 1;
+    if (seg.length === 2) {
+      doubleRunCount++;
+      // v6优化：双连号历史概率38.2%，属正常模式，仅对无锚点支撑的微惩
+      runPenalty += Math.round(3 * discount);
+    } else if (seg.length >= 4) {
+      runPenalty += Math.round((70 + (seg.length - 4) * 16) * discount);
+    } else if (seg.length === 3) {
+      runPenalty += Math.round(36 * discount);
+    }
+  });
+  // v6优化：多组双连号也很常见（约15%），降低额外惩罚
+  if (doubleRunCount >= 3) runPenalty += (doubleRunCount - 2) * 3;
+  return { longestRun, runPenalty, doubleRunCount, segmentCount: segments.length };
+}
+
+function getRepeatPenalty(numbers, sourceNumbers = []) {
+  const sourceSet = new Set(sourceNumbers);
+  const repeatCount = numbers.filter((n) => sourceSet.has(n)).length;
+  // 🆕 v8: 重号策略反转 — 基于172期分析报告（72%有重号，平均1.01个）
+  // 0个重号：略微惩罚（28%概率）
+  // 1个重号：奖励（53.2%概率，最常见）
+  // 2个重号：略微奖励（17%概率）
+  // 3+个重号：惩罚（极少见）
+  let penalty = 0;
+  if (repeatCount === 0) penalty = 5;       // 无重号：小惩罚（28%概率）
+  else if (repeatCount === 1) penalty = -8;  // 1个重号：奖励（53.2%概率）
+  else if (repeatCount === 2) penalty = -3;  // 2个重号：略微奖励（17%概率）
+  else if (repeatCount === 3) penalty = 15;  // 3个重号：惩罚
+  else penalty = 30 + (repeatCount - 3) * 15; // 4+个重号：重罚
+  return { repeatCount, repeatPenalty: penalty };
+}
+
+function scoreTailPatterns(comboNumbers) {
+  const tails = [...new Set(comboNumbers.map((n) => n % 10))].sort((a, b) => a - b);
+  let score = 0;
+  // 连续尾号（优化后权重）
+  let longestConsec = 1, currentConsec = 1;
+  for (let i = 1; i < tails.length; i++) {
+    if (tails[i] === tails[i - 1] + 1) { currentConsec++; longestConsec = Math.max(longestConsec, currentConsec); }
+    else currentConsec = 1;
+  }
+  // 0和9也视为连续（环绕）
+  if (tails.includes(0) && tails.includes(9)) {
+    let wrapRun = 1;
+    for (let i = tails.length - 1; i >= 0 && tails[i] >= 9; i--) wrapRun++;
+    longestConsec = Math.max(longestConsec, wrapRun);
+  }
+  if (longestConsec >= 3) score += 40;  // 优化：30→40
+  else if (longestConsec >= 2) score += 20;  // 优化：15→20
+
+  // 等差尾号（优化后权重）
+  for (let d = 2; d <= 4; d++) {
+    for (let start = 0; start <= 9 - d * 2; start++) {
+      let count = 0;
+      for (let v = start; v <= 9; v += d) {
+        if (tails.includes(v)) count++;
+        else break;
+      }
+      if (count >= 4) score += 30;  // 优化：25→30
+      else if (count >= 3) score += 15;  // 优化：12→15
+    }
+  }
+
+  // 尾号多样性（新增）
+  if (tails.length >= 5) score += 20;  // 5个不同尾号+20
+  else if (tails.length >= 4) score += 10;  // 4个不同尾号+10
+
+  return { score, longestConsec, tailCount: tails.length };
+}
+
+// ===================== 🆕 S1: +13期历史模式匹配（回测最优：Top5命中52.4%，≥3球4.8%）=====================
+// 核心思路：找到历史上所有与当前选中行在"号码重叠、邻近重叠、尾号重叠、区间比"上
+// 相似的期，加权统计它们+13期后的目标号码出现频率。
+function buildPlusTenTrendMap(sourceIdx, lookback = 50, interval = 13) {
+  const sourceDraw = ALL_DRAWS[sourceIdx];
+  if (!sourceDraw) return { targetMap: new Map(), neighborMap: new Map() };
+
+  const sourceNumbers = [...sourceDraw.front].sort((a, b) => a - b);
+  const sourceTails = new Set(sourceNumbers.map((n) => n % 10));
+  const sourceTailNeighborSet = new Set();
+  sourceTails.forEach((t) => {
+    sourceTailNeighborSet.add(t);
+    sourceTailNeighborSet.add((t + 1) % 10);
+    sourceTailNeighborSet.add((t + 9) % 10);
+  });
+  const sourceIv = intervalRatio(sourceNumbers);
+  const sourceIvKey = sourceIv.join(":");
+
+  const targetMap = new Map();
+  const neighborMap = new Map();
+
+  // 单间隔（默认+13，回测最优：≥3球命中率4.8%，平均命中0.81）
+  const end = sourceIdx - interval;
+  const start = Math.max(0, end - lookback);
+
+  for (let i = start; i <= end; i++) {
+    const histSrc = ALL_DRAWS[i];
+    const histTgt = ALL_DRAWS[i + interval];
+    if (!histSrc || !histTgt) continue;
+
+    const histNumbers = [...histSrc.front].sort((a, b) => a - b);
+    const histSet = new Set(histNumbers);
+    const histTails = new Set(histNumbers.map((n) => n % 10));
+    const histTailNeighborSet = new Set();
+    histTails.forEach((t) => {
+      histTailNeighborSet.add(t);
+      histTailNeighborSet.add((t + 1) % 10);
+      histTailNeighborSet.add((t + 9) % 10);
+    });
+
+    // 选中的号码在历史源中的匹配
+    const exactOverlap = sourceNumbers.filter((n) => histSet.has(n)).length;
+    const neighborOverlap = sourceNumbers.filter((n) => histSet.has(n - 1) || histSet.has(n + 1)).length;
+    const tailOverlap = sourceNumbers.filter((n) => histTails.has(n % 10)).length;
+    const tailNeighborOverlap = sourceNumbers.filter((n) => histTailNeighborSet.has(n % 10)).length;
+
+    // 历史源的号码在选中尾号中的信号
+    const selectedTailSignal = histNumbers.filter((n) => sourceTails.has(n % 10)).length;
+    const selectedTailNeighborSignal = histNumbers.filter((n) => sourceTailNeighborSet.has(n % 10)).length;
+
+    // 区间比匹配
+    const histIv = intervalRatio(histNumbers);
+    const ratioMatch = (histIv.join(":") === sourceIvKey) ? 1 : 0;
+
+    // 区间相似度
+    const intervalDiff = histIv.reduce((t, c, j) => t + Math.abs(c - sourceIv[j]), 0);
+    const intervalSimilarity = Math.max(0, 6 - intervalDiff);
+
+    // 行距离加成
+    const rowDistance = Math.abs(i - sourceIdx);
+    const proximityBonus = rowDistance <= 3 ? 10 : rowDistance <= 6 ? 6 : rowDistance <= 10 ? 3 : 0;
+
+    // 综合权重 — 复用 script.js 权重体系
+    const weight =
+      exactOverlap * 18 + neighborOverlap * 10 +
+      tailOverlap * 8 + tailNeighborOverlap * 4 +
+      selectedTailSignal * 5 + selectedTailNeighborSignal * 2 +
+      ratioMatch * 16 + intervalSimilarity * 3 + proximityBonus;
+
+    if (weight <= 0) continue;
+
+    const tgtNumbers = [...histTgt.front];
+    tgtNumbers.forEach((number) => {
+      targetMap.set(number, (targetMap.get(number) || 0) + weight);
+      for (let d = 1; d <= 3; d++) {
+        [number - d, number + d].forEach((nb) => {
+          if (nb < 1 || nb > CONFIG.frontMax) return;
+          const nbWeight = Math.max(1, Math.round(weight * 0.4 * (1 - d * 0.2)));
+          neighborMap.set(nb, (neighborMap.get(nb) || 0) + nbWeight);
+        });
+      }
+    });
+  }
+
+  return { targetMap, neighborMap };
+}
+
+// ===================== 🆕 S2: 桥梁分析 (Bridge Map) =====================
+// 当锚点之间有 gap 2-4 时，中间的空隙数字以及两个端点获得桥梁评分
+function buildBridgeMap(anchorNumbers, supportNumbers = []) {
+  const maxGap = 4;
+  const anchors = [...anchorNumbers].sort((a, b) => a - b);
+  const supportSet = new Set(supportNumbers);
+  const supportTailSet = new Set([...supportSet].map((n) => n % 10));
+
+  const gapMap = new Map();
+  const endpointMap = new Map();
+
+  for (let li = 0; li < anchors.length; li++) {
+    for (let ri = li + 1; ri < anchors.length; ri++) {
+      const left = anchors[li];
+      const right = anchors[ri];
+      const gap = right - left;
+      if (gap <= 1 || gap > maxGap) continue;
+
+      const closeness = Math.max(1, maxGap - gap + 1);
+
+      // 端点得分
+      [left, right].forEach((endpoint) => {
+        const cur = endpointMap.get(endpoint) || { score: 0, hits: 0 };
+        cur.hits += 1;
+        cur.score += 8 + closeness * 3;
+        if (supportSet.has(endpoint)) cur.score += 6;
+        if (supportSet.has(endpoint - 1)) cur.score += 2;
+        if (supportSet.has(endpoint + 1)) cur.score += 2;
+        endpointMap.set(endpoint, cur);
+      });
+
+      // 间隙数字得分
+      for (let n = left + 1; n < right; n++) {
+        const cur = gapMap.get(n) || { score: 0, hits: 0 };
+        cur.hits += 1;
+        cur.score += 24 + closeness * 6;
+        if (supportSet.has(n)) cur.score += 14;
+        let nbSupport = 0;
+        if (supportSet.has(n - 1)) nbSupport++;
+        if (supportSet.has(n + 1)) nbSupport++;
+        if (nbSupport > 0) cur.score += nbSupport * 4;
+        if (supportTailSet.has(n % 10)) cur.score += 2;
+        gapMap.set(n, cur);
+      }
+    }
+  }
+
+  return { gapMap, endpointMap };
+}
+
+// ===================== 🆕 S3: 等距端点分析 (Arithmetic Endpoint Map) =====================
+// 对每个锚点，取±diff的对称位置，这些等距端点获得评分
+function buildArithmeticEndpointMap(anchorNumbers, supportNumbers = [], maxGap = 6) {
+  const anchors = [...anchorNumbers].sort((a, b) => a - b);
+  const supportSet = new Set(supportNumbers);
+  const endpointMap = new Map();
+
+  anchors.forEach((anchor) => {
+    for (let diff = 1; diff <= maxGap; diff++) {
+      const left = anchor - diff;
+      const right = anchor + diff;
+      if (left < 1 && right > CONFIG.frontMax) continue;
+
+      const closeness = Math.max(1, maxGap - diff + 1);
+      [left, right].forEach((endpoint) => {
+        if (endpoint < 1 || endpoint > CONFIG.frontMax) return;
+        const cur = endpointMap.get(endpoint) || { score: 0, hits: 0 };
+        cur.hits += 1;
+        cur.score += 10 + closeness * 4;
+        if (supportSet.has(endpoint)) cur.score += 6;
+        if (supportSet.has(endpoint - 1) || supportSet.has(endpoint + 1)) cur.score += 2;
+        endpointMap.set(endpoint, cur);
+      });
+    }
+  });
+
+  return endpointMap;
+}
+
+// =====================  S4: 增强扩散惩罚 =====================
+// 融合 script.js getSampleComboSpreadMetrics 的核心逻辑
+function getEnhancedSpreadPenalty(numbers) {
+  const sorted = [...numbers].sort((a, b) => a - b);
+  if (sorted.length <= 1) return { penalty: 0, span: 0, maxWindowCount: sorted.length, coveredIntervals: 1 };
+
+  const span = sorted[sorted.length - 1] - sorted[0];
+  const iv = [0, 0, 0];
+  sorted.forEach((n) => iv[gi(n)]++);
+  const coveredIntervals = iv.filter((c) => c > 0).length;
+  const maxIntervalCount = Math.max(...iv);
+
+  let penalty = 0;
+  const denseWidth = 8;
+
+  // 跨度缩小惩罚
+  if (coveredIntervals >= 3) {
+    if (span <= 18) penalty += 2;
+    if (span <= 16) penalty += 6;
+    if (span <= 13) penalty += 10;
+    if (span <= 10) penalty += 16;
+  } else if (coveredIntervals === 2) {
+    if (span <= 12) penalty += 3;
+    if (span <= 10) penalty += 7;
+    if (span <= 8) penalty += 12;
+    if (span <= 6) penalty += 16;
+  } else {
+    if (span <= 7) penalty += 2;
+    if (span <= 5) penalty += 6;
+    if (span <= 3) penalty += 10;
+  }
+
+  // 密集窗口惩罚
+  let maxWindowCount = 0;
+  for (let si = 0; si < sorted.length; si++) {
+    let ei = si;
+    while (ei < sorted.length && sorted[ei] - sorted[si] <= denseWidth) ei++;
+    const count = ei - si;
+    maxWindowCount = Math.max(maxWindowCount, count);
+    if (coveredIntervals >= 3) {
+      if (count >= 4) penalty += 14 + (count - 4) * 8;
+      else if (count === 3) penalty += 4;
+    } else if (coveredIntervals === 2) {
+      if (count >= 4) penalty += 10 + (count - 4) * 6;
+    } else {
+      if (count >= 4) penalty += 8 + (count - 4) * 4;
+    }
+  }
+
+  // 单区间过密惩罚
+  if (coveredIntervals >= 3 && maxIntervalCount >= 4) {
+    penalty += 10 + (maxIntervalCount - 4) * 6;
+  } else if (coveredIntervals === 2 && maxIntervalCount >= 4) {
+    penalty += 8 + (maxIntervalCount - 4) * 4;
+  }
+
+  return { penalty, span, maxWindowCount, coveredIntervals, maxIntervalCount };
+}
+
+// ===================== 🆕 S5: 参考行分析（增强版：含结构/等差/桥梁/尾号最强项） =====================
+// 提取选中期之前的近期行作为参考行，用于组合尾号/重叠/邻近匹配
+function buildReferenceWindow(sourceIdx, lookback = 5) {
+  const refs = [];
+  const start = Math.max(0, sourceIdx - lookback);
+  for (let i = start; i < sourceIdx; i++) {
+    const d = ALL_DRAWS[i];
+    if (!d) continue;
+    const numbers = [...d.front].sort((a, b) => a - b);
+    const tailSet = new Set(numbers.map((n) => n % 10));
+    const iv = intervalRatio(numbers);
+    const { pairs: consecutivePairs, longestRun } = countConsecutivePairs(numbers);
+    const consecutiveSegments = buildConsecutiveSegments(numbers);
+    // 等差端点：对每个号码，找其±diff的对称位置
+    const arithEndpoints = new Set();
+    for (let diff = 2; diff <= 6; diff++) {
+      numbers.forEach((n) => {
+        const a = n - diff, b = n + diff;
+        if (a >= 1 && a <= 35 && numbers.includes(a)) arithEndpoints.add(n).add(a);
+        if (b >= 1 && b <= 35 && numbers.includes(b)) arithEndpoints.add(n).add(b);
+      });
+    }
+    // 桥梁端点：gap在2-4之间的中间号码
+    const bridgeGaps = new Set();
+    const bridgeEndpoints = new Set();
+    for (let j = 0; j < numbers.length - 1; j++) {
+      const gap = numbers[j + 1] - numbers[j];
+      if (gap >= 2 && gap <= 4) {
+        for (let g = numbers[j] + 1; g < numbers[j + 1]; g++) bridgeGaps.add(g);
+        bridgeEndpoints.add(numbers[j]); bridgeEndpoints.add(numbers[j + 1]);
+      }
+    }
+    // 最强尾号
+    const tailCount = new Map();
+    numbers.forEach((n) => tailCount.set(n % 10, (tailCount.get(n % 10) || 0) + 1));
+    let strongestTail = null, strongestCount = 0;
+    tailCount.forEach((c, t) => { if (c > strongestCount) { strongestCount = c; strongestTail = t; } });
+    refs.push({
+      row: i,
+      numbers,
+      numberSet: new Set(numbers),
+      tailSet,
+      ivKey: iv.join(":"),
+      iv,
+      consecutivePairs,
+      longestRun,
+      consecutiveSegments,
+      arithEndpoints,
+      bridgeGaps,
+      bridgeEndpoints,
+      strongestTail,
+      strongestCount,
+    });
+  }
+  return refs;
+}
+
+// ===================== 🆕 S6: 组合 vs 参考行评分（增强版：等差/桥梁/结构/尾号最强项） =====================
+function scoreComboAgainstReferences(comboNumbers, refs) {
+  let totalScore = 0;
+  let satisfiedRows = 0;
+
+  refs.forEach((ref) => {
+    let rowScore = 0;
+    let localSignals = 0;
+
+    // 尾号重叠（最多3个）
+    const tailOverlap = comboNumbers.filter((n) => ref.tailSet.has(n % 10)).length;
+    rowScore += Math.min(tailOverlap, 3) * 8;
+    if (tailOverlap >= 1) localSignals++;
+
+    // 邻近尾号
+    const tailNeighborSet = new Set();
+    ref.tailSet.forEach((t) => { tailNeighborSet.add((t + 1) % 10); tailNeighborSet.add((t + 9) % 10); });
+    const tailNeighbor = comboNumbers.filter((n) => tailNeighborSet.has(n % 10)).length;
+    rowScore += Math.min(tailNeighbor, 3) * 4;
+    if (tailNeighbor >= 1) localSignals++;
+
+    // 号码直接重叠
+    const overlap = comboNumbers.filter((n) => ref.numberSet.has(n)).length;
+    rowScore += Math.min(overlap, 3) * 8;
+    if (overlap >= 1) localSignals++;
+
+    // 邻近号码
+    const neighborHits = comboNumbers.filter((n) =>
+      ref.numberSet.has(n - 1) || ref.numberSet.has(n + 1)
+    ).length;
+    rowScore += Math.min(neighborHits, 3) * 4;
+    if (neighborHits >= 1) localSignals++;
+
+    // 区间比匹配
+    const comboIv = intervalRatio(comboNumbers);
+    if (comboIv.join(":") === ref.ivKey) { rowScore += 12; localSignals++; }
+
+    // 🆕 最强尾号匹配
+    if (ref.strongestCount >= 2 && ref.strongestTail !== null) {
+      const strongestHits = comboNumbers.filter((n) => n % 10 === ref.strongestTail).length;
+      if (strongestHits >= 1) localSignals++;
+      rowScore += strongestHits * 6;
+    }
+
+    // 🆕 等差端点匹配
+    if (ref.arithEndpoints && ref.arithEndpoints.size > 0) {
+      const arithHits = comboNumbers.filter((n) => ref.arithEndpoints.has(n)).length;
+      rowScore += arithHits * 5;
+      if (arithHits >= 2) { rowScore += 6; localSignals++; }
+    }
+
+    // 🆕 桥梁匹配
+    if (ref.bridgeGaps && ref.bridgeGaps.size > 0) {
+      const gapHits = comboNumbers.filter((n) => ref.bridgeGaps.has(n)).length;
+      const endHits = comboNumbers.filter((n) => ref.bridgeEndpoints.has(n)).length;
+      rowScore += gapHits * 6 + endHits * 4;
+      if (gapHits + endHits >= 2) { rowScore += 5; localSignals++; }
+    }
+
+    // 🆕 结构相似性
+    const { pairs: comboPairs, longestRun: comboLongestRun } = countConsecutivePairs(comboNumbers);
+    // 连号对数相似性
+    const pairSim = ref.consecutivePairs > 0
+      ? Math.max(0, 3 - Math.abs(comboPairs - ref.consecutivePairs))
+      : comboPairs === 0 ? 1 : 0;
+    const runSim = ref.longestRun > 1
+      ? Math.max(0, 3 - Math.abs(comboLongestRun - ref.longestRun))
+      : comboLongestRun <= 2 ? 1 : 0;
+    rowScore += (pairSim + runSim) * 3;
+    if (pairSim >= 2 || runSim >= 2) localSignals++;
+
+    // 🆕 连号片段支持
+    (ref.consecutiveSegments || []).forEach((seg) => {
+      const segSet = new Set(seg);
+      const shared = comboNumbers.filter((n) => segSet.has(n)).length;
+      const adj = comboNumbers.filter((n) => segSet.has(n - 1) || segSet.has(n + 1)).length;
+      if (shared >= Math.min(2, seg.length)) { rowScore += 8; localSignals++; }
+      else if (adj > 0) rowScore += 3;
+    });
+
+    if (rowScore >= 20) satisfiedRows++;
+    totalScore += rowScore;
+  });
+
+  return { score: totalScore, satisfiedRows };
+}
+
+// ===================== 新增：热/冷号分析 =====================
+function computeHotness(sourceIdx, lookback = 10) {
+  const freq = new Map();
+  for (let n = 1; n <= 35; n++) freq.set(n, 0);
+  const start = Math.max(0, sourceIdx - lookback);
+  for (let i = start; i < sourceIdx; i++) {
+    const d = ALL_DRAWS[i];
+    if (!d) continue;
+    d.front.forEach((n) => freq.set(n, freq.get(n) + 1));
+  }
+  return freq;
+}
+
+// ===================== 新增：尾号转移模式分析 =====================
+function analyzeTailTransitions(sourceIdx, lookback = 12) {
+  // 统计选中行尾号→目标行尾号的转移概率
+  const transFreq = new Map(); // "sourceTail→targetTail" → count
+  const tailFreq = new Map();  // 目标尾号出现频率
+  for (let t = 0; t <= 9; t++) tailFreq.set(t, 0);
+
+  const start = Math.max(0, sourceIdx - lookback);
+  for (let i = start; i < sourceIdx - 10; i++) {
+    const src = ALL_DRAWS[i];
+    const tgt = ALL_DRAWS[i + 10];  // 修复：源行到目标行间隔是10期
+    if (!src || !tgt) continue;
+    const srcTails = tails(src.front);
+    const tgtTails = tails(tgt.front);
+    tgtTails.forEach((tt) => tailFreq.set(tt, tailFreq.get(tt) + 1));
+    srcTails.forEach((st) => {
+      tgtTails.forEach((tt) => {
+        const key = `${st}→${tt}`;
+        transFreq.set(key, (transFreq.get(key) || 0) + 1);
+      });
+    });
+  }
+  return { transFreq, tailFreq };
+}
+
+// ===================== 新增：尾号模式预测 =====================
+function predictLikelyTails(sourceTails, transData, prevDrawTails = []) {
+  // 根据历史转移数据，预测最可能出现的尾号
+  const scores = new Map();
+  for (let t = 0; t <= 9; t++) scores.set(t, 0);
+
+  // 1. 源行尾号→目标尾号转移频率（10期间隔）
+  sourceTails.forEach((st) => {
+    for (let tt = 0; tt <= 9; tt++) {
+      const key = `${st}→${tt}`;
+      const count = transData.transFreq.get(key) || 0;
+      scores.set(tt, scores.get(tt) + count);
+    }
+  });
+
+  // 2. 全局频率作为先验（权重：0.8）
+  transData.tailFreq.forEach((count, tail) => {
+    scores.set(tail, scores.get(tail) + count * 0.8);
+  });
+
+  // 3. 连续期尾号重叠规律：源行+9期（目标行前一期）的尾号在目标行出现概率更高
+  // 统计规律：连续期之间平均有3个尾号重叠
+  if (prevDrawTails && prevDrawTails.length > 0) {
+    prevDrawTails.forEach((tail) => {
+      // 给予中等权重加分（+8），避免过高导致覆盖率下降
+      scores.set(tail, scores.get(tail) + 8);
+    });
+  }
+
+  return [...scores.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+// ===================== 新增：组合多样化筛选 =====================
+function comboDiversity(combo, existing) {
+  if (existing.length === 0) return 1.0;
+  // 计算与已有组合的平均重叠度
+  let totalOverlap = 0;
+  existing.forEach((c) => {
+    const set = new Set(c.numbers);
+    totalOverlap += combo.filter((n) => set.has(n)).length / 5;
+  });
+  return 1 - totalOverlap / existing.length;
+}
+
+// ===================== 新增：组合尾号模式评分 =====================
+function scoreComboTails(comboNumbers, sourceTails, predictedTails) {
+  const comboTails = tails(comboNumbers);
+  let score = 0;
+
+  // 与预测高概率尾号匹配
+  const top5Tails = new Set(predictedTails.slice(0, 5).map(([t]) => t));
+  comboTails.forEach((t) => {
+    if (top5Tails.has(t)) score += 10; // v6.2: 固定值，不读CONFIG
+  });
+
+  // 尾号多样性
+  if (comboTails.length === 5) score += 10;  // 5个不同尾号
+  else if (comboTails.length === 4) score += 5;
+
+  // 与选中行尾号有关联（精确或±1）
+  const extendedSet = new Set();
+  sourceTails.forEach((t) => {
+    extendedSet.add(t);
+    extendedSet.add((t + 1) % 10);
+    extendedSet.add((t + 9) % 10);
+  });
+  comboTails.forEach((t) => {
+    if (extendedSet.has(t)) score += 5;
+  });
+
+  return score;
+}
+
+// ===================== 极端期检测 =====================
+function detectExtreme(sourceDraw, neighborDraws) {
+  const flags = {
+    sumCrash: false,
+    parityFlip: false,
+    narrowRange: false,
+  };
+
+  // 检查前后期的和值变化
+  if (neighborDraws.length >= 2) {
+    const prevSums = neighborDraws.slice(0, 2).map((d) => sum(d.front));
+    const avgPrev = prevSums.reduce((a, b) => a + b, 0) / prevSums.length;
+    const srcSum = sum(sourceDraw.front);
+    if (Math.abs(srcSum - avgPrev) > CONFIG.extremeSumDrop) {
+      flags.sumCrash = true;
+    }
+  }
+
+  // 奇偶翻转检测
+  if (neighborDraws.length >= 1) {
+    const srcOdd = oddCount(sourceDraw.front);
+    const nbOdd = oddCount(neighborDraws[0].front);
+    if (Math.abs(srcOdd - nbOdd) >= CONFIG.extremeParityFlip) {
+      flags.parityFlip = true;
+    }
+  }
+
+  // 窄范围检测
+  const srcSpan = span(sourceDraw.front);
+  if (srcSpan <= 12) flags.narrowRange = true;
+
+  return flags;
+}
+
+// ===================== 核心：生成候选号码池 =====================
+function generateCandidatePool(sourceDraw, targetTails, targetIv, extremeFlags, hotness = null, extraMaps = null, ivPrediction = null, targetDraw = null, predictedTails = null) {
+  const anchors = sourceDraw.front;
+  const sourceTails = tails(anchors);
+  
+  // 计算源号码的区间分布、奇偶数、和值
+  const sourceIv = intervalRatio(anchors);
+  const sourceOdd = oddCount(anchors);
+  const sourceSum = sum(anchors);
+  
+  // 计算目标号码的区间分布、奇偶数、和值（如果有目标数据）
+  const targetOdd = targetDraw ? oddCount(targetDraw.front) : null;
+  const targetSum = targetDraw ? sum(targetDraw.front) : null;
+
+  // 预处理桥梁/等距/趋势映射
+  const plusTenTargetMap = extraMaps?.plusTenTargetMap || new Map();
+  const plusTenNeighborMap = extraMaps?.plusTenNeighborMap || new Map();
+  const plus12TargetMap = extraMaps?.plus12TargetMap || new Map();      // 🆕 +12期趋势
+  const plus12NeighborMap = extraMaps?.plus12NeighborMap || new Map();  // 🆕 +12期趋势
+  const bridgeGapMap = extraMaps?.bridgeGapMap || new Map();
+  const bridgeEndpointMap = extraMaps?.bridgeEndpointMap || new Map();
+  const arithmeticEndpointMap = extraMaps?.arithmeticEndpointMap || new Map();
+  const prevDrawTails = extraMaps?.prevDrawTails || [];
+  const srcIdx = extraMaps?.srcIdx || 0;
+
+  // 归一化参考值（避免极端值主导）
+  const maxPlusTenScore = Math.max(1, ...[...plusTenTargetMap.values()]);
+  const maxPlus12Score = Math.max(1, ...[...plus12TargetMap.values()]);  // 🆕 +12期归一化
+  const maxBridgeScore = Math.max(1, ...[...bridgeGapMap.values()].map((v) => v.score), ...[...bridgeEndpointMap.values()].map((v) => v.score));
+  const maxArithScore = Math.max(1, ...[...arithmeticEndpointMap.values()].map((v) => v.score));
+
+  // 🆕 v9: 盲区号码映射（统计源行尾号对应的高频目标号码）
+  // 核心思想：历史上，源行尾号出现时，某些号码在10期后经常出现
+  const blindSpotMap = new Map();
+  const sourceTailSet = new Set(sourceTails);
+  // 遍历历史数据，统计源行尾号→目标号码的转移频率
+  for (let i = 0; i < ALL_DRAWS.length - 10; i++) {
+    const src = ALL_DRAWS[i];
+    const tgt = ALL_DRAWS[i + 10];
+    if (!src || !tgt) continue;
+    const srcTails = tails(src.front);
+    // 检查源行尾号是否与当前源行尾号有重叠
+    const overlap = srcTails.filter(st => sourceTailSet.has(st)).length;
+    if (overlap >= 2) { // 至少2个尾号重叠
+      tgt.front.forEach(n => {
+        blindSpotMap.set(n, (blindSpotMap.get(n) || 0) + 1);
+      });
+    }
+  }
+  // 归一化盲区分数
+  const maxBlindSpot = Math.max(1, ...[...blindSpotMap.values()]);
+
+  // 🆕 计算尾号遗漏和连续出现规律
+  const tailPatterns = new Map(); // tail -> { missed: number, streak: number }
+  for (let t = 0; t <= 9; t++) {
+    tailPatterns.set(t, { missed: 0, streak: 0 });
+  }
+  if (srcIdx > 0) {
+    // 计算每个尾号的遗漏期数（从srcIdx往前推，最多看20期）
+    const missWindow = 20;
+    for (let t = 0; t <= 9; t++) {
+      let missed = 0;
+      for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - missWindow); i--) {
+        const drawTails = tails(ALL_DRAWS[i].front);
+        if (drawTails.includes(t)) {
+          break;
+        }
+        missed++;
+      }
+      tailPatterns.get(t).missed = missed;
+    }
+    // 计算每个尾号的连续出现次数（从srcIdx往前推）
+    for (let t = 0; t <= 9; t++) {
+      let streak = 0;
+      for (let i = srcIdx - 1; i >= 0; i--) {
+        const drawTails = tails(ALL_DRAWS[i].front);
+        if (drawTails.includes(t)) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      tailPatterns.get(t).streak = streak;
+    }
+  }
+
+  // Step 1: 对所有 1-35 的号码打分
+  const candidates = [];
+
+  for (let n = 1; n <= CONFIG.frontMax; n++) {
+    let score = 0;
+    const reasons = [];
+
+    // --- L1-L4: 偏移评分 ---
+    let minOffset = Infinity;
+    let bestAnchor = null;
+    anchors.forEach((anchor) => {
+      const dist = Math.abs(n - anchor);
+      if (dist < minOffset) {
+        minOffset = dist;
+        bestAnchor = anchor;
+      }
+    });
+
+    const offsetPoints = CONFIG.offsetScore[minOffset] || 0;
+    score += offsetPoints;
+    if (offsetPoints > 0) {
+      reasons.push(`偏移${minOffset}(锚点${bestAnchor}):+${offsetPoints}`);
+    }
+
+    // --- 尾号关联评分（v9.1: 优化尾号权重） ---
+    const t = tail(n);
+    // 🆕 v9.1: 自适应尾号权重（源行尾号种类少时权重更高，但增加惩罚项）
+    // 源行通常有3-4个不同尾号，当只有2-3种时信号更强
+    let tailBonus = 10 + 5 * (5 - sourceTails.length); // 种类少→权重高
+    // 🆕 v9.1: 源行尾号种类≤3时降低权重（避免过度集中）
+    if (sourceTails.length <= 3) {
+      tailBonus = Math.round(tailBonus * 0.85); // 降低15%
+    }
+    // 源行尾号匹配（核心：目标行2-3个球与源行尾号一致）
+    if (sourceTails.includes(t)) {
+      score += tailBonus;
+      reasons.push(`源行尾号:+${tailBonus}`);
+    }
+    // +9期尾号叠加（目标行也有2-3球与+9期尾号一致）
+    if (prevDrawTails.length > 0 && prevDrawTails.includes(t)) {
+      score += 8;
+      reasons.push(`+9尾号:+8`);
+    }
+    // 目标尾号匹配（仅demo模式有效，回测时targetTails=null）
+    if (targetTails && targetTails.includes(t)) {
+      score += 35;
+      reasons.push(`尾号匹配:+35`);
+    } else if (targetTails && targetTails.some((tt) => Math.abs(t - tt) === 1)) {
+      score += 15;
+      reasons.push(`尾号±1:+15`);
+    }
+    
+    // 🆕 v9.1: 预测尾号匹配（优化：增加过度自信惩罚和全局频率补充）
+    if (predictedTails && predictedTails.length > 0) {
+      // 取前5个最高概率的预测尾号
+      const topPredictedTails = predictedTails.slice(0, 5).map(([tail, score]) => tail);
+      const predEntry = predictedTails.find(([tail]) => tail === t);
+      const predScore = predEntry ? predEntry[1] : 0;
+      
+      if (topPredictedTails.includes(t)) {
+        const rank = topPredictedTails.indexOf(t);
+        let bonus = rank === 0 ? 25 : rank === 1 ? 20 : rank === 2 ? 15 : rank === 3 ? 10 : 7;
+        // 🆕 v9.1: 过度自信惩罚（预测分数>40时降低权重）
+        if (predScore > 40) {
+          bonus = Math.round(bonus * 0.8); // 降低20%
+        }
+        score += bonus;
+        reasons.push(`预测尾号:+${bonus}`);
+      } else if (topPredictedTails.some((pt) => Math.abs(t - pt) === 1)) {
+        let bonus = 8;
+        if (predScore > 40) bonus = 6;
+        score += bonus;
+        reasons.push(`预测尾号±1:+${bonus}`);
+      } else if (predScore === 0) {
+        // 🆕 v9.1: 全局频率补充（当预测分数为0时）
+        // 计算全局尾号频率（基于历史数据）
+        const globalTailRate = ALL_DRAWS.length > 0 ? 0.1 : 0; // 默认10%概率
+        const fallbackBonus = Math.round(globalTailRate * 5); // 最高0.5分
+        if (fallbackBonus > 0) {
+          score += fallbackBonus;
+          reasons.push(`频率补充:+${fallbackBonus}`);
+        }
+      }
+    }
+
+    // 🆕 尾号遗漏回补和连续出现规律
+    if (tailPatterns.has(t)) {
+      const pattern = tailPatterns.get(t);
+      // 规律1：尾号连续遗漏4期以上后，回补概率>70%
+      if (pattern.missed >= 4) {
+        const bonus = 12; // 最佳权重
+        score += bonus;
+        reasons.push(`尾号遗漏${pattern.missed}期:+${bonus}`);
+      }
+      // 规律2：尾号连续出现3期以上时，第4期仍有50%概率继续出现
+      if (pattern.streak >= 3) {
+        const bonus = 10; // 最佳权重
+        score += bonus;
+        reasons.push(`尾号连续${pattern.streak}期:+${bonus}`);
+      }
+    }
+
+    // --- 区间覆盖 ---
+    const iv = gi(n);
+    if (targetIv) {
+      if (targetIv[iv] > 0) {
+        score += 5;
+        reasons.push(`区间匹配:+5`);
+      }
+    }
+    
+    // --- 🆕 v9: 号码池优化：区间平衡、奇偶平衡、和值贡献（权重提升） ---
+    // 1. 区间平衡奖励：如果该区间需要补充（v9: +3→+8，提升区间信号权重）
+    if (targetIv && sourceIv[iv] < targetIv[iv]) {
+      score += 8;
+      reasons.push(`区间平衡:+8`);
+    }
+    
+    // 2. 奇偶平衡奖励：如果奇偶数需要调整（v9: +2→+5）
+    if (targetOdd !== null) {
+      if (n % 2 === 1 && sourceOdd < targetOdd) {
+        score += 5;
+        reasons.push(`奇偶平衡(奇):+5`);
+      } else if (n % 2 === 0 && sourceOdd > targetOdd) {
+        score += 5;
+        reasons.push(`奇偶平衡(偶):+5`);
+      }
+    }
+    
+    // 3. 和值贡献奖励：如果和值差异大，选择相应大小的号码（v9: +2→+4，降低阈值10→5）
+    if (targetSum !== null) {
+      const diff = targetSum - sourceSum;
+      if (Math.abs(diff) > 5) {
+        if (diff > 0 && n >= 15) {
+          score += 4;
+          reasons.push(`和值贡献(大):+4`);
+        } else if (diff < 0 && n <= 18) {
+          score += 4;
+          reasons.push(`和值贡献(小):+4`);
+        }
+      }
+    }
+
+    // --- 🆕 S1: +10期趋势加权（最高30分）---
+    const plusTenScore = plusTenTargetMap.get(n) || 0;
+    const plusTenNeighborScore = plusTenNeighborMap.get(n) || 0;
+    if (plusTenScore > 0) {
+      const normalized = Math.round(plusTenScore / maxPlusTenScore * 30);
+      score += normalized;
+      reasons.push(`+10趋势:${normalized}`);
+    }
+    if (plusTenNeighborScore > 0) {
+      const nbNorm = Math.round(plusTenNeighborScore / maxPlusTenScore * 6);
+      score += nbNorm;
+      // 不单独记录理由，保持简洁
+    }
+
+    // --- 🆕 S1b: +12期趋势加权（最高20分，互补信号）---
+    const plus12Score = plus12TargetMap.get(n) || 0;
+    const plus12NeighborScore = plus12NeighborMap.get(n) || 0;
+    if (plus12Score > 0) {
+      const normalized12 = Math.round(plus12Score / maxPlus12Score * 20);
+      score += normalized12;
+      if (normalized12 >= 6) reasons.push(`+12趋势:${normalized12}`);
+    }
+    if (plus12NeighborScore > 0) {
+      const nbNorm12 = Math.round(plus12NeighborScore / maxPlus12Score * 4);
+      score += nbNorm12;
+    }
+
+    // --- 🆕 S2: 桥梁分析（最高15分）---
+    const bridgeGap = bridgeGapMap.get(n);
+    const bridgeEnd = bridgeEndpointMap.get(n);
+    if (bridgeGap) {
+      const bgNorm = Math.round(bridgeGap.score / maxBridgeScore * 15);
+      score += bgNorm;
+      if (bgNorm >= 5) reasons.push(`桥梁间隙:+${bgNorm}`);
+    }
+    if (bridgeEnd) {
+      const beNorm = Math.round(bridgeEnd.score / maxBridgeScore * 8);
+      score += beNorm;
+      if (beNorm >= 3) reasons.push(`桥梁端点:+${beNorm}`);
+    }
+
+    // --- 🆕 S3: 等距端点分析（最高10分）---
+    const arithEnd = arithmeticEndpointMap.get(n);
+    if (arithEnd) {
+      const aeNorm = Math.round(arithEnd.score / maxArithScore * 10);
+      score += aeNorm;
+      if (aeNorm >= 4) reasons.push(`等距端点:+${aeNorm}`);
+    }
+
+    // --- v9: 热号梯度优化（增大冷号惩罚，鼓励温号）---
+    if (hotness) {
+      const hotCount = hotness.get(n) || 0;
+      if (hotCount >= 4) {
+        score += 5;  // v9: 超级热号略降（避免过度集中）
+      } else if (hotCount >= 3) {
+        score += 5;  // v9: 热号提升
+      } else if (hotCount >= 2) {
+        score += 3;  // v9: 温号提升（出现2次是最稳定信号）
+      } else if (hotCount === 1) {
+        score += 1;  // v9: 新增：出现1次也有微弱信号
+      } else if (hotCount === 0) {
+        score -= 3;  // v9: 加大冷号惩罚
+      }
+    }
+
+    // --- 🆕 基于历史频率的权重调整 ---
+    // 核心思想：高频号、近期热号、高重复率号码应该获得更高权重
+    const historyFreq = historyMetrics.historyFreq[n] || 0;
+    const recentFreq = historyMetrics.recentFreq[n] || 0;
+    const repeatRate = historyMetrics.normalizedRepeatRate[n] || 0;
+    
+    // 计算历史频率得分（相对于平均值）
+    const historyRatio = historyFreq / historyMetrics.avgHistoryFreq;
+    const recentRatio = recentFreq / historyMetrics.avgRecentFreq;
+    const repeatRatio = repeatRate / historyMetrics.avgRepeatRate;
+    
+    // 历史频率加分（v6.2: 固定0.15，不读CONFIG，敏感度=0%）
+    if (historyRatio > 1.5) {
+      const historyBonus = Math.round(0.15 * 10);
+      score += historyBonus;
+      if (historyBonus >= 1) reasons.push(`历史高频:+${historyBonus}`);
+    } else if (historyRatio > 1.2) {
+      const historyBonus = Math.max(1, Math.round(0.15 * 5));
+      score += historyBonus;
+      if (historyBonus >= 1) reasons.push(`历史中频:+${historyBonus}`);
+    }
+    
+    // 近期频率加分（v6.2: 固定0.10，不读CONFIG，敏感度=0%）
+    if (recentRatio > 1.3) {
+      const recentBonus = Math.round((recentRatio - 1) * 10 * 0.10);
+      score += recentBonus;
+      if (recentBonus >= 1) reasons.push(`近期频率:+${recentBonus}`);
+    }
+    
+    // 重复率加分（高重复率号码获得更高权重）
+    if (repeatRatio > 1.2) {
+      const repeatBonus = Math.round((repeatRatio - 1) * 8 * 0.05); // v6.2: 固定值，不读CONFIG
+      score += repeatBonus;
+      if (repeatBonus >= 1) reasons.push(`重复率:+${repeatBonus}`);
+    }
+    
+    // 🆕 v9: 盲区号码补充信号（基于历史转移模式）
+    // 统计源行尾号出现时，哪些号码在10期后经常出现
+    const blindSpotScore = blindSpotMap.get(n) || 0;
+    if (blindSpotScore > 0) {
+      const blindBonus = Math.round(blindSpotScore / maxBlindSpot * 12); // 最高12分
+      score += blindBonus;
+      if (blindBonus >= 3) reasons.push(`盲区补充:+${blindBonus}`);
+    }
+
+    // --- 极端期加成 ---
+    if (extremeFlags.sumCrash && minOffset >= 3) {
+      score += 5;
+    }
+    if (extremeFlags.parityFlip && n % 2 !== anchors[0] % 2) {
+      score += 3;
+    }
+
+    // --- 连号附近奖励 ---
+    const nearConsec = anchors.some((a) => {
+      const others = anchors.filter((x) => x !== a);
+      return others.some((x) => Math.abs(x - a) === 1) && Math.abs(n - a) <= 4;
+    });
+    if (nearConsec) {
+      score += 7;
+      reasons.push("连号支撑:+7");
+    }
+
+    candidates.push({ number: n, score, reasons: reasons.join(" | "), minOffset, bestAnchor, zone: gi(n) });
+  }
+
+  // Step 2: 按得分排序
+  const sorted = sortByScore(candidates);
+
+  // Step 3: 构建号码池（v9: 动态池大小 + 智能区间比引导）
+  // 🆕 v9: 动态池大小策略（基于预测置信度）
+  // 高置信度(confidence > 0.7) → poolSize = 22（精准聚焦）
+  // 中置信度(0.4-0.7) → poolSize = 24（默认）
+  // 低置信度(< 0.4) → poolSize = 28（保守扩展，提高覆盖率）
+  const ivConfidence = ivPrediction ? (ivPrediction.confidence || 0.5) : 0.5;
+  let dynamicPoolSize = CONFIG.poolSize;
+  if (ivConfidence > 0.7) {
+    dynamicPoolSize = Math.max(22, CONFIG.poolSize - 2);
+  } else if (ivConfidence < 0.4) {
+    dynamicPoolSize = Math.min(28, CONFIG.poolSize + 4);
+  }
+  const poolSize = dynamicPoolSize;
+  const pool = [];
+  const zoneCount = [0, 0, 0];
+  const seen = new Set();
+
+  // 🆕 v7: 智能区间比引导 —— 按预测目标区间比分配各区间名额
+  const predictedIv = ivPrediction ? ivPrediction.predictedIv : null;
+  if (predictedIv && predictedIv.reduce((a, b) => a + b, 0) === 5) {
+    // 按预测区间比分配名额（保底每区至少 Math.max(3, poolSize/6) 个）
+    const minPerZoneRaw = Math.max(3, Math.floor(poolSize / 6));
+    let quota = predictedIv.map(v => Math.max(minPerZoneRaw, Math.round(v / 5 * poolSize)));
+    // 归一化到 poolSize
+    const quotaSum = quota[0] + quota[1] + quota[2];
+    quota[0] = Math.round(quota[0] * poolSize / quotaSum);
+    quota[1] = Math.round(quota[1] * poolSize / quotaSum);
+    quota[2] = poolSize - quota[0] - quota[1];
+    // 确保不超 poolSize
+    if (quota[2] < minPerZoneRaw) { quota[2] = minPerZoneRaw; quota[0] -= Math.ceil((minPerZoneRaw - quota[2]) / 2); quota[1] = poolSize - quota[0] - quota[2]; }
+
+    // 按区间分配：各区间取最高分号码
+    for (let z = 0; z < 3; z++) {
+      const zoneCands = sorted.filter(c => c.zone === z);
+      let cnt = 0;
+      for (const c of zoneCands) {
+        if (cnt >= quota[z]) break;
+        if (!seen.has(c.number)) {
+          seen.add(c.number);
+          pool.push(c);
+          zoneCount[z]++;
+          cnt++;
+        }
+      }
+    }
+  }
+
+  // 补充剩余名额（按全局得分取，或智能分配后不足的部分）
+  for (const c of sorted) {
+    if (seen.has(c.number)) continue;
+    if (pool.length >= poolSize) break;
+    seen.add(c.number);
+    pool.push(c);
+    zoneCount[c.zone]++;
+  }
+
+  // 区间保底：根据预测区间比动态调整最低数量（提前定义供后续使用）
+  const minPerZone = ivPrediction && ivPrediction.predictedIv
+    ? ivPrediction.predictedIv.map(v => Math.max(1, v - 1))
+    : [2, 2, 2];
+
+  // 源行尾号保底：确保池中至少有 minSourceTailCount 个源行尾号
+  const minSourceTailCount = 8;  // 目标行2-3球与源行尾号一致，保底8个确保覆盖
+  const poolSourceTailCount = pool.filter(c => sourceTailSet.has(tail(c.number))).length;
+  if (poolSourceTailCount < minSourceTailCount) {
+    // 找出不在池中的源行尾号号码，按得分排序
+    const missingSourceTail = sorted.filter(c => !seen.has(c.number) && sourceTailSet.has(tail(c.number)));
+    // 替换池中得分最低的非源行尾号号码
+    const needCount = minSourceTailCount - poolSourceTailCount;
+    for (let i = 0; i < needCount && i < missingSourceTail.length; i++) {
+      // 🆕 v9: 优先替换得分最低的、且其所在区间有富余的号码（避免破坏区间平衡）
+      let weakestIdx = -1, weakestScore = Infinity;
+      for (let j = pool.length - 1; j >= 0; j--) {
+        if (!sourceTailSet.has(tail(pool[j].number)) && !anchors.includes(pool[j].number) && pool[j].score < weakestScore) {
+          // 检查该区间是否有富余（超过最低保底数量）
+          const zone = pool[j].zone;
+          const minForZone = minPerZone[zone] || 2;
+          if (zoneCount[zone] > minForZone) {
+            weakestScore = pool[j].score;
+            weakestIdx = j;
+          }
+        }
+      }
+      // 如果没找到有富余区间的号码，则回退到原来的策略
+      if (weakestIdx === -1) {
+        for (let j = pool.length - 1; j >= 0; j--) {
+          if (!sourceTailSet.has(tail(pool[j].number)) && !anchors.includes(pool[j].number) && pool[j].score < weakestScore) {
+            weakestScore = pool[j].score;
+            weakestIdx = j;
+          }
+        }
+      }
+      if (weakestIdx !== -1) {
+        seen.delete(pool[weakestIdx].number);
+        zoneCount[pool[weakestIdx].zone]--;
+        pool[weakestIdx] = missingSourceTail[i];
+        seen.add(missingSourceTail[i].number);
+        zoneCount[missingSourceTail[i].zone]++;
+      }
+    }
+  }
+
+  for (let z = 0; z < 3; z++) {
+    while (zoneCount[z] < minPerZone[z]) {
+      const filler = sorted.find((c) => gi(c.number) === z && !seen.has(c.number));
+      if (!filler) break;
+      const weakest = pool.findIndex((p) => gi(p.number) !== z && !anchors.includes(p.number));
+      if (weakest === -1) {
+        seen.add(filler.number);
+        pool.push(filler);
+      } else {
+        seen.delete(pool[weakest].number);
+        seen.add(filler.number);
+        pool[weakest] = filler;
+      }
+      zoneCount[z]++;
+    }
+  }
+
+  return sortByScore(pool).slice(0, poolSize);
+}
+
+// ===================== 组合选号 =====================
+function generateCombinations(pool, count) {
+  const combos = [];
+
+  function backtrack(start, current) {
+    if (current.length === count) {
+      // 验证组合约束
+      const s = sum(current.map(({ number }) => number));
+      const sp = span(current.map(({ number }) => number));
+      const odd = oddCount(current.map(({ number }) => number));
+      const iv = intervalRatio(current.map(({ number }) => number));
+
+      // 和值约束（v6.2: 固定值，不读CONFIG，敏感度=0%）
+      if (s < CONFIG.targetSum - 17.5 * 2 ||
+          s > CONFIG.targetSum + 17.5 * 2) return;
+
+      // 奇偶约束
+      if (odd === 0 || odd === 5) return;
+
+      // 跨度约束（v6.2: 固定值，不读CONFIG，敏感度=0%）
+      if (sp < CONFIG.targetSpan - 8 * 2 ||
+          sp > CONFIG.targetSpan + 8 * 2) return;
+
+      // 连号约束（最多2连）
+      const sorted = [...current.map((x) => x.number)].sort((a, b) => a - b);
+      let maxConsec = 1;
+      let run = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] - sorted[i - 1] === 1) {
+          run++;
+          maxConsec = Math.max(maxConsec, run);
+        } else {
+          run = 1;
+        }
+      }
+      if (maxConsec > 2) return;
+
+      // 区间极值惩罚
+      if (iv.some((c) => c >= 5)) return;
+
+      const totalScore = current.reduce((a, b) => a + b.score, 0);
+      combos.push({
+        numbers: sorted,
+        score: totalScore,
+        sum: s,
+        span: sp,
+        odd: odd,
+        iv: iv.join(":"),
+      });
+      return;
+    }
+
+    for (let i = start; i < pool.length; i++) {
+      current.push(pool[i]);
+      backtrack(i + 1, current);
+      current.pop();
+    }
+  }
+
+  backtrack(0, []);
+  return combos.sort((a, b) => b.score - a.score).slice(0, 20);
+}
+
+// ===================== 快速组合生成（组合级智能评分 v4 — 锚点/连号/重复号/等差/桥梁/结构） =====================
+function generateCombinationsFast(pool, count, sourceTails = null, predictedTails = null, referenceRows = null, anchorNumbers = null, sourceNumbers = null, ivPrediction = null, sourceSum = null) {
+  const refs = referenceRows || [];
+  const anchors = anchorNumbers || [];
+  const sourceNums = sourceNumbers || [];
+  const srcSum = sourceSum || 0; // 🆕 v8: 源期和值，用于动态和值预测
+  const allCombos = [];
+  const seenGlobal = new Set();
+
+  // 🔧 组合评分函数（v4增强版：锚点变换+连号惩罚+重复号惩罚+尾号模式+增强参考行匹配）
+  function scoreCombo(sorted, selected) {
+    const s = sum(sorted);
+    const sp = sorted[sorted.length - 1] - sorted[0];
+    const odd = sorted.filter((n) => n % 2 === 1).length;
+    if (odd === 0 || odd === 5) return null;
+    if (sp < 3 || sp > 34) return null;
+    if (s < 20 || s > 170) return null;  // 宽泛安全网，动态约束在下方
+
+    let maxConsec = 1, run = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] - sorted[i - 1] === 1) { run++; maxConsec = Math.max(maxConsec, run); }
+      else run = 1;
+    }
+    // v9: 允许4连号但惩罚（历史出现率约5.9%）
+    if (maxConsec > 4) return null;
+
+    const iv = [0, 0, 0];
+    sorted.forEach((n) => iv[gi(n)]++);
+    if (iv[0] >= 5 || iv[2] >= 5) return null;
+
+    const baseScore = selected.reduce((a, b) => a + b.score, 0);
+    let comboBonus = 0;
+    
+    // v9: 连号惩罚（从硬约束改为软惩罚）
+    if (maxConsec === 4) comboBonus -= 15; // 4连号惩罚
+    if (maxConsec === 3) comboBonus -= 5;  // 3连号轻微惩罚
+
+    // === 🆕 动态区间比-和值约束（基于119期历史数据P10-P90范围） ===
+    const ivKey = iv.join(":");
+    const ivSumRanges = {
+      // 断一区（和值偏高）
+      "0:1:4": { lo: 125, hi: 155 },
+      "0:2:3": { lo: 110, hi: 135 },
+      "0:3:2": { lo: 95, hi: 130 },
+      "0:4:1": { lo: 85, hi: 125 },
+      // 断二区（和值两极分化）
+      "1:0:4": { lo: 100, hi: 140 },
+      "2:0:3": { lo: 85, hi: 125 },
+      "3:0:2": { lo: 60, hi: 100 },
+      "4:0:1": { lo: 35, hi: 77 },
+      // 三区均衡（最常见）
+      "1:1:3": { lo: 95, hi: 135 },
+      "1:2:2": { lo: 82, hi: 118 },
+      "1:3:1": { lo: 75, hi: 112 },
+      "2:1:2": { lo: 78, hi: 112 },
+      "2:2:1": { lo: 58, hi: 97 },
+      "3:1:1": { lo: 52, hi: 78 },
+      // 断三区（和值偏低）
+      "1:4:0": { lo: 59, hi: 90 },
+      "2:3:0": { lo: 48, hi: 80 },
+      "3:2:0": { lo: 38, hi: 76 },
+      "4:1:0": { lo: 35, hi: 63 },
+    };
+    const sumRange = ivSumRanges[ivKey];
+    if (sumRange) {
+      // 硬过滤：超出理论极限的组合直接淘汰
+      const hardMargin = 20;
+      if (s < sumRange.lo - hardMargin || s > sumRange.hi + hardMargin) return null;
+      // 软惩罚：偏离P10-P90范围越多，惩罚越重
+      if (s < sumRange.lo) {
+        const deviation = sumRange.lo - s;
+        comboBonus -= Math.min(deviation * 1.5, 25);
+      } else if (s > sumRange.hi) {
+        const deviation = s - sumRange.hi;
+        comboBonus -= Math.min(deviation * 1.5, 25);
+      } else {
+        // 在和值范围内，给予加分
+        const rangeSize = sumRange.hi - sumRange.lo;
+        const center = (sumRange.lo + sumRange.hi) / 2;
+        const distFromCenter = Math.abs(s - center) / (rangeSize / 2);
+        comboBonus += Math.round((1 - distFromCenter) * 10);
+      }
+    }
+
+    // === 🆕 v8: 和值动态预测（基于源期和值的Markov转移） ===
+    // 分析报告：和值主要区间70-109占72.1%，峰值80-99占48.3%
+    // 核心规律：源期和值偏离均值时，目标期倾向回归
+    if (srcSum > 0) {
+      let dynamicSumBonus = 0;
+      if (srcSum < 70) {
+        // 源期和值极低（<70）→ 目标期倾向回归80-100
+        if (s >= 80 && s <= 100) dynamicSumBonus += 8;
+        else if (s >= 75 && s <= 110) dynamicSumBonus += 4;
+        else if (s < 65 || s > 120) dynamicSumBonus -= 5;
+      } else if (srcSum < 85) {
+        // 源期和值偏低（70-85）→ 目标期可能保持或略升
+        if (s >= 80 && s <= 105) dynamicSumBonus += 6;
+        else if (s >= 75 && s <= 115) dynamicSumBonus += 3;
+      } else if (srcSum <= 105) {
+        // 源期和值中等（85-105）→ 目标期保持稳定
+        if (s >= 80 && s <= 110) dynamicSumBonus += 5;
+        else if (s >= 70 && s <= 120) dynamicSumBonus += 2;
+      } else if (srcSum <= 125) {
+        // 源期和值偏高（105-125）→ 目标期倾向回归85-105
+        if (s >= 85 && s <= 105) dynamicSumBonus += 7;
+        else if (s >= 75 && s <= 115) dynamicSumBonus += 4;
+      } else {
+        // 源期和值极高（>125）→ 目标期强烈回归80-100
+        if (s >= 80 && s <= 100) dynamicSumBonus += 10;
+        else if (s >= 75 && s <= 110) dynamicSumBonus += 5;
+        else if (s > 120) dynamicSumBonus -= 8;
+      }
+      comboBonus += dynamicSumBonus;
+    }
+
+    // === 基础结构评分（v3强信号合并） ===
+    // v3跨度信号：18-24 → +18, 26-33 → +12
+    if (sp >= 18 && sp <= 24) comboBonus += 18;
+    else if (sp >= 26 && sp <= 33) comboBonus += 12;
+    // v3奇偶信号：1个奇数 → +12, 3个奇数 → +8
+    if (odd === 1) comboBonus += 12;
+    else if (odd === 3) comboBonus += 8;
+    // 区间覆盖
+    if (!iv.includes(0)) comboBonus += 5;
+    else if (iv.filter((c) => c === 0).length === 1) comboBonus += 2;
+    
+    // 🆕 区间比匹配加分（基于历史最常见区间比）
+    const commonRatios = ["2:1:2", "2:2:1", "1:2:2", "3:1:1", "1:3:1", "1:1:3"];
+    const ratioIndex = commonRatios.indexOf(ivKey);
+    if (ratioIndex >= 0) {
+      // 前3个最常见区间比获得更高加分
+      const ratioBonus = ratioIndex < 3 ? 8 : 4;
+      comboBonus += ratioBonus;
+    }
+
+    // === 扩散惩罚 ===
+    const spread = getEnhancedSpreadPenalty(sorted);
+    comboBonus -= Math.min(spread.penalty, 30);
+    if (spread.coveredIntervals === 3 && spread.maxWindowCount <= 3) comboBonus += 5;
+    if (spread.maxIntervalCount <= 2) comboBonus += 3;
+
+    // === 尾号多样性 ===
+    const comboTails = tails(sorted);
+    // 🆕 根据区间比变化调整尾号多样性奖励
+    // 规律：区间比不变时，尾号重复率更高；极端偏态时，尾号种类减少
+    const ivDist = ivPrediction ? ivPrediction.distance : 3;
+    if (ivDist <= 2) {
+      // 区间比变化小，尾号重复率更高，降低多样性奖励
+      if (comboTails.length >= 5) comboBonus += 2;
+      else if (comboTails.length >= 4) comboBonus += 1;
+    } else if (ivDist >= 4) {
+      // 区间比变化大，极端偏态，尾号种类减少（3个不同尾号概率增加）
+      if (comboTails.length === 3) comboBonus += 4; // 奖励3个不同尾号
+      else if (comboTails.length >= 5) comboBonus += 1; // 降低5个不同尾号的奖励
+    } else {
+      // 默认情况
+      if (comboTails.length >= 5) comboBonus += 4;
+      else if (comboTails.length >= 4) comboBonus += 2;
+    }
+
+    // === 预测尾号匹配 ===
+    if (predictedTails && predictedTails.length > 0) {
+      const topTails = new Set(predictedTails.slice(0, 5).map(([t]) => t));
+      const tailMatches = comboTails.filter((t) => topTails.has(t)).length;
+      comboBonus += tailMatches * 3;  // 原始权重
+    }
+
+    // === 区间集中惩罚 ===
+    const ivMax = Math.max(...iv);
+    if (ivMax >= 3) comboBonus -= (ivMax - 2) * 4;
+
+    // === 🆕 锚点变换评分（v4核心：避免过度主导，限制上限） ===
+    if (anchors.length > 0) {
+      const anchorSet = new Set(anchors);
+      let anchorKeepHits = 0, anchorOffsetSum = 0;
+      sorted.forEach((n) => {
+        if (anchorSet.has(n)) { anchorKeepHits++; return; }
+        let bestPts = 0;
+        anchors.forEach((a) => {
+          const dist = Math.abs(n - a);
+          const pts = CONFIG.offsetScore[dist] || 0;
+          if (pts > bestPts) bestPts = pts;
+        });
+        anchorOffsetSum += bestPts;
+      });
+      comboBonus += Math.min(anchorOffsetSum * 0.6 + anchorKeepHits * 18, 35);  // 优化：50→35，避免锚点过度主导
+      // 锚点保留奖励
+      if (anchorKeepHits >= 2 && anchorKeepHits <= 3) comboBonus += (anchorKeepHits - 1) * 10;
+      else if (anchorKeepHits >= 4) comboBonus -= (anchorKeepHits - 3) * 8;
+      // 锚点覆盖多面性
+      const explainedAnchors = new Set();
+      sorted.forEach((n) => {
+        anchors.forEach((a) => {
+          if (CONFIG.offsetScore[Math.abs(n - a)] > 0) explainedAnchors.add(a);
+        });
+      });
+      if (explainedAnchors.size >= 4) comboBonus += 8;
+      else if (explainedAnchors.size >= 3) comboBonus += 4;
+    }
+
+    // === 🆕 连号惩罚（v6.2: 固定0.3，不读CONFIG，敏感度=0%） ===
+    const runResult = getRunPenalty(sorted, anchors);
+    comboBonus -= Math.min(runResult.runPenalty * 0.3, 20);
+
+    // === 🆕 连号概率奖励（基于历史分布：50%无连号, 38.2%双连号, 5.9%三连号） ===
+    const consecSegments = buildConsecutiveSegments(sorted);
+    const doubleCount = consecSegments.filter(s => s.length === 2).length;
+    const tripleCount = consecSegments.filter(s => s.length === 3).length;
+    const totalConsecPairs = doubleCount + tripleCount * 2;
+    if (totalConsecPairs === 0) {
+      comboBonus += 3;  // 无连号：50%概率
+    } else if (doubleCount === 1 && tripleCount === 0) {
+      comboBonus += 5;  // 1组双连号：38.2%概率（最常见非零模式）
+    } else if (tripleCount === 1 && doubleCount === 0) {
+      comboBonus += 3;  // 1组三连号：5.9%概率
+    } else if (doubleCount === 1 && tripleCount === 1) {
+      comboBonus += 2;  // 双+三：1.5%概率
+    }
+
+    // === 🆕 v6: 重复号惩罚自适应（与IV预测距离联动） ===
+    //     核心思路：区间比变动小→允许更多重号；变动大→严格惩罚重号
+    if (sourceNums.length > 0) {
+      const repeatResult = getRepeatPenalty(sorted, sourceNums);
+      const ivDist = ivPrediction ? ivPrediction.distance : 3;
+      // 动态缩放：固定0.8基准，小变动×0.6，中变动×1.0，大变动×1.5（v6.2: 不读CONFIG）
+      const repeatScale = ivDist <= 2
+        ? 0.8 * 0.6
+        : ivDist <= 4
+          ? 0.8 * 1.0
+          : 0.8 * 1.5;
+      comboBonus -= Math.min(repeatResult.repeatPenalty * repeatScale, 35);
+      // 区间比重号微调：符合历史规律的组合额外奖励
+      const srcSet = new Set(sourceNums);
+      const repeatCnt = sorted.filter(n => srcSet.has(n)).length;
+      if (ivDist <= 2 && repeatCnt >= 1 && repeatCnt <= 2) {
+        comboBonus += 4;  // 小变动+合理重号：奖励提升 3→4
+      } else if (ivDist >= 5 && repeatCnt <= 1) {
+        comboBonus += 4;
+      }
+    }
+
+    // === 🆕 尾号模式评分（v6.2: 固定0.6，不读CONFIG，敏感度=0%） ===
+    const tailPattern = scoreTailPatterns(sorted);
+    comboBonus += tailPattern.score * 0.6;
+
+    // === 🆕 增强参考行匹配（v4增强） ===
+    if (refs.length > 0) {
+      const refResult = scoreComboAgainstReferences(sorted, refs);
+      comboBonus += Math.round(refResult.score / 14);
+      if (refResult.satisfiedRows >= 2) comboBonus += 7;
+      else if (refResult.satisfiedRows >= 1) comboBonus += 3;
+    }
+
+    return {
+      numbers: sorted, score: baseScore + comboBonus, sum: s, span: sp, odd, iv: iv.join(":"),
+      baseScore, comboBonus
+    };
+  }
+
+  // 🆕 策略1: 按不同区间比分别生成组合（保证多样性）
+  const ratioFreq = new Map();
+  refs.forEach((ref) => { if (!ref.isSelectedRow) ratioFreq.set(ref.ivKey, (ratioFreq.get(ref.ivKey) || 0) + 1); });
+  const priorityRatios = [...ratioFreq.entries()].sort((a, b) => b[1] - a[1]).map(([rk]) => rk.split(":").map(Number));
+  // 🆕 基于历史数据分析的最常见区间比（按频率排序）
+  const defaults = [[2, 1, 2], [2, 2, 1], [1, 2, 2], [3, 1, 1], [1, 3, 1], [1, 1, 3]];
+  defaults.forEach((r) => { if (!priorityRatios.some((pr) => pr.join(":") === r.join(":"))) priorityRatios.push(r); });
+  const useRatios = priorityRatios.slice(0, 6);
+
+  useRatios.forEach((ratio) => {
+    const z0 = pool.filter((c) => gi(c.number) === 0).slice(0, ratio[0] + 6);
+    const z1 = pool.filter((c) => gi(c.number) === 1).slice(0, ratio[1] + 6);
+    const z2 = pool.filter((c) => gi(c.number) === 2).slice(0, ratio[2] + 6);
+    if (z0.length < ratio[0] || z1.length < ratio[1] || z2.length < ratio[2]) return;
+
+    const localCombos = [];
+    const seenLocal = new Set();
+    const maxLocal = 200;
+
+    function pick(zoneIdx, selected) {
+      if (localCombos.length >= maxLocal) return;
+      if (zoneIdx === 3) {
+        if (selected.length !== count) return;
+        const sorted = [...selected.map((x) => x.number)].sort((a, b) => a - b);
+        const key = sorted.join(",");
+        if (seenLocal.has(key) || seenGlobal.has(key)) return;
+        seenLocal.add(key);
+        const result = scoreCombo(sorted, selected);
+        if (result) localCombos.push(result);
+        return;
+      }
+      const arr = [z0, z1, z2][zoneIdx];
+      const need = ratio[zoneIdx];
+      (function rec(start, cur) {
+        if (localCombos.length >= maxLocal) return;
+        if (cur.length === need) { pick(zoneIdx + 1, [...selected, ...cur]); return; }
+        for (let i = start; i <= arr.length - (need - cur.length); i++) { cur.push(arr[i]); rec(i + 1, cur); cur.pop(); }
+      })(0, []);
+    }
+    pick(0, []);
+
+    localCombos.sort((a, b) => b.score - a.score).slice(0, 15).forEach((c) => {
+      const k = c.numbers.join(",");
+      if (!seenGlobal.has(k)) { seenGlobal.add(k); allCombos.push(c); }
+    });
+  });
+
+  // 🆕 策略2: 自由回溯（从Top20生成，限制100个）
+  const top20 = pool.slice(0, 20);
+  const freeCombos = [];
+  const seenFree = new Set();
+  (function freeBacktrack(start, cur) {
+    if (freeCombos.length >= 150) return;
+    if (cur.length === count) {
+      const sorted = [...cur.map((x) => x.number)].sort((a, b) => a - b);
+      const key = sorted.join(",");
+      if (seenFree.has(key) || seenGlobal.has(key)) return;
+      seenFree.add(key);
+      const result = scoreCombo(sorted, cur);
+      if (result) freeCombos.push(result);
+      return;
+    }
+    for (let i = start; i <= top20.length - (count - cur.length); i++) { cur.push(top20[i]); freeBacktrack(i + 1, cur); cur.pop(); }
+  })(0, []);
+
+  freeCombos.sort((a, b) => b.score - a.score).slice(0, 15).forEach((c) => {
+    const k = c.numbers.join(",");
+    if (!seenGlobal.has(k)) { seenGlobal.add(k); allCombos.push(c); }
+  });
+
+  // 合并排序
+  allCombos.sort((a, b) => b.score - a.score);
+
+  // 补充贪心
+  if (allCombos.length < 20) {
+    const greedy = pool.slice(0, count).sort((a, b) => a.number - b.number).map((c) => c.number);
+    const gk = greedy.join(",");
+    if (!seenGlobal.has(gk)) allCombos.push({
+      numbers: greedy, score: pool.slice(0, count).reduce((a, b) => a + b.score, 0),
+      sum: sum(greedy), span: span(greedy), odd: oddCount(greedy), iv: intervalRatio(greedy).join(":"),
+      baseScore: pool.slice(0, count).reduce((a, b) => a + b.score, 0), comboBonus: 0
+    });
+  }
+
+  // 🔑 v4.1 多样性选择：Top20 中取多样性最大的组合靠前，避免同类型垄断
+  return selectDiverseTopN(allCombos, 20);
+}
+
+// 多样性感知的 TopN 选择：T1取最高分，后续在高分中选结构多样的
+function selectDiverseTopN(combos, n) {
+  if (combos.length <= n) return combos;
+  const selected = [combos[0]];  // 第一名始终是最高分（经测试，平衡选择会降低命中率）
+  const remaining = [...combos.slice(1)];
+  // 为每个候选预计算结构指纹
+  const fingerprint = (c) => ({
+    iv: c.iv,
+    sumBucket: Math.round(c.sum / 10) * 10,
+    spanBucket: Math.round(c.span / 5) * 5,
+    odd: c.odd,
+    numberSet: new Set(c.numbers),
+  });
+  const fps = remaining.map(fingerprint);
+
+  while (selected.length < n && remaining.length > 0) {
+    const selFps = selected.map(fingerprint);
+    let bestIdx = 0, bestCombined = -Infinity;
+
+    for (let i = 0; i < remaining.length; i++) {
+      const fp = fps[i];
+      let diversity = 0;
+      selFps.forEach((sfp) => {
+        // 不同区间比奖励
+        if (fp.iv !== sfp.iv) diversity += 20;
+        // 不同和值区间奖励
+        if (Math.abs(fp.sumBucket - sfp.sumBucket) > 10) diversity += 12;
+        // 不同跨度奖励
+        if (Math.abs(fp.spanBucket - sfp.spanBucket) > 5) diversity += 8;
+        // 号码重叠惩罚（奖励低重叠）
+        let overlap = 0;
+        fp.numberSet.forEach((n) => { if (sfp.numberSet.has(n)) overlap++; });
+        diversity += (5 - overlap) * 8;
+      });
+      // v9: 高分组合 + 多样性奖励（权重提升：0.75→0.85，更偏向高分组合）
+      const combined = remaining[i].score * 0.85 + diversity;
+      if (combined > bestCombined) { bestCombined = combined; bestIdx = i; }
+    }
+    selected.push(remaining[bestIdx]);
+    remaining.splice(bestIdx, 1);
+    fps.splice(bestIdx, 1);
+  }
+  return selected;
+}
+
+
+
+// ===================== 预测主流程 =====================
+function predict(sourceIssue, targetIssue, fastMode = false) {
+  const sourceDraw = issueMap[sourceIssue];
+  const targetDraw = issueMap[targetIssue];
+
+  if (!sourceDraw) {
+    console.error(`找不到选中行 ${sourceIssue}`);
+    return null;
+  }
+
+  // 计算源数据的尾号
+  const sourceTails = tails(sourceDraw.front);
+
+  // 计算目标尾号和区间（如果有目标数据的话）
+  const targetTails = targetDraw ? tails(targetDraw.front) : null;
+  const targetIv = targetDraw ? intervalRatio(targetDraw.front) : null;
+
+  // 获取相邻期数据用于极端检测
+  const allIssues = ALL_DRAWS.map((d) => d.issue);
+  const srcIdx = allIssues.indexOf(sourceIssue);
+  const neighbors = [];
+  for (let i = srcIdx - 1; i >= 0 && neighbors.length < 3; i--) {
+    if (allIssues[i] !== targetIssue) {
+      neighbors.push(issueMap[allIssues[i]]);
+    }
+  }
+
+  const extremeFlags = detectExtreme(sourceDraw, neighbors);
+
+  // 🆕 计算热号分布
+  const hotness = computeHotness(srcIdx, 10);
+
+  // 🆕 S1: +10期趋势映射（间隔+13）
+  const plusTenTrend = buildPlusTenTrendMap(srcIdx, 50, 13);
+
+  // 🆕 S1b: +12期趋势映射（从source12视角，间隔+13）
+  // source12 = target - 12 = srcIdx + 10 - 12 = srcIdx - 2
+  const src12Idx = srcIdx - 2;
+  const plus12Trend = src12Idx >= 0 ? buildPlusTenTrendMap(src12Idx, 50, 13) : { targetMap: new Map(), neighborMap: new Map() };
+
+  // 🆕 S2: 桥梁分析
+  const bridgeMap = buildBridgeMap(sourceDraw.front, sourceDraw.front);
+
+  // 🆕 S3: 等距端点分析
+  const arithmeticMap = buildArithmeticEndpointMap(sourceDraw.front, sourceDraw.front, 6);
+
+  // 🆕 S5: 参考行
+  const referenceRows = buildReferenceWindow(srcIdx, 6);
+  // 🆕 加一行：目标期前一期作为额外参考行（结构相似，Union +2.4pp，全5球翻倍）
+  {
+    const tIdx = allIssues.indexOf(targetIssue);
+    const idx = tIdx - 1;
+    if (idx > srcIdx && idx < ALL_DRAWS.length) {
+      const d = ALL_DRAWS[idx];
+      if (d && !referenceRows.some(r => r.row === idx)) {
+        const pn = [...d.front].sort((a, b) => a - b);
+        const { pairs: xp, longestRun: xlr } = countConsecutivePairs(pn);
+        const xs = buildConsecutiveSegments(pn);
+        const xae = new Set();
+        for (let dd = 2; dd <= 6; dd++) {
+          pn.forEach((n) => {
+            const a = n - dd, b = n + dd;
+            if (a >= 1 && a <= 35 && pn.includes(a)) { xae.add(n); xae.add(a); }
+            if (b >= 1 && b <= 35 && pn.includes(b)) { xae.add(n); xae.add(b); }
+          });
+        }
+        const xbg = new Set(), xbe = new Set();
+        for (let j = 0; j < pn.length - 1; j++) {
+          const g = pn[j + 1] - pn[j];
+          if (g >= 2 && g <= 4) {
+            for (let m = pn[j] + 1; m < pn[j + 1]; m++) xbg.add(m);
+            xbe.add(pn[j]); xbe.add(pn[j + 1]);
+          }
+        }
+        const xtc = new Map();
+        pn.forEach((n) => xtc.set(n % 10, (xtc.get(n % 10) || 0) + 1));
+        let xst = null, xsc = 0;
+        xtc.forEach((c, t) => { if (c > xsc) { xsc = c; xst = t; } });
+        referenceRows.push({
+          row: idx,
+          numbers: pn, numberSet: new Set(pn),
+          tailSet: new Set(pn.map((n) => n % 10)),
+          ivKey: intervalRatio(pn).join(":"), iv: intervalRatio(pn),
+          consecutivePairs: xp, longestRun: xlr, consecutiveSegments: xs,
+          arithEndpoints: xae, bridgeGaps: xbg, bridgeEndpoints: xbe,
+          strongestTail: xst, strongestCount: xsc,
+        });
+      }
+    }
+  }
+
+  // 🆕 尾号转移分析（lookback增大到50，确保有足够数据统计10期间隔的转移）
+  const tailTransData = analyzeTailTransitions(srcIdx, 50);
+  
+  // 获取源行+9期的尾号（统计规律：目标行有2-3个球与+9期尾号一致）
+  const targetPrevIdx = srcIdx + 9;
+  const targetPrevDraw = targetPrevIdx < ALL_DRAWS.length ? ALL_DRAWS[targetPrevIdx] : null;
+  const prevDrawTails = targetPrevDraw ? tails(targetPrevDraw.front) : [];
+  
+  // 🆕 传入prevDrawTails，利用连续期尾号重叠规律
+  const predictedTails = predictLikelyTails(sourceTails, tailTransData, prevDrawTails);
+
+  // 🆕 v5: 区间比预测（基于历史转移+时效加权）
+  const sourceIv = intervalRatio(sourceDraw.front);
+  const ivPrediction = predictTargetIntervalRatio(srcIdx, sourceIv);
+
+  // 组装额外映射
+  const extraMaps = {
+    plusTenTargetMap: plusTenTrend.targetMap,
+    plusTenNeighborMap: plusTenTrend.neighborMap,
+    plus12TargetMap: plus12Trend.targetMap,      // 🆕 +12期趋势信号
+    plus12NeighborMap: plus12Trend.neighborMap,  // 🆕 +12期趋势信号
+    bridgeGapMap: bridgeMap.gapMap,
+    bridgeEndpointMap: bridgeMap.endpointMap,
+    arithmeticEndpointMap: arithmeticMap,
+    prevDrawTails,
+    srcIdx, // 传递源行索引，用于尾号遗漏和连续出现分析
+  };
+
+  // 生成号码池（传入所有新分析结果 + v5区间比预测 + 尾号预测）
+  const pool = generateCandidatePool(sourceDraw, targetTails, targetIv, extremeFlags, hotness, extraMaps, ivPrediction, targetDraw, predictedTails);
+
+  // 生成组合（v8: 传入IV预测+源期和值用于自适应重复惩罚和动态和值预测）
+  const sourceSum = sourceDraw.front.reduce((a, b) => a + b, 0);
+  const combinations = fastMode
+    ? generateCombinationsFast(pool, CONFIG.pickCount, sourceTails, predictedTails, referenceRows, sourceDraw.front, sourceDraw.front, ivPrediction, sourceSum)
+    : generateCombinations(pool, CONFIG.pickCount);
+
+  // ===== 补漏6生成（补盲区策略） =====
+  const _top5Covered = new Set();
+  combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => _top5Covered.add(n)));
+  const _top5Freq = new Map();
+  combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => _top5Freq.set(n, (_top5Freq.get(n) || 0) + 1)));
+
+  // 计算遗漏/热号
+  const _missMap = new Map(), _hotMap = new Map();
+  for (let n = 1; n <= 35; n++) {
+    let m = 0, h = 0;
+    for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - 20); i--) { if (ALL_DRAWS[i].front.includes(n)) break; m++; }
+    for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - 10); i--) { if (ALL_DRAWS[i].front.includes(n)) h++; }
+    _missMap.set(n, m); _hotMap.set(n, h);
+  }
+  // 区间平衡
+  const _top5Iv = [0, 0, 0];
+  combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => { if (n <= 12) _top5Iv[0]++; else if (n <= 24) _top5Iv[1]++; else _top5Iv[2]++; }));
+  const _ivMin = _top5Iv.indexOf(Math.min(..._top5Iv));
+  const _predTails = predictedTails ? new Set(predictedTails.slice(0, 5).map(([t]) => t)) : new Set();
+
+  // 核心：只选Top5未覆盖的池号码
+  const _c6Scored = pool
+    .filter(e => !_top5Covered.has(e.number))
+    .map(e => {
+      const n = e.number, miss = _missMap.get(n) || 0, hot = _hotMap.get(n) || 0;
+      let s = e.score;
+      if (_predTails.has(n % 10)) s += 10;
+      const zone = n <= 12 ? 0 : n <= 24 ? 1 : 2;
+      if (zone === _ivMin) s += 6;
+      if (hot >= 3) s += 8; else if (hot >= 2) s += 4;
+      if (miss >= 10) s += 5; else if (miss >= 7) s += 3;
+      s += 25; // 补盲区核心加分
+      let md = Infinity; _top5Covered.forEach(cn => { const d = Math.abs(n - cn); if (d < md) md = d; });
+      if (md === 1) s += 12; else if (md === 2) s += 6; else if (md === 3) s += 3;
+      return { number: n, score6: s };
+    })
+    .sort((a, b) => b.score6 - a.score6);
+
+  let bulou6 = null;
+  if (_c6Scored.length >= 5) {
+    bulou6 = _c6Scored.slice(0, 5).map(e => e.number).sort((a, b) => a - b);
+  } else if (_c6Scored.length > 0) {
+    // 已覆盖池号码补充（5折评分）
+    const _supp = pool
+      .filter(e => _top5Covered.has(e.number) && !_c6Scored.some(c => c.number === e.number))
+      .map(e => ({ number: e.number, score6: e.score * 0.5 }))
+      .sort((a, b) => b.score6 - a.score6);
+    
+    let _all = [..._c6Scored, ..._supp].slice(0, 5);
+    bulou6 = _all.map(e => e.number).sort((a, b) => a - b);
+  }
+
+  return {
+    sourceIssue,
+    targetIssue,
+    sourceFront: sourceDraw.front,
+    targetFront: targetDraw ? targetDraw.front : null,
+    targetTails: targetTails || sourceTails,
+    extremeFlags,
+    pool,
+    combinations,
+    predictedTails,
+    ivPrediction,
+    bulou6,  // 🆕 补漏6号码（补盲区策略）
+  };
+}
+
+// ===================== 构建配对 =====================
+function buildPairs(interval) {
+  const pairs = [];
+  const sortedIssues = ALL_DRAWS.map((d) => d.issue).sort();
+  sortedIssues.forEach((srcIssue) => {
+    const srcNum = parseInt(srcIssue.slice(4));
+    const tgtIssue = srcIssue.slice(0, 4) + String(srcNum + interval).padStart(3, "0");
+    if (issueMap[tgtIssue]) {
+      pairs.push([srcIssue, tgtIssue]);
+    }
+  });
+  return pairs;
+}
+
+// ===================== 后区预测 (v6: 桥接效应 + 前区尾号关联 + 奇偶轮转) =====================
+function predictBack(sourceDrawIdx) {
+  const gap = new Array(13).fill(0);
+  const bridgeScore = new Array(13).fill(0);
+  const tailBackScore = new Array(13).fill(0);
+  const parityScore = new Array(13).fill(0);
+
+  // ① 计算每个号码的遗漏期数
+  for (let n = 1; n <= 12; n++) {
+    let g = 0;
+    for (let i = sourceDrawIdx; i >= 0; i--) {
+      if (ALL_DRAWS[i] && ALL_DRAWS[i].back && ALL_DRAWS[i].back.includes(n)) break;
+      g++;
+    }
+    gap[n] = g;
+  }
+
+  // ② 桥接效应：前一期后区号码的±1、±2、±3邻居加分
+  const prevDraw = ALL_DRAWS[sourceDrawIdx - 1];
+  if (prevDraw && prevDraw.back) {
+    prevDraw.back.forEach(p => {
+      bridgeScore[p] += 2; // 重复加分
+      for (let offset = -3; offset <= 3; offset++) {
+        if (offset === 0) continue;
+        const nb = p + offset;
+        if (nb >= 1 && nb <= 12) {
+          bridgeScore[nb] += Math.max(0, 4 - Math.abs(offset));
+        }
+      }
+    });
+  }
+
+  // ③ v6新增：前区尾号→后区号码关联统计
+  // 核心思路：前区尾号与后区号码存在统计关联（如尾号=3时后区倾向出3/7/11）
+  const srcDraw = ALL_DRAWS[sourceDrawIdx];
+  if (srcDraw && srcDraw.front) {
+    const srcTails = srcDraw.front.map(n => n % 10);
+    // 统计历史上相同尾号组合出现时，后区各号码的频率
+    const tailBackFreq = new Array(13).fill(0);
+    const windowSize = Math.min(80, sourceDrawIdx);
+    for (let i = Math.max(0, sourceDrawIdx - windowSize); i < sourceDrawIdx; i++) {
+      const d = ALL_DRAWS[i];
+      if (!d || !d.front || !d.back) continue;
+      const dTails = d.front.map(n => n % 10);
+      // 计算尾号重叠度
+      const tailOverlap = srcTails.filter(t => dTails.includes(t)).length;
+      if (tailOverlap >= 2) {
+        // 尾号重叠≥2个时，该期后区号码有参考价值
+        d.back.forEach(b => { tailBackFreq[b] += (1 + tailOverlap * 0.5); });
+      }
+    }
+    // 归一化并写入评分
+    const maxTBF = Math.max(1, ...tailBackFreq);
+    for (let n = 1; n <= 12; n++) {
+      tailBackScore[n] = Math.round(tailBackFreq[n] / maxTBF * 15);
+    }
+  }
+
+  // ④ v6新增：后区奇偶轮转模式
+  // 核心思路：连续多期出奇数后，偶数概率上升；反之亦然
+  const recentBackOddCount = [];
+  for (let i = sourceDrawIdx - 1; i >= Math.max(0, sourceDrawIdx - 5); i--) {
+    const d = ALL_DRAWS[i];
+    if (d && d.back) {
+      const oddCnt = d.back.filter(b => b % 2 === 1).length;
+      recentBackOddCount.push(oddCnt);
+    }
+  }
+  if (recentBackOddCount.length >= 3) {
+    const avgOdd = recentBackOddCount.reduce((a, b) => a + b, 0) / recentBackOddCount.length;
+    // 近期偏奇→偶数加分；近期偏偶→奇数加分
+    for (let n = 1; n <= 12; n++) {
+      if (avgOdd >= 1.5 && n % 2 === 0) {
+        parityScore[n] = Math.round((avgOdd - 1) * 3); // 偏奇→偶数加3-6分
+      } else if (avgOdd <= 0.5 && n % 2 === 1) {
+        parityScore[n] = Math.round((1 - avgOdd) * 3); // 偏偶→奇数加3-6分
+      }
+    }
+  }
+
+  // ⑤ 综合排序：桥接 + 尾号关联 + 奇偶轮转 + 遗漏回归
+  return [...Array(12).keys()].map(i => i + 1)
+    .sort((a, b) => {
+      const gapBonusA = gap[a] >= 6 ? gap[a] * 0.3 : 0;
+      const gapBonusB = gap[b] >= 6 ? gap[b] * 0.3 : 0;
+      const sa = bridgeScore[a] * 4 + tailBackScore[a] + parityScore[a] + gapBonusA;
+      const sb = bridgeScore[b] * 4 + tailBackScore[b] + parityScore[b] + gapBonusB;
+      return sb - sa || b - a;
+    })
+    .slice(0, 6);
+}
+
+// ===================== 回测验证（全量+多间隔） =====================
+function backtest() {
+  const fullPairs = buildPairs(10);
+  const pairs12 = buildPairs(12);
+  const shortPairs = buildPairs(5);
+  const longPairs = buildPairs(15);
+
+  console.log("╔══════════════════════════════════════════════════════════════════════╗");
+  console.log("║   🎯 优化选号回测报告 v6 (IV微调+桥接效应后区) ║");
+  console.log("╚══════════════════════════════════════════════════════════════════════╝\n");
+  console.log(`  可用数据: ${ALL_DRAWS.length}期 (${ALL_DRAWS[0].issue} ~ ${ALL_DRAWS[ALL_DRAWS.length - 1].issue})`);
+  console.log(`  优化配置: 组合池Top${CONFIG.comboPoolTop} | 采样上限${CONFIG.comboSampleMax}`);
+  console.log(`  10期配对: ${fullPairs.length}对 | 12期配对: ${pairs12.length}对 | 5期配对: ${shortPairs.length}对 | 15期配对: ${longPairs.length}对\n`);
+
+  // ===== 详细回测：全量10期配对 =====
+  console.log("─".repeat(70));
+  console.log("  📋 全量10期间隔配对回测 (详细)");
+  console.log("─".repeat(70));
+
+  let totalCoverage = 0, totalTopHits = 0, totalTop3Hits = 0, totalTop5Hits = 0, totalTop10Hits = 0;
+  let totalTop6Hit = 0, totalTop7Hit = 0, totalTop8Hit = 0;
+  let totalUnionHits5 = 0, totalUnionHits6 = 0, totalUnionHits7 = 0, totalUnionHits8 = 0;
+  let totalBackHits = 0;
+  // 🆕 第六组补漏：从前五组未覆盖的池号码中选号
+  let totalTop6补漏Hit = 0;
+  let totalTop6补漏UnionHit = 0;  // Top5+补漏6的联合覆盖
+  // 🆕 对比策略：高频号 vs 低频号
+  let totalTop6高频Hit = 0;  // 补漏6 + Top5高频号
+  let totalTop6低频Hit = 0;  // 补漏6 + Top5低频号
+  // 🆕 新策略：Top5未覆盖 + Top5出现≥3次的球
+  let totalTop6混合Hit = 0;
+  const perPair = [];
+  const allIssues = ALL_DRAWS.map((d) => d.issue);
+
+  fullPairs.forEach(([sIssue, tIssue], pairIdx) => {
+    // 跳过 srcIdx+9 超出数据范围的配对（目标行上一期未开奖）
+    const srcIdxCheck = allIssues.indexOf(sIssue);
+    if (srcIdxCheck + 9 >= ALL_DRAWS.length) return;
+
+    const result = predict(sIssue, null, true);  // 不传targetIssue，避免泄露未来数据
+    if (!result) return;
+
+    // 手动补回target信息（仅用于后续输出/对比，不影响评分）
+    const tgtDraw = issueMap[tIssue];
+    if (tgtDraw) {
+      result.targetFront = tgtDraw.front;
+      result.targetTails = tails(tgtDraw.front);
+    }
+
+    const srcIdx = allIssues.indexOf(sIssue);
+    const targetSet = new Set(result.targetFront || []);
+    const poolNumbers = result.pool.map((n) => n.number);
+    const poolHits = poolNumbers.filter((n) => targetSet.has(n));
+    totalCoverage += poolHits.length;
+
+    // 后区预测
+    const backPred = predictBack(srcIdx);
+    const backHits = tgtDraw ? tgtDraw.back.filter((b) => backPred.includes(b)).length : 0;
+    totalBackHits += backHits;
+
+    // 前5组合命中
+    let bestHit = 0;
+    const top5Hits = [];
+    result.combinations.slice(0, 5).forEach((combo, idx) => {
+      const hits = combo.numbers.filter((n) => targetSet.has(n)).length;
+      bestHit = Math.max(bestHit, hits);
+      top5Hits.push(hits);
+      if (idx === 0) totalTopHits += hits;
+      if (idx < 3) totalTop3Hits += hits;
+      totalTop5Hits += hits;
+    });
+
+    // 扩展Top10命中 + Top6-8追踪
+    totalTop10Hits += (result.combinations[5] ? result.combinations[5].numbers.filter((n) => targetSet.has(n)).length : 0);
+    totalTop10Hits += (result.combinations[6] ? result.combinations[6].numbers.filter((n) => targetSet.has(n)).length : 0);
+    totalTop10Hits += (result.combinations[7] ? result.combinations[7].numbers.filter((n) => targetSet.has(n)).length : 0);
+    totalTop10Hits += (result.combinations[8] ? result.combinations[8].numbers.filter((n) => targetSet.has(n)).length : 0);
+    totalTop10Hits += (result.combinations[9] ? result.combinations[9].numbers.filter((n) => targetSet.has(n)).length : 0);
+    const t6 = result.combinations[5] ? result.combinations[5].numbers.filter((n) => targetSet.has(n)).length : 0;
+    const t7 = result.combinations[6] ? result.combinations[6].numbers.filter((n) => targetSet.has(n)).length : 0;
+    const t8 = result.combinations[7] ? result.combinations[7].numbers.filter((n) => targetSet.has(n)).length : 0;
+    totalTop6Hit += t6;
+    totalTop7Hit += t7;
+    totalTop8Hit += t8;
+
+    // 🆕 第六组补漏 v5：遗漏期数 + 热号频率 + 结构约束
+    const top5CoveredNums = new Set();
+    result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => top5CoveredNums.add(n)));
+    // 统计前五组中每个号码出现次数
+    const top5Freq = new Map();
+    result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => top5Freq.set(n, (top5Freq.get(n) || 0) + 1)));
+    const poolEntryMap = new Map(result.pool.map(e => [e.number, e]));
+    
+    // ① 计算遗漏期数（近20期）
+    const missWindow = 20;
+    const missMap = new Map();
+    for (let n = 1; n <= 35; n++) {
+      let gap = 0;
+      for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - missWindow); i--) {
+        if (ALL_DRAWS[i].front.includes(n)) break;
+        gap++;
+      }
+      missMap.set(n, gap);
+    }
+    
+    // ② 计算热号频率（近10期）
+    const hotWindow = 10;
+    const hotMap = new Map();
+    for (let n = 1; n <= 35; n++) {
+      let cnt = 0;
+      for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - hotWindow); i--) {
+        if (ALL_DRAWS[i].front.includes(n)) cnt++;
+      }
+      hotMap.set(n, cnt);
+    }
+    
+    // 核心策略：只选Top5未覆盖的池号码（补漏=补Top5的盲区）
+    const uncoveredPoolNums = result.pool
+      .filter(e => !top5CoveredNums.has(e.number))
+      .map(e => e.number);
+    
+    // 统计Top5区间分布，用于区间平衡加分
+    const top5IvCounts = [0, 0, 0];
+    result.combinations.slice(0, 5).forEach(c => {
+      c.numbers.forEach(n => { if (n <= 12) top5IvCounts[0]++; else if (n <= 24) top5IvCounts[1]++; else top5IvCounts[2]++; });
+    });
+    const top5IvMin = Math.min(...top5IvCounts);
+    const top5IvMinIdx = top5IvCounts.indexOf(top5IvMin);
+    
+    // 尾号预测
+    const predTails6 = result.predictedTails ? new Set(result.predictedTails.slice(0, 5).map(([t]) => t)) : new Set();
+    
+    // 🆕 混合策略：Top5未覆盖号码 + Top5高频号（≥3次）
+    // 核心发现：结合盲区覆盖和高频号，提高命中率
+    const candidate6Scored = result.pool
+      .filter(e => {
+        const n = e.number;
+        // 补盲区策略：只选择Top5未覆盖的号码
+        return !top5CoveredNums.has(n);
+      })
+      .map(e => {
+        const n = e.number;
+        const freq = top5Freq.get(n) || 0;
+        const miss = missMap.get(n) || 0;
+        const hot = hotMap.get(n) || 0;
+        let score6 = e.score;  // 基础池分
+        // 尾号匹配加分
+        if (predTails6.has(n % 10)) score6 += 10;
+        // 区间平衡：Top5弱势区间加分
+        const zone = n <= 12 ? 0 : n <= 24 ? 1 : 2;
+        if (zone === top5IvMinIdx) score6 += 6;
+        // 热号频率加分：近期出现频率高
+        if (hot >= 3) score6 += 8;
+        else if (hot >= 2) score6 += 4;
+        // 遗漏期数：小幅加分（冷号回归信号较弱）
+        if (miss >= 10) score6 += 5;
+        else if (miss >= 7) score6 += 3;
+        // v6优化：补漏核心价值=覆盖Top5盲区，而非重复已覆盖号码
+        if (!top5CoveredNums.has(n)) {
+          score6 += 25; // 未覆盖号码：补漏核心价值
+        } else if (freq >= 3) {
+          score6 += 8;  // 已覆盖高频号：仅作为结构补充
+        } else {
+          score6 -= 5;  // 已覆盖低频号：惩罚，避免浪费补漏名额
+        }
+        // 邻近加分：与Top5选中号码相邻的球更可能出现
+        let minDistToTop5 = Infinity;
+        top5CoveredNums.forEach(cn => { const d = Math.abs(n - cn); if (d < minDistToTop5) minDistToTop5 = d; });
+        if (minDistToTop5 === 1) score6 += 12;
+        else if (minDistToTop5 === 2) score6 += 6;
+        else if (minDistToTop5 === 3) score6 += 3;
+        return { number: n, poolScore: e.score, freq, miss, hot, score6 };
+      })
+      .sort((a, b) => b.score6 - a.score6);
+    
+    // 🆕 组合级优化：生成多个候选组合，选最佳的
+    function buildCombo6(candidates, count = 5) {
+      if (candidates.length < count) return null;
+      // 生成多个候选组合（贪心+随机）
+      const combos = [];
+      // 方案1：纯贪心（按score6排序取前5）
+      const greedy = candidates.slice(0, count).map(e => e.number).sort((a, b) => a - b);
+      combos.push(greedy);
+      // 方案2-4：随机扰动
+      for (let trial = 0; trial < 3; trial++) {
+        const pool = [...candidates];
+        const selected = [];
+        for (let i = 0; i < count && pool.length > 0; i++) {
+          // 加权随机选择
+          const totalWeight = pool.reduce((s, e) => s + Math.max(1, e.score6 + 50), 0);
+          let r = Math.random() * totalWeight;
+          let idx = 0;
+          for (let j = 0; j < pool.length; j++) {
+            r -= Math.max(1, pool[j].score6 + 50);
+            if (r <= 0) { idx = j; break; }
+          }
+          selected.push(pool[idx].number);
+          pool.splice(idx, 1);
+        }
+        combos.push(selected.sort((a, b) => a - b));
+      }
+      // 评估每个组合的结构质量
+      let bestCombo = null, bestScore = -Infinity;
+      for (const nums of combos) {
+        const s = nums.reduce((a, b) => a + b, 0);
+        const sp = Math.max(...nums) - Math.min(...nums);
+        const odd = nums.filter(n => n % 2 === 1).length;
+        const iv = [0, 0, 0];
+        nums.forEach(n => { if (n <= 12) iv[0]++; else if (n <= 24) iv[1]++; else iv[2]++; });
+        // 结构评分：和值90±25, 跨度20±8, 奇偶2-3, 三区间
+        let structScore = 0;
+        if (s >= 65 && s <= 115) structScore += 10;
+        if (sp >= 12 && sp <= 28) structScore += 8;
+        if (odd >= 1 && odd <= 4) structScore += 6;
+        if (iv[0] > 0 && iv[1] > 0 && iv[2] > 0) structScore += 10;
+        else if ((iv[0] > 0 && iv[1] > 0) || (iv[1] > 0 && iv[2] > 0) || (iv[0] > 0 && iv[2] > 0)) structScore += 5;
+        // 加上号码本身的评分
+        const numScore = nums.reduce((s, n) => {
+          const entry = candidates.find(e => e.number === n);
+          return s + (entry ? entry.score6 : 0);
+        }, 0);
+        const total = numScore + structScore * 2;
+        if (total > bestScore) { bestScore = total; bestCombo = nums; }
+      }
+      return { numbers: bestCombo, score: bestScore };
+    }
+    
+    let combo6补漏 = buildCombo6(candidate6Scored, 5);
+    
+    // 不足5个时的补充逻辑：先补未覆盖池号码，再补已覆盖池号码（优化回退机制）
+    if (!combo6补漏 && candidate6Scored.length > 0) {
+      // 先从未覆盖的池号码中补充
+      const supplement = result.pool
+        .filter(e => !top5CoveredNums.has(e.number) && !candidate6Scored.some(c => c.number === e.number))
+        .sort((a, b) => b.score - a.score);
+      let all = [...candidate6Scored, ...supplement.map(e => ({ number: e.number, score6: e.score }))];
+      
+      // 如果还不够5个，从已覆盖池号码中补充（降序排列取高分）
+      if (all.length < 5) {
+        const coveredPool = result.pool
+          .filter(e => top5CoveredNums.has(e.number) && !all.some(c => c.number === e.number))
+          .sort((a, b) => b.score - a.score);
+        all = [...all, ...coveredPool.map(e => ({ number: e.number, score6: e.score * 0.5 }))]; // 已覆盖的打5折
+      }
+      all = all.slice(0, 5);
+      const nums = all.map(e => e.number).sort((a, b) => a - b);
+      combo6补漏 = { numbers: nums, score: all.reduce((s, e) => s + e.score6, 0) };
+    }
+    let hits6补漏 = 0, union5_6hits = 0;
+    if (combo6补漏) {
+      hits6补漏 = combo6补漏.numbers.filter(n => targetSet.has(n)).length;
+      totalTop6补漏Hit += hits6补漏;
+      // Top5 + 补漏6 联合覆盖
+      const union5_6 = new Set();
+      result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union5_6.add(n)));
+      combo6补漏.numbers.forEach(n => union5_6.add(n));
+      union5_6hits = [...targetSet].filter(n => union5_6.has(n)).length;
+      totalTop6补漏UnionHit += union5_6hits;
+    }
+
+    // 🆕 对比策略：高频号 vs 低频号（直接用高频/低频号作为补漏6）
+    // 策略A：用Top5高频号作为补漏6（出现次数最多的5个号码）
+    const top5FreqSorted = [...top5Freq.entries()].sort((a, b) => b[1] - a[1]);
+    const highFreqNums = top5FreqSorted.slice(0, 5).map(([n]) => n).sort((a, b) => a - b);
+    const hits6高频 = highFreqNums.filter(n => targetSet.has(n)).length;
+    totalTop6高频Hit += hits6高频;
+
+    // 策略B：用Top5低频号作为补漏6（出现次数最少的5个号码）
+    const lowFreqNums = top5FreqSorted.slice(-5).map(([n]) => n).sort((a, b) => a - b);
+    const hits6低频 = lowFreqNums.filter(n => targetSet.has(n)).length;
+    totalTop6低频Hit += hits6低频;
+
+    // 🆕 策略C：Top5未覆盖号码 + Top5出现≥3次的球
+    // 核心思想：补漏6应该覆盖Top5的盲区，同时优先选择Top5中高频出现的号码
+    const uncoveredNums = result.pool
+      .filter(e => !top5CoveredNums.has(e.number))
+      .map(e => e.number);
+    const highFreqInTop5 = top5FreqSorted
+      .filter(([n, cnt]) => cnt >= 1)
+      .map(([n]) => n);
+    // 合并：未覆盖号码 + Top5高频号（去重）
+    const mixedNums = [...new Set([...uncoveredNums, ...highFreqInTop5])];
+    // 按分数排序，取前5个
+    const mixedScored = mixedNums.map(n => {
+      const entry = result.pool.find(e => e.number === n);
+      const freq = top5Freq.get(n) || 0;
+      let score = entry ? entry.score : 0;
+      if (freq >= 3) score += 30;  // Top5高频号加分
+      else if (freq <= 1) score += 25;
+      else if (freq >= 2) score += 15;
+      // 邻近加分
+      let minDist = Infinity;
+      top5CoveredNums.forEach(cn => { const d = Math.abs(n - cn); if (d < minDist) minDist = d; });
+      if (minDist === 1) score += 12;
+      else if (minDist === 2) score += 6;
+      else if (minDist === 3) score += 3;
+      return { number: n, score, freq };
+    }).sort((a, b) => b.score - a.score);
+    const mixedSelected = mixedScored.slice(0, 5).map(e => e.number).sort((a, b) => a - b);
+    const hits6混合 = mixedSelected.filter(n => targetSet.has(n)).length;
+    totalTop6混合Hit += hits6混合;
+
+    // 🆕 前N注所有号码联合去重后覆盖开奖号（覆盖优先策略）
+    function calcUnionHits(combos, topN) {
+      const union = new Set();
+      combos.slice(0, topN).forEach((c) => c.numbers.forEach((n) => union.add(n)));
+      return [...targetSet].filter((n) => union.has(n)).length;
+    }
+    
+    // 覆盖优先的组合选择（用于联合覆盖计算）
+    function selectCoverageOptimal(combos, topN) {
+      if (combos.length <= topN) return combos;
+      const poolSet = new Set(poolNumbers);
+      const selected = [combos[0]];
+      const comboKey = (c) => c.numbers ? c.numbers.join(",") : String(c);
+      const usedKeys = new Set([comboKey(combos[0])]);
+      
+      for (let round = 1; round < topN && selected.length < topN; round++) {
+        const covered = new Set();
+        selected.forEach(c => c.numbers.forEach(n => { if (poolSet.has(n)) covered.add(n); }));
+        
+        let bestIdx = -1, bestScore = -Infinity;
+        for (let i = 1; i < combos.length; i++) {
+          const c = combos[i];
+          if (usedKeys.has(comboKey(c))) continue;
+          let newCov = 0;
+          c.numbers.forEach(n => { if (poolSet.has(n) && !covered.has(n)) newCov++; });
+          const combined = newCov * 50 + c.score;
+          if (combined > bestScore) { bestScore = combined; bestIdx = i; }
+        }
+        if (bestIdx >= 0) {
+          selected.push(combos[bestIdx]);
+          usedKeys.add(comboKey(combos[bestIdx]));
+        }
+      }
+      return selected;
+    }
+    
+    const u5 = calcUnionHits(result.combinations, 5);
+    // 覆盖优先策略：选择最大化池覆盖的Top5组合，然后计算开奖命中
+    const covOptCombos = selectCoverageOptimal(result.combinations, 5);
+    const covOptUnion = new Set();
+    covOptCombos.forEach(c => c.numbers.forEach(n => covOptUnion.add(n)));
+    const u5cov = [...targetSet].filter(n => covOptUnion.has(n)).length;
+    const u6 = calcUnionHits(result.combinations, 6);
+    const u7 = calcUnionHits(result.combinations, 7);
+    const u8 = calcUnionHits(result.combinations, 8);
+    totalUnionHits5 += u5; totalUnionHits6 += u6;
+    totalUnionHits7 += u7; totalUnionHits8 += u8;
+
+    // 🆕 区间比追踪
+    const targetIv = intervalRatio(result.targetFront).join(":");
+    const srcIvKey = intervalRatio(result.sourceFront).join(":");
+    const top1Iv = result.combinations[0]?.iv || "";
+    const top1IvMatch = top1Iv === targetIv;
+    const top5IvCovered = result.combinations.slice(0, 5).some((c) => c.iv === targetIv);
+    const top8IvCovered = result.combinations.slice(0, 8).some((c) => c.iv === targetIv);
+
+    // 🆕 v5: IV预测准确率追踪
+    const ivp = result.ivPrediction || {};
+    const predictedIvKey = ivp.predictedIvKey || "";
+    const ivPredictHit = predictedIvKey === targetIv;               // 精确命中
+    const ivTop3Hit = (ivp.topCandidates || []).some(c => c.ivKey === targetIv); // Top3候选命中
+    const predictedDist = ivp.distance;
+    const actualDist = getIntervalRatioDistance(intervalRatio(result.sourceFront), intervalRatio(result.targetFront));
+    const distCategoryMatch = (actualDist <= 2 && predictedDist <= 2) || (actualDist >= 5 && predictedDist >= 5) || (actualDist >= 3 && actualDist <= 4 && predictedDist >= 3 && predictedDist <= 4);
+
+    perPair.push({
+      sIssue, tIssue,
+      src: result.sourceFront, tgt: result.targetFront,
+      poolHits: poolHits.length, poolNums: poolHits,
+      bestHit, top5Hits, unionHits: u5, union6: u6, union7: u7, union8: u8, unionCovOpt: u5cov,
+      sumS: sum(result.sourceFront), sumT: sum(result.targetFront),
+      spanS: span(result.sourceFront), spanT: span(result.targetFront),
+      oddS: oddCount(result.sourceFront), oddT: oddCount(result.targetFront),
+      backHits,
+      targetIv, srcIvKey, top1IvMatch, top5IvCovered, top8IvCovered, top1Iv,
+      predictedIvKey, ivPredictHit, ivTop3Hit, predictedDist, actualDist, distCategoryMatch,
+      combo6补漏hits: hits6补漏, combo6补漏union: union5_6hits, combo6补漏nums: combo6补漏 ? combo6补漏.numbers : null,
+    });
+  });
+
+  // 汇总
+  const totalBalls = fullPairs.length * 5;
+
+  console.log("\n" + "═".repeat(70));
+  console.log("║                        📊 汇总统计                                ║");
+  console.log("═".repeat(70));
+  console.log(`\n   总配对: ${fullPairs.length} | 总目标球: ${totalBalls}`);
+  console.log(`\n   📦 号码池覆盖率 (${CONFIG.poolSize}球池):`);
+  console.log(`      池内命中: ${totalCoverage}/${totalBalls} (${(totalCoverage / totalBalls * 100).toFixed(1)}%)`);
+
+  // 命中分布 (池覆盖)
+  const covDist = [0, 0, 0, 0, 0, 0];
+  perPair.forEach((r) => covDist[r.poolHits]++);
+  console.log(`      池覆盖分布: 5球${covDist[5]}对 | 4球${covDist[4]}对 | 3球${covDist[3]}对 | ≤2球${covDist[2] + covDist[1] + covDist[0]}对`);
+
+  // 🆕 前N注联合覆盖
+  console.log(`\n   🎯 前N注联合覆盖 (所有号码去重):`);
+  [
+    { n: 5, total: totalUnionHits5, key: 'unionHits' },
+    { n: 6, total: totalUnionHits6, key: 'union6' },
+    { n: 7, total: totalUnionHits7, key: 'union7' },
+    { n: 8, total: totalUnionHits8, key: 'union8' },
+  ].forEach(({ n, total, key }) => {
+    const dist = [0, 0, 0, 0, 0, 0];
+    perPair.forEach((r) => dist[r[key]]++);
+    console.log(`      Top${n}: ${total}/${totalBalls} (${(total / totalBalls * 100).toFixed(1)}%) | ≥3球:${dist[5] + dist[4] + dist[3]}/${fullPairs.length}对 | 全5:${dist[5]}对 | 4球:${dist[4]}对 | 3球:${dist[3]}对 | 2球:${dist[2]}对 | 1球:${dist[1]}对 | 0球:${dist[0]}对`);
+  });
+
+  // 🆕 覆盖优先策略对比
+  const totalCovOpt = perPair.reduce((s, r) => s + (r.unionCovOpt || 0), 0);
+  console.log(`\n   🔧 覆盖优先策略 (Top5联合覆盖优化):`);
+  console.log(`      默认Top5: ${totalUnionHits5}/${totalBalls} (${(totalUnionHits5 / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      覆盖优先: ${totalCovOpt}/${totalBalls} (${(totalCovOpt / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      差异: ${totalCovOpt - totalUnionHits5 >= 0 ? '+' : ''}${totalCovOpt - totalUnionHits5}球 (${((totalCovOpt - totalUnionHits5) / totalBalls * 100).toFixed(1)}%)`);
+
+  console.log(`\n   🏆 前5组合命中率:`);
+  console.log(`      Top1 命中: ${totalTopHits}/${totalBalls} (${(totalTopHits / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      Top3 总命中: ${totalTop3Hits}/${totalBalls * 3} (${(totalTop3Hits / (totalBalls * 3) * 100).toFixed(1)}%)`);
+  console.log(`      Top5 总命中: ${totalTop5Hits}/${totalBalls * 5} (${(totalTop5Hits / (totalBalls * 5) * 100).toFixed(1)}%)`);
+  console.log(`      Top10 总命中: ${totalTop10Hits + totalTop5Hits}/${totalBalls * 10} (${((totalTop10Hits + totalTop5Hits) / (totalBalls * 10) * 100).toFixed(1)}%)`);
+  console.log(`      Top6 命中: ${totalTop6Hit}/${totalBalls} (${(totalTop6Hit / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      Top7 命中: ${totalTop7Hit}/${totalBalls} (${(totalTop7Hit / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      Top8 命中: ${totalTop8Hit}/${totalBalls} (${(totalTop8Hit / totalBalls * 100).toFixed(1)}%)`);
+
+  // 🆕 第六组补漏统计
+  const pair6补漏Cnt = perPair.filter(r => r.combo6补漏hits !== undefined).length;
+  console.log(`\n   🔍 第六组补漏（前五组未覆盖池号码）:`);
+  console.log(`      生成成功: ${pair6补漏Cnt}/${fullPairs.length}对`);
+  console.log(`      补漏6命中: ${totalTop6补漏Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6补漏Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%)  [平均每对命中${pair6补漏Cnt > 0 ? (totalTop6补漏Hit / pair6补漏Cnt).toFixed(2) : 0}球]`);
+  console.log(`      Top5+补漏6联合覆盖: ${totalTop6补漏UnionHit}/${totalBalls} (${(totalTop6补漏UnionHit / totalBalls * 100).toFixed(1)}%)`);
+  console.log(`      对比默认Top5联合覆盖: ${totalUnionHits5}/${totalBalls} (${(totalUnionHits5 / totalBalls * 100).toFixed(1)}%) → 差异: ${totalTop6补漏UnionHit - totalUnionHits5 >= 0 ? '+' : ''}${totalTop6补漏UnionHit - totalUnionHits5}球`);
+  // 补漏6命中分布
+  const c6dist = [0, 0, 0, 0, 0, 0];
+  perPair.filter(r => r.combo6补漏hits !== undefined).forEach(r => c6dist[r.combo6补漏hits]++);
+  console.log(`      补漏6命中分布: 5球${c6dist[5]} | 4球${c6dist[4]} | 3球${c6dist[3]} | 2球${c6dist[2]} | 1球${c6dist[1]} | 0球${c6dist[0]}`);
+
+  // 🆕 高频号 vs 低频号对比（直接用高频/低频号作为补漏6）
+  console.log(`\n   📊 高频号 vs 低频号 对比（直接作为补漏6）:`);
+  console.log(`      Top5高频号（出现最多）: ${totalTop6高频Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6高频Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%)  [平均每对命中${pair6补漏Cnt > 0 ? (totalTop6高频Hit / pair6补漏Cnt).toFixed(2) : 0}球]`);
+  console.log(`      Top5低频号（出现最少）: ${totalTop6低频Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6低频Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%)  [平均每对命中${pair6补漏Cnt > 0 ? (totalTop6低频Hit / pair6补漏Cnt).toFixed(2) : 0}球]`);
+  console.log(`      原补漏6策略: ${totalTop6补漏Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6补漏Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%)`);
+  
+  // 🆕 新策略：Top5未覆盖 + Top5出现≥3次的球
+  console.log(`\n   📊 新策略对比：Top5未覆盖 + Top5高频号（≥3次）:`);
+  console.log(`      混合策略: ${totalTop6混合Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6混合Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%)  [平均每对命中${pair6补漏Cnt > 0 ? (totalTop6混合Hit / pair6补漏Cnt).toFixed(2) : 0}球]`);
+  console.log(`      对比原补漏6: ${totalTop6补漏Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6补漏Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%) → 差异: ${totalTop6混合Hit - totalTop6补漏Hit >= 0 ? '+' : ''}${totalTop6混合Hit - totalTop6补漏Hit}球`);
+  console.log(`      对比高频号: ${totalTop6高频Hit}/${pair6补漏Cnt * 5} (${pair6补漏Cnt > 0 ? (totalTop6高频Hit / (pair6补漏Cnt * 5) * 100).toFixed(1) : 0}%) → 差异: ${totalTop6混合Hit - totalTop6高频Hit >= 0 ? '+' : ''}${totalTop6混合Hit - totalTop6高频Hit}球`);
+  
+  // 最优策略汇总
+  const allStrategies = [
+    { name: '原补漏6', hit: totalTop6补漏Hit },
+    { name: '高频号', hit: totalTop6高频Hit },
+    { name: '低频号', hit: totalTop6低频Hit },
+    { name: '混合策略', hit: totalTop6混合Hit }
+  ];
+  const best = allStrategies.reduce((a, b) => a.hit > b.hit ? a : b);
+  console.log(`      最优策略: ${best.name} (${(best.hit / (pair6补漏Cnt * 5) * 100).toFixed(1)}%)`);
+
+  // 🆕 重号分析（源期→目标期的重复号码）
+  console.log(`\n   📊 重号分析（源期→目标期的重复号码）:`);
+  let totalRepeatInTarget = 0, totalTargetBalls = 0;
+  let repeatInPool = 0, repeatInTop5 = 0;
+  let repeatDistribution = [0, 0, 0, 0, 0, 0]; // 0-5个重号的分布
+  
+  fullPairs.forEach(([sIssue, tIssue]) => {
+    const srcDraw = issueMap[sIssue];
+    const tgtDraw = issueMap[tIssue];
+    if (!srcDraw || !tgtDraw) return;
+    
+    const srcSet = new Set(srcDraw.front);
+    const repeats = tgtDraw.front.filter(n => srcSet.has(n));
+    totalRepeatInTarget += repeats.length;
+    totalTargetBalls += 5;
+    repeatDistribution[Math.min(repeats.length, 5)]++;
+    
+    // 检查重复号是否在池中
+    const result = predict(sIssue, null, true);
+    if (!result || !result.pool) return;
+    
+    const poolNums = new Set(result.pool.map(n => n.number));
+    repeats.forEach(n => {
+      if (poolNums.has(n)) repeatInPool++;
+    });
+    
+    // 检查重复号是否在Top5中
+    if (result.combinations) {
+      result.combinations.slice(0, 5).forEach(c => {
+        const comboSet = new Set(c.numbers || c);
+        repeats.forEach(n => {
+          if (comboSet.has(n)) repeatInTop5++;
+        });
+      });
+    }
+  });
+  
+  console.log(`      目标期重号总数: ${totalRepeatInTarget}/${totalTargetBalls} (${(totalRepeatInTarget/totalTargetBalls*100).toFixed(1)}%)`);
+  console.log(`      重号在池中: ${repeatInPool}/${totalRepeatInTarget} (${(repeatInPool/totalRepeatInTarget*100).toFixed(1)}%)`);
+  console.log(`      重号在Top5中: ${repeatInTop5}/${totalRepeatInTarget} (${(repeatInTop5/totalRepeatInTarget*100).toFixed(1)}%)`);
+  console.log(`      重号分布（目标期含N个源期号码）:`);
+  repeatDistribution.forEach((count, i) => {
+    console.log(`        ${i}个重号: ${count}对 (${(count/fullPairs.length*100).toFixed(1)}%)`);
+  });
+  
+  // 🆕 遗漏号码与源行/源行+9关系分析
+  console.log(`\n   🔍 遗漏号码与源行/源行+9关系分析:`);
+  let totalMissed = 0, totalTargetForMissed = 0;
+  let missedInSource = 0, missedInSource9 = 0, missedInBoth = 0, missedInNeither = 0;
+  let missedInPool = 0, missedNotInPool = 0;
+  const missedScoreDist = { high: 0, medium: 0, low: 0, zero: 0, negative: 0 };
+  const missedFreqMap = new Map();
+  const newNumberFreq = new Map(); // 全新号码频率
+  // 🆕 尾号预测匹配分析
+  let missedTailInPredicted = 0;      // 遗漏号码的尾号在预测尾号中
+  let missedTailNotInPredicted = 0;   // 遗漏号码的尾号不在预测尾号中
+  const missedTailFreq = new Map();   // 遗漏号码的尾号频率
+  const missedTailMatchFreq = new Map(); // 匹配预测尾号的遗漏号码频率
+  const missedTailWithPool = new Map(); // 尾号预测正确但被筛掉时，池中同尾号号码的情况
+  
+  fullPairs.forEach(([sIssue, tIssue]) => {
+    const srcIdx = allIssues.indexOf(sIssue);
+    if (srcIdx + 9 >= ALL_DRAWS.length) return;
+    
+    const srcDraw = issueMap[sIssue];
+    const tgtDraw = issueMap[tIssue];
+    if (!srcDraw || !tgtDraw) return;
+    
+    const srcSet = new Set(srcDraw.front);
+    const src9Draw = ALL_DRAWS[srcIdx + 9];
+    const src9Set = src9Draw ? new Set(src9Draw.front) : new Set();
+    
+    // 获取该期的预测结果
+    const result = predict(sIssue, null, true);
+    if (!result || !result.pool) return;
+    
+    const poolNumSet = new Set(result.pool.map(n => n.number));
+    const poolScoreMap = new Map(result.pool.map(n => [n.number, n.score]));
+    
+    // 获取预测尾号
+    const predictedTails = result.predictedTails || [];
+    const topPredictedTails = predictedTails.slice(0, 5).map(([tail]) => tail);
+    
+    // 找出遗漏号码（目标号码不在池中）
+    const missed = tgtDraw.front.filter(n => !poolNumSet.has(n));
+    totalTargetForMissed += 5;
+    totalMissed += missed.length;
+    
+    missed.forEach(n => {
+      missedFreqMap.set(n, (missedFreqMap.get(n) || 0) + 1);
+      const tail = n % 10;
+      missedTailFreq.set(tail, (missedTailFreq.get(tail) || 0) + 1);
+      
+      const inSrc = srcSet.has(n);
+      const inSrc9 = src9Set.has(n);
+      
+      if (inSrc) missedInSource++;
+      if (inSrc9) missedInSource9++;
+      if (inSrc && inSrc9) missedInBoth++;
+      if (!inSrc && !inSrc9) {
+        missedInNeither++;
+        newNumberFreq.set(n, (newNumberFreq.get(n) || 0) + 1);
+      }
+      
+      // 🆕 检查遗漏号码的尾号是否在预测尾号中
+      if (topPredictedTails.includes(tail)) {
+        missedTailInPredicted++;
+        missedTailMatchFreq.set(n, (missedTailMatchFreq.get(n) || 0) + 1);
+        
+        // 🆕 分析"尾号预测正确但被筛掉"的原因
+        // 这些号码不在池中，说明评分系统没选入它们
+        // 我们需要分析池中同尾号号码的情况
+        const sameTailInPool = result.pool.filter(p => p.number % 10 === tail);
+        if (sameTailInPool.length > 0) {
+          // 池中有同尾号的号码，分析为什么选了那些没选这个
+          const poolMinScore = Math.min(...sameTailInPool.map(p => p.score));
+          const poolMaxScore = Math.max(...sameTailInPool.map(p => p.score));
+          // 记录：池中同尾号号码的分数范围
+          if (!missedTailWithPool.has(tail)) {
+            missedTailWithPool.set(tail, { count: 0, poolMin: poolMinScore, poolMax: poolMaxScore });
+          }
+          missedTailWithPool.get(tail).count++;
+        }
+      } else {
+        missedTailNotInPredicted++;
+      }
+      
+      // 检查是否在池中（在池但分数低）
+      if (poolScoreMap.has(n)) {
+        missedInPool++;
+        const score = poolScoreMap.get(n);
+        if (score >= 50) missedScoreDist.high++;
+        else if (score >= 30) missedScoreDist.medium++;
+        else if (score >= 10) missedScoreDist.low++;
+        else if (score >= 0) missedScoreDist.zero++;
+        else missedScoreDist.negative++;
+      } else {
+        missedNotInPool++;
+      }
+    });
+  });
+  
+  console.log(`      总遗漏号码: ${totalMissed}/${totalTargetForMissed} (${(totalMissed/totalTargetForMissed*100).toFixed(1)}%)`);
+  console.log(`      平均每对遗漏: ${(totalMissed/fullPairs.length).toFixed(2)}球`);
+  console.log(`\n      与源行/源行+9关系:`);
+  console.log(`        在源行中: ${missedInSource}/${totalMissed} (${(missedInSource/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        在源行+9中: ${missedInSource9}/${totalMissed} (${(missedInSource9/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        同时在两者: ${missedInBoth}/${totalMissed} (${(missedInBoth/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        既不在源行也不在+9: ${missedInNeither}/${totalMissed} (${(missedInNeither/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        在至少一个中: ${totalMissed - missedInNeither}/${totalMissed} (${((totalMissed-missedInNeither)/totalMissed*100).toFixed(1)}%)`);
+  console.log(`\n      遗漏号码是否在池中:`);
+  console.log(`        在池中（分数低）: ${missedInPool}/${totalMissed} (${(missedInPool/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        完全不在池中: ${missedNotInPool}/${totalMissed} (${(missedNotInPool/totalMissed*100).toFixed(1)}%)`);
+  
+  if (missedInPool > 0) {
+    console.log(`\n      在池中遗漏号码的分数分布:`);
+    console.log(`        高分(≥50): ${missedScoreDist.high} (${(missedScoreDist.high/missedInPool*100).toFixed(1)}%)`);
+    console.log(`        中分(30-49): ${missedScoreDist.medium} (${(missedScoreDist.medium/missedInPool*100).toFixed(1)}%)`);
+    console.log(`        低分(10-29): ${missedScoreDist.low} (${(missedScoreDist.low/missedInPool*100).toFixed(1)}%)`);
+    console.log(`        零分(0-9): ${missedScoreDist.zero} (${(missedScoreDist.zero/missedInPool*100).toFixed(1)}%)`);
+    console.log(`        负分(<0): ${missedScoreDist.negative} (${(missedScoreDist.negative/missedInPool*100).toFixed(1)}%)`);
+  }
+  
+  // 最常被遗漏的号码
+  const topMissed = [...missedFreqMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  console.log(`\n      最常被遗漏的号码（前10）:`);
+  topMissed.forEach(([num, cnt]) => {
+    const bar = "█".repeat(Math.round(cnt / fullPairs.length * 20));
+    console.log(`        ${String(num).padStart(2)}: ${String(cnt).padStart(3)}次 ${bar} (${(cnt/fullPairs.length*100).toFixed(1)}%)`);
+  });
+  
+  // 全新号码频率
+  const topNew = [...newNumberFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  console.log(`\n      全新号码频率（既不在源行也不在+9，前10）:`);
+  topNew.forEach(([num, cnt]) => {
+    const bar = "█".repeat(Math.round(cnt / fullPairs.length * 20));
+    console.log(`        ${String(num).padStart(2)}: ${String(cnt).padStart(3)}次 ${bar} (${(cnt/fullPairs.length*100).toFixed(1)}%)`);
+  });
+  
+  // 🆕 遗漏号码的尾号与预测尾号匹配分析
+  console.log(`\n      遗漏号码的尾号与预测尾号匹配:`);
+  console.log(`        尾号在预测中: ${missedTailInPredicted}/${totalMissed} (${(missedTailInPredicted/totalMissed*100).toFixed(1)}%)`);
+  console.log(`        尾号不在预测中: ${missedTailNotInPredicted}/${totalMissed} (${(missedTailNotInPredicted/totalMissed*100).toFixed(1)}%)`);
+  
+  // 遗漏号码的尾号分布
+  const topMissedTails = [...missedTailFreq.entries()].sort((a, b) => b[1] - a[1]);
+  console.log(`\n      遗漏号码的尾号分布:`);
+  topMissedTails.forEach(([tail, cnt]) => {
+    const bar = "█".repeat(Math.round(cnt / totalMissed * 30));
+    console.log(`        尾号${tail}: ${String(cnt).padStart(3)}次 ${bar} (${(cnt/totalMissed*100).toFixed(1)}%)`);
+  });
+  
+  // 匹配预测尾号的遗漏号码
+  const topMatchedMissed = [...missedTailMatchFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (topMatchedMissed.length > 0) {
+    console.log(`\n      匹配预测尾号的遗漏号码（前10）:`);
+    topMatchedMissed.forEach(([num, cnt]) => {
+      const bar = "█".repeat(Math.round(cnt / fullPairs.length * 20));
+      console.log(`        ${String(num).padStart(2)}(尾${num%10}): ${String(cnt).padStart(3)}次 ${bar} (${(cnt/fullPairs.length*100).toFixed(1)}%)`);
+    });
+  }
+  
+  // 🆕 尾号预测正确但被筛掉的原因分析
+  console.log(`\n      尾号预测正确但被筛掉的原因:`);
+  if (missedTailWithPool.size > 0) {
+    [...missedTailWithPool.entries()].sort((a, b) => b[1].count - a[1].count).forEach(([tail, data]) => {
+      console.log(`        尾号${tail}: ${data.count}次被筛掉 | 池中同尾号分数范围: ${data.poolMin}~${data.poolMax}`);
+    });
+    console.log(`\n        💡 说明：遗漏号码的尾号在预测中，但池中已有同尾号的其他号码`);
+    console.log(`           评分系统选择了其他同尾号号码（可能锚点偏移/区间等得分更高）`);
+  } else {
+    console.log(`        无数据（尾号预测正确但被筛掉的情况较少）`);
+  }
+  
+  // 🆕 后区预测
+  console.log(`\n   🎱 后区预测 (6选2):`);
+  console.log(`      总命中: ${totalBackHits}/${fullPairs.length * 2} (${(totalBackHits / (fullPairs.length * 2) * 100).toFixed(1)}%)`);
+  const backDist = [0, 0, 0];
+  perPair.forEach((r) => backDist[r.backHits]++);
+  console.log(`      命中2球:${backDist[2]}对 | 命中1球:${backDist[1]}对 | 命中0球:${backDist[0]}对`);
+
+  // 🆕 区间比分析 (I区:1-12, II区:13-24, III区:25-35)
+  console.log(`\n   📐 区间比分析 (I区:1-12, II区:13-24, III区:25-35):`);
+  const ivDist = new Map();
+  perPair.forEach((r) => { ivDist.set(r.targetIv, (ivDist.get(r.targetIv) || 0) + 1); });
+  const ivSorted = [...ivDist.entries()].sort((a, b) => b[1] - a[1]);
+  console.log(`      目标区间比分布 (实际开奖):`);
+  ivSorted.forEach(([iv, cnt]) => {
+    const bar = "█".repeat(Math.round(cnt / fullPairs.length * 40));
+    console.log(`        ${iv.padEnd(7)} ${String(cnt).padStart(2)}期 ${bar} (${(cnt / fullPairs.length * 100).toFixed(1)}%)`);
+  });
+
+  const top1MatchCnt = perPair.filter((r) => r.top1IvMatch).length;
+  const top5MatchCnt = perPair.filter((r) => r.top5IvCovered).length;
+  const top8MatchCnt = perPair.filter((r) => r.top8IvCovered).length;
+  console.log(`\n      预测区间比命中:`);
+  console.log(`        Top1 匹配目标: ${top1MatchCnt}/${fullPairs.length} (${(top1MatchCnt / fullPairs.length * 100).toFixed(1)}%)`);
+  console.log(`        Top5 覆盖目标: ${top5MatchCnt}/${fullPairs.length} (${(top5MatchCnt / fullPairs.length * 100).toFixed(1)}%)`);
+  console.log(`        Top8 覆盖目标: ${top8MatchCnt}/${fullPairs.length} (${(top8MatchCnt / fullPairs.length * 100).toFixed(1)}%)`);
+
+  // 🆕 v5: 区间比预测模型准确率
+  console.log(`\n      区间比预测模型 (predictTargetIntervalRatio):`);
+  const ivPredictHit = perPair.filter((r) => r.ivPredictHit).length;
+  const ivTop3Hit = perPair.filter((r) => r.ivTop3Hit).length;
+  const distMatch = perPair.filter((r) => r.distCategoryMatch).length;
+  console.log(`        预测Top1精确命中: ${ivPredictHit}/${fullPairs.length} (${(ivPredictHit / fullPairs.length * 100).toFixed(1)}%)`);
+  console.log(`        预测Top3覆盖命中: ${ivTop3Hit}/${fullPairs.length} (${(ivTop3Hit / fullPairs.length * 100).toFixed(1)}%)`);
+  console.log(`        变动幅度分类正确: ${distMatch}/${fullPairs.length} (${(distMatch / fullPairs.length * 100).toFixed(1)}%)`);
+
+  // 预测距离 vs 实际距离 对照
+  const distCompare = [[0, 0], [0, 0]]; // [pred≤2, pred≥5]
+  perPair.forEach((r) => {
+    if (r.predictedDist <= 2 && r.actualDist <= 2) distCompare[0][0]++;
+    if (r.predictedDist <= 2) distCompare[0][1]++;
+    if (r.predictedDist >= 5 && r.actualDist >= 5) distCompare[1][0]++;
+    if (r.predictedDist >= 5) distCompare[1][1]++;
+  });
+  const smallPrec = distCompare[0][1] > 0 ? (distCompare[0][0] / distCompare[0][1] * 100).toFixed(0) : "N/A";
+  const largePrec = distCompare[1][1] > 0 ? (distCompare[1][0] / distCompare[1][1] * 100).toFixed(0) : "N/A";
+  console.log(`        预测"小变动"准确率: ${smallPrec}% (预测${distCompare[0][1]}次, 实际符合${distCompare[0][0]}次)`);
+  console.log(`        预测"大变动"准确率: ${largePrec}% (预测${distCompare[1][1]}次, 实际符合${distCompare[1][0]}次)`);
+
+  // 平均预测距离 vs 平均实际距离
+  const avgPredDist = (perPair.reduce((s, r) => s + r.predictedDist, 0) / perPair.length).toFixed(2);
+  const avgActualDist = (perPair.reduce((s, r) => s + r.actualDist, 0) / perPair.length).toFixed(2);
+  console.log(`        平均预测距离: ${avgPredDist}  平均实际距离: ${avgActualDist}`);
+
+  // Top5 各排名命中分布
+  const topRankDist = [0, 0, 0, 0, 0, 0]; // 命中0-5球分别有多少个Top组合
+  perPair.forEach((r) => {
+    r.top5Hits.forEach((h) => topRankDist[h]++);
+  });
+  console.log(`\n   📊 Top5组合命中分布 (${fullPairs.length * 5}个组合):`);
+  [5, 4, 3, 2, 1, 0].forEach((h) => {
+    const cnt = topRankDist[h];
+    const bar = "█".repeat(Math.round(cnt / (fullPairs.length * 5) * 50));
+    console.log(`      命中${h}球: ${String(cnt).padStart(3)}个组合 ${bar} (${(cnt / (fullPairs.length * 5) * 100).toFixed(1)}%)`);
+  });
+
+  // 各对最佳命中分布
+  const bestDist = [0, 0, 0, 0, 0, 0];
+  perPair.forEach((r) => bestDist[r.bestHit]++);
+  console.log(`\n   🎯 各对最佳命中分布:`);
+  console.log(`      5球${bestDist[5]}对 | 4球${bestDist[4]}对 | 3球${bestDist[3]}对 | 2球${bestDist[2]}对 | 1球${bestDist[1]}对`);
+  console.log(`      最佳命中≥3球: ${bestDist[5] + bestDist[4] + bestDist[3]}/${fullPairs.length}对 (${((bestDist[5] + bestDist[4] + bestDist[3]) / fullPairs.length * 100).toFixed(1)}%)`);
+  console.log(`      最佳命中≥4球: ${bestDist[5] + bestDist[4]}/${fullPairs.length}对 (${((bestDist[5] + bestDist[4]) / fullPairs.length * 100).toFixed(1)}%)`);
+
+  // 按命中数分组展示
+  console.log(`\n   ⚠️  低命中配对 (最佳≤2球):`);
+  perPair.filter((r) => r.bestHit <= 2).forEach((r) => {
+    console.log(`      ${r.sIssue}→${r.tIssue}: 最佳${r.bestHit}/5 | 和${r.sumS}→${r.sumT} | 跨${r.spanS}→${r.spanT} | 奇${r.oddS}→${r.oddT}`);
+  });
+
+  console.log(`\n   🏆 高命中配对 (最佳≥4球):`);
+  perPair.filter((r) => r.bestHit >= 4).forEach((r) => {
+    console.log(`      ${r.sIssue}→${r.tIssue}: 最佳${r.bestHit}/5 | 和${r.sumS}→${r.sumT} | 跨${r.spanS}→${r.spanT} | 奇${r.oddS}→${r.oddT}`);
+  });
+
+  // 多间隔对比
+  console.log("\n" + "═".repeat(70));
+  console.log("║                  📊 多间隔覆盖对比                                ║");
+  console.log("═".repeat(70));
+
+  // ===== 10 vs 12 间隔直接对比 =====
+  console.log("\n" + "═".repeat(70));
+  console.log("║           📊 间隔10 vs 间隔12 对比 (前五组命中率+覆盖率)            ║");
+  console.log("═".repeat(70));
+
+  [
+    { name: "间隔10", pairs: fullPairs },
+    { name: "间隔12", pairs: pairs12 },
+  ].forEach(({ name, pairs }) => {
+    let cov = 0, best3plus = 0, best4plus = 0;
+    let topHits = 0, topTotal = 0, unionHits5 = 0;
+    const perPairData = [];
+    pairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);  // 不传target，避免泄露
+      if (!result) return;
+      const tgtDraw = issueMap[tIssue];
+      if (tgtDraw) { result.targetFront = tgtDraw.front; result.targetTails = tails(tgtDraw.front); }
+      const tgtSet = new Set(result.targetFront || []);
+      const poolHits = result.pool.filter((n) => tgtSet.has(n.number)).length;
+      cov += poolHits;
+
+      // 前5组合命中
+      let bestH = 0;
+      const t5h = [];
+      result.combinations.slice(0, 5).forEach((combo, idx) => {
+        const hits = combo.numbers.filter((n) => tgtSet.has(n)).length;
+        bestH = Math.max(bestH, hits);
+        t5h.push(hits);
+        topHits += hits;
+      });
+      topTotal += 5;
+
+      // 前5注联合覆盖
+      const unionSet = new Set();
+      result.combinations.slice(0, 5).forEach((c) => c.numbers.forEach((n) => unionSet.add(n)));
+      const u5 = [...tgtSet].filter((n) => unionSet.has(n)).length;
+      unionHits5 += u5;
+
+      if (bestH >= 3) best3plus++;
+      if (bestH >= 4) best4plus++;
+      perPairData.push({ sIssue, tIssue, bestH, top5: t5h, poolHits, u5 });
+    });
+    const balls = pairs.length * 5;
+    console.log(`\n   【${name}】 ${pairs.length}对`);
+    console.log(`      号码池覆盖率: ${cov}/${balls} (${(cov / balls * 100).toFixed(1)}%)`);
+    console.log(`      前5组联合覆盖率: ${unionHits5}/${balls} (${(unionHits5 / balls * 100).toFixed(1)}%)`);
+    console.log(`      前5组总命中率: ${topHits}/${balls * 5} (${(topHits / (balls * 5) * 100).toFixed(1)}%)`);
+    console.log(`      最佳命中≥3球: ${best3plus}/${pairs.length} (${(best3plus / pairs.length * 100).toFixed(1)}%)`);
+    console.log(`      最佳命中≥4球: ${best4plus}/${pairs.length} (${(best4plus / pairs.length * 100).toFixed(1)}%)`);
+
+    // 命中分布
+    const bestDist = [0, 0, 0, 0, 0, 0];
+    perPairData.forEach((r) => bestDist[r.bestH]++);
+    console.log(`      最佳命中分布: 5球${bestDist[5]}对 | 4球${bestDist[4]}对 | 3球${bestDist[3]}对 | 2球${bestDist[2]}对 | 1球${bestDist[1]}对 | 0球${bestDist[0]}对`);
+
+    // 联合覆盖分布
+    const uDist = [0, 0, 0, 0, 0, 0];
+    perPairData.forEach((r) => uDist[r.u5]++);
+    console.log(`      联合覆盖分布: 5球${uDist[5]}对 | 4球${uDist[4]}对 | 3球${uDist[3]}对 | 2球${uDist[2]}对 | 1球${uDist[1]}对 | 0球${uDist[0]}对`);
+  });
+
+  // ===== 多间隔总览 =====
+  console.log("\n" + "─".repeat(70));
+  console.log("  📊 多间隔总览对比");
+  console.log("─".repeat(70));
+
+  [
+    { name: "5期间隔", pairs: shortPairs },
+    { name: "10期间隔", pairs: fullPairs },
+    { name: "12期间隔", pairs: pairs12 },
+    { name: "15期间隔", pairs: longPairs },
+  ].forEach(({ name, pairs }) => {
+    let cov = 0;
+    let best3plus = 0;
+    let best4plus = 0;
+    let topHits = 0, unionHits5 = 0;
+    pairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);  // 不传target，避免泄露
+      if (!result) return;
+      const tgtDraw = issueMap[tIssue];
+      if (tgtDraw) { result.targetFront = tgtDraw.front; result.targetTails = tails(tgtDraw.front); }
+      const tgtSet = new Set(result.targetFront || []);
+      const poolHits = result.pool.filter((n) => tgtSet.has(n.number)).length;
+      cov += poolHits;
+      let bestH = 0;
+      const unionSet = new Set();
+      result.combinations.slice(0, 5).forEach((combo) => {
+        const hits = combo.numbers.filter((n) => tgtSet.has(n)).length;
+        bestH = Math.max(bestH, hits);
+        topHits += hits;
+        combo.numbers.forEach((n) => unionSet.add(n));
+      });
+      unionHits5 += [...tgtSet].filter((n) => unionSet.has(n)).length;
+      if (bestH >= 3) best3plus++;
+      if (bestH >= 4) best4plus++;
+    });
+    const balls = pairs.length * 5;
+    console.log(`   ${name.padEnd(12)}: ${pairs.length}对 | 池覆盖${cov}/${balls}(${(cov / balls * 100).toFixed(1)}%) | 前5联合覆盖${unionHits5}/${balls}(${(unionHits5 / balls * 100).toFixed(1)}%) | 前5命中率${topHits}/${balls * 5}(${(topHits / (balls * 5) * 100).toFixed(1)}%) | ≥3球${best3plus}/${pairs.length}(${(best3plus / pairs.length * 100).toFixed(0)}%) | ≥4球${best4plus}/${pairs.length}(${(best4plus / pairs.length * 100).toFixed(0)}%)`);
+  });
+
+  // ===== +10/+12 权重融合对比 =====
+  console.log("\n" + "═".repeat(70));
+  console.log("║        📊 +10/+12 趋势权重融合对比 (不同权重组合)                  ║");
+  console.log("═".repeat(70));
+
+  const weightTests = [
+    { label: "仅+10(基线)", w10: 1.0, w12: 0.0 },
+    { label: "1.0:1.0",    w10: 1.0, w12: 1.0 },
+    { label: "仅+12",       w10: 0.0, w12: 1.0 },
+  ];
+
+  function quickEval(pairs) {
+    let cov = 0, u5 = 0, th = 0, b3 = 0, b4 = 0;
+    pairs.forEach(([s, t]) => {
+      const r = predict(s, null, true);  // 修复：不传target，避免泄露
+      if (!r) return;
+      const ts = new Set(r.targetFront);
+      cov += r.pool.filter(n => ts.has(n.number)).length;
+      let best = 0; const us = new Set();
+      r.combinations.slice(0, 5).forEach(c => {
+        const h = c.numbers.filter(n => ts.has(n)).length;
+        best = Math.max(best, h); th += h;
+        c.numbers.forEach(n => us.add(n));
+      });
+      u5 += [...ts].filter(n => us.has(n)).length;
+      if (best >= 3) b3++; if (best >= 4) b4++;
+    });
+    const B = pairs.length * 5;
+    return { cov, u5, th, b3, b4, B, n: pairs.length };
+  }
+
+  console.log(`  ${"权重w10:w12".padEnd(14)} | 间隔 | ${"池覆盖".padEnd(14)} | ${"联合覆盖".padEnd(14)} | ${"命中率".padEnd(14)} | ≥3球       | ≥4球`);
+  console.log("  " + "─".repeat(90));
+
+  for (const wt of weightTests) {
+    globalThis._trendWeights = { 10: wt.w10, 12: wt.w12 };
+    for (const [iName, iP] of [["10", fullPairs], ["12", pairs12]]) {
+      const r = quickEval(iP);
+      const lbl = wt.label.padEnd(14);
+      const covS = `${r.cov}/${r.B}(${(r.cov / r.B * 100).toFixed(1)}%)`.padEnd(14);
+      const u5S = `${r.u5}/${r.B}(${(r.u5 / r.B * 100).toFixed(1)}%)`.padEnd(14);
+      const thS = `${r.th}/${r.B * 5}(${(r.th / (r.B * 5) * 100).toFixed(1)}%)`.padEnd(14);
+      const b3S = `${r.b3}/${r.n}(${(r.b3 / r.n * 100).toFixed(0)}%)`.padEnd(10);
+      const b4S = `${r.b4}/${r.n}(${(r.b4 / r.n * 100).toFixed(0)}%)`;
+      console.log(`  ${lbl} | ${iName.padEnd(4)} | ${covS} | ${u5S} | ${thS} | ${b3S} | ${b4S}`);
+    }
+    console.log("  " + "─".repeat(90));
+  }
+  globalThis._trendWeights = { 10: 1.0, 12: 1.0 }; // 恢复默认
+
+  // ===== 按结构特征分组对比 =====
+  console.log("\n" + "═".repeat(70));
+  console.log("║                  📊 按特征分组对比                                ║");
+  console.log("═".repeat(70));
+
+  // 按和值变化分组
+  const sumRise = perPair.filter((r) => r.sumT - r.sumS > 10);
+  const sumStable = perPair.filter((r) => Math.abs(r.sumT - r.sumS) <= 10);
+  const sumDrop = perPair.filter((r) => r.sumS - r.sumT > 10);
+
+  [
+    { label: "和值上涨(>10)", data: sumRise },
+    { label: "和值稳定(±10)", data: sumStable },
+    { label: "和值下跌(>10)", data: sumDrop },
+  ].forEach(({ label, data }) => {
+    const avgBestHit = data.length > 0 ? (data.reduce((a, r) => a + r.bestHit, 0) / data.length).toFixed(2) : "N/A";
+    const avgPoolHit = data.length > 0 ? (data.reduce((a, r) => a + r.poolHits, 0) / data.length).toFixed(2) : "N/A";
+    console.log(`   ${label.padEnd(16)}: ${data.length}对 | 平均池命中${avgPoolHit} | 平均最佳${avgBestHit}`);
+  });
+
+  // 按奇偶变化分组
+  const paritySame = perPair.filter((r) => r.oddS === r.oddT);
+  const parityDiff1 = perPair.filter((r) => Math.abs(r.oddS - r.oddT) === 1);
+  const parityDiff2plus = perPair.filter((r) => Math.abs(r.oddS - r.oddT) >= 2);
+
+  [
+    { label: "奇偶比不变", data: paritySame },
+    { label: "奇偶差1", data: parityDiff1 },
+    { label: "奇偶差≥2(翻转)", data: parityDiff2plus },
+  ].forEach(({ label, data }) => {
+    const avgBestHit = data.length > 0 ? (data.reduce((a, r) => a + r.bestHit, 0) / data.length).toFixed(2) : "N/A";
+    const avgPoolHit = data.length > 0 ? (data.reduce((a, r) => a + r.poolHits, 0) / data.length).toFixed(2) : "N/A";
+    console.log(`   ${label.padEnd(16)}: ${data.length}对 | 平均池命中${avgPoolHit} | 平均最佳${avgBestHit}`);
+  });
+
+  // 逐对一览（紧凑）— 含前5名命中 + 后区
+  console.log("\n" + "═".repeat(70));
+  console.log("║          📋 逐对命中一览 (前5组合命中球数 + 后区)                 ║");
+  console.log("═".repeat(70));
+  console.log("   选中 → 目标   |池| T1 T2 T3 T4 T5| 和值变化     | 奇偶 |后区");
+  console.log("  " + "─".repeat(65));
+
+  perPair.forEach((r) => {
+    const t = r.top5Hits;
+    const sumDiff = r.sumT - r.sumS;
+    const sumDir = sumDiff > 0 ? `+${sumDiff}` : `${sumDiff}`;
+    const oddDiff = r.oddT - r.oddS;
+    const oddDir = oddDiff > 0 ? `+${oddDiff}` : `${oddDiff}`;
+    const flag = r.bestHit >= 4 ? "⭐" : r.bestHit <= 1 ? "⚠" : " ";
+    const h = (v) => v >= 3 ? `[${v}]` : ` ${v} `;
+    console.log(`   ${r.sIssue}→${r.tIssue} |${r.poolHits}| ${h(t[0])} ${h(t[1])} ${h(t[2])} ${h(t[3])} ${h(t[4])}| 和${r.sumS}→${r.sumT}(${String(sumDir).padStart(3)}) | ${r.oddS}→${r.oddT}(${oddDir})|后${r.backHits}${flag}`);
+  });
+
+  // 汇总：各排名平均命中
+  const avgT = [0, 0, 0, 0, 0];
+  perPair.forEach((r) => r.top5Hits.forEach((h, i) => avgT[i] += h));
+  console.log("  " + "─".repeat(57));
+  console.log(`   58对平均     | - | ${avgT.map((v) => (v / fullPairs.length).toFixed(2).padStart(4)).join(" ")}|`);
+
+  // 统计：Top N 有多少对达到各命中级别
+  for (let rank = 1; rank <= 5; rank++) {
+    const ge3 = perPair.filter((r) => r.top5Hits[rank - 1] >= 3).length;
+    const ge4 = perPair.filter((r) => r.top5Hits[rank - 1] >= 4).length;
+    const eq5 = perPair.filter((r) => r.top5Hits[rank - 1] === 5).length;
+    console.log(`   T${rank}   ≥3球:${String(ge3).padStart(2)}对 | ≥4球:${String(ge4).padStart(2)}对 | =5球:${String(eq5).padStart(2)}对`);
+  }
+
+  // 🆕 详细统计：Top1-Top5 + 补漏6 每注命中率和覆盖率
+  console.log("\n" + "═".repeat(70));
+  console.log("║     📊 Top1-Top5 + 补漏6 逐注命中率 & 开奖号覆盖率              ║");
+  console.log("═".repeat(70));
+
+  const N = fullPairs.length;
+  // Top1-Top5 各注总命中
+  const t1Hit = perPair.reduce((s, r) => s + r.top5Hits[0], 0);
+  const t2Hit = perPair.reduce((s, r) => s + r.top5Hits[1], 0);
+  const t3Hit = perPair.reduce((s, r) => s + r.top5Hits[2], 0);
+  const t4Hit = perPair.reduce((s, r) => s + r.top5Hits[3], 0);
+  const t5Hit = perPair.reduce((s, r) => s + r.top5Hits[4], 0);
+  // 补漏6总命中
+  const t6Hit = totalTop6补漏Hit;
+  // 联合覆盖（Top1-5去重）
+  const top5UnionHit = totalUnionHits5;
+  // Top1-5 + 补漏6 联合覆盖
+  const top6UnionHit = totalTop6补漏UnionHit;
+  // 逐对命中分布
+  const t1Dist = [0,0,0,0,0,0], t2Dist = [0,0,0,0,0,0], t3Dist = [0,0,0,0,0,0];
+  const t4Dist = [0,0,0,0,0,0], t5Dist = [0,0,0,0,0,0], t6Dist = [0,0,0,0,0,0];
+  perPair.forEach(r => {
+    t1Dist[r.top5Hits[0]]++;
+    t2Dist[r.top5Hits[1]]++;
+    t3Dist[r.top5Hits[2]]++;
+    t4Dist[r.top5Hits[3]]++;
+    t5Dist[r.top5Hits[4]]++;
+    if (r.combo6补漏hits !== undefined) t6Dist[r.combo6补漏hits]++;
+  });
+
+  console.log(`\n   总配对: ${N} | 每对开奖5球 | 总开奖球: ${N * 5}`);
+  console.log(`\n   ┌─────────┬──────────┬──────────┬──────────┐`);
+  console.log(`   │ 组合    │ 总命中   │ 命中率   │ 平均/对  │`);
+  console.log(`   ├─────────┼──────────┼──────────┼──────────┤`);
+  console.log(`   │ Top1    │ ${String(t1Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t1Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t1Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │ Top2    │ ${String(t2Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t2Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t2Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │ Top3    │ ${String(t3Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t3Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t3Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │ Top4    │ ${String(t4Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t4Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t4Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │ Top5    │ ${String(t5Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t5Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t5Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │ 补漏6   │ ${String(t6Hit).padStart(4)}/${String(N*5).padStart(4)} │ ${(t6Hit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(t6Hit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   ├─────────┼──────────┼──────────┼──────────┤`);
+  console.log(`   │T1-5联合 │ ${String(top5UnionHit).padStart(4)}/${String(N*5).padStart(4)} │ ${(top5UnionHit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(top5UnionHit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   │T1-6联合 │ ${String(top6UnionHit).padStart(4)}/${String(N*5).padStart(4)} │ ${(top6UnionHit/(N*5)*100).toFixed(1).padStart(6)}%  │ ${(top6UnionHit/N).toFixed(2).padStart(6)}   │`);
+  console.log(`   └─────────┴──────────┴──────────┴──────────┘`);
+
+  console.log(`\n   📊 各组合命中分布 (命中X球的对数):`);
+  console.log(`   ┌──────┬────────┬────────┬────────┬────────┬────────┬────────┐`);
+  console.log(`   │ 命中 │ Top1   │ Top2   │ Top3   │ Top4   │ Top5   │ 补漏6  │`);
+  console.log(`   ├──────┼────────┼────────┼────────┼────────┼────────┼────────┤`);
+  for (let h = 5; h >= 0; h--) {
+    console.log(`   │  ${h}球 │ ${String(t1Dist[h]).padStart(4)}对 │ ${String(t2Dist[h]).padStart(4)}对 │ ${String(t3Dist[h]).padStart(4)}对 │ ${String(t4Dist[h]).padStart(4)}对 │ ${String(t5Dist[h]).padStart(4)}对 │ ${String(t6Dist[h]).padStart(4)}对 │`);
+  }
+  console.log(`   └──────┴────────┴────────┴────────┴────────┴────────┴────────┘`);
+
+  // 覆盖率统计
+  console.log(`\n   📦 开奖号覆盖率统计:`);
+  console.log(`      号码池(25球)覆盖: ${totalCoverage}/${N*5} (${(totalCoverage/(N*5)*100).toFixed(1)}%)`);
+  console.log(`      Top5联合覆盖:     ${top5UnionHit}/${N*5} (${(top5UnionHit/(N*5)*100).toFixed(1)}%)`);
+  console.log(`      Top5+补漏6联合:   ${top6UnionHit}/${N*5} (${(top6UnionHit/(N*5)*100).toFixed(1)}%)`);
+  console.log(`      补漏6增补覆盖:    +${top6UnionHit - top5UnionHit}球 (+${((top6UnionHit - top5UnionHit)/(N*5)*100).toFixed(1)}%)`);
+
+  // 逐对明细（前10对示例）
+  console.log(`\n   📋 逐对明细 (Top1-5 + 补漏6命中数):`);
+  console.log(`   选中→目标  | T1 T2 T3 T4 T5 | 补漏6 | Top5联合 | T1-6联合`);
+  console.log(`   ${"─".repeat(60)}`);
+  perPair.slice(0, 15).forEach(r => {
+    const t = r.top5Hits;
+    const h = v => v >= 3 ? `[${v}]` : ` ${v} `;
+    const u5 = r.unionHits;
+    const u6 = r.combo6补漏union || u5;
+    console.log(`   ${r.sIssue}→${r.tIssue} | ${h(t[0])} ${h(t[1])} ${h(t[2])} ${h(t[3])} ${h(t[4])} |  ${r.combo6补漏hits || 0}    |    ${u5}     |    ${u6}`);
+  });
+  if (N > 15) console.log(`   ... (共${N}对，仅显示前15对)`);
+
+  console.log("\n" + "═".repeat(70));
+
+  // 🛡️ v6: 回测结束自动触发过拟合验证
+  walkForwardValidation(4);
+}
+
+// ===================== 未来预测 =====================
+function predictNext(sourceIssue) {
+  // 如果没有目标尾号信息，从选中行推断
+  const sourceDraw = issueMap[sourceIssue];
+  if (!sourceDraw) {
+    console.error(`找不到 ${sourceIssue} 的数据`);
+    return;
+  }
+
+  // 用选中行自己的尾号作为目标尾号参考（尾号关联性假设）
+  const result = predict(sourceIssue, null);
+
+  console.log("\n" + "═".repeat(70));
+  console.log(`║           🔮 未来预测 — 基于 ${sourceIssue} 的锚点                        ║`);
+  console.log("═".repeat(70));
+  console.log(`\n   选中行 (${sourceIssue}): [${result.sourceFront.join(", ")}]`);
+  console.log(`   和值: ${sum(result.sourceFront)} | 跨度: ${span(result.sourceFront)}`);
+  console.log(`   区间比: ${intervalRatio(result.sourceFront).join(":")}`);
+  console.log(`   尾号集合: [${tails(result.sourceFront).join(", ")}]`);
+  console.log(`   极端检测: ${Object.entries(result.extremeFlags).filter(([, v]) => v).map(([k]) => k).join(", ") || "无"}`);
+
+  console.log(`\n   📦 推荐号码池 (${result.pool.length}个, 动态调整):`);
+  const poolNumbers = result.pool.map((n) => n.number);
+
+  // 美化输出号码池
+  for (let i = 0; i < poolNumbers.length; i += 5) {
+    const chunk = poolNumbers.slice(i, i + 5);
+    console.log(`      ${chunk.map((n) => String(n).padStart(2)).join("  ")}`);
+  }
+
+  console.log(`\n   🏆 Top 10 推荐组合 (前区5个):`);
+  result.combinations.slice(0, 10).forEach((combo, idx) => {
+    const stars = combo.score >= 100 ? "⭐⭐⭐" : combo.score >= 80 ? "⭐⭐" : combo.score >= 60 ? "⭐" : "";
+    console.log(`   ${String(idx + 1).padStart(2)}. [${combo.numbers.join(", ")}] 分:${combo.score} | 和:${combo.sum} | 跨:${combo.span} | 奇:${combo.odd} | 区:${combo.iv} ${stars}`);
+  });
+
+  console.log("\n   💡 选号建议:");
+  console.log(`      核心窗口: 锚点±5范围内号码`);
+  console.log(`      尾号偏好: 与选中行尾号相同或±1的号码`);
+  console.log(`      区间要求: 至少覆盖2个区间, 避免单区间≥5个`);
+  console.log(`      和值范围: ${CONFIG.targetSum - CONFIG.sumTolerance} ~ ${CONFIG.targetSum + CONFIG.sumTolerance}`);
+  console.log(`      奇偶约束: 1-4 (不能全奇或全偶)`);
+  console.log(`      跨度范围: ${CONFIG.targetSpan - CONFIG.spanTolerance} ~ ${CONFIG.targetSpan + CONFIG.spanTolerance}`);
+
+  return result;
+}
+
+// ===================== 示例演示（展示完整优化流程）=====================
+function demo(sIssue, tIssue) {
+  const sourceDraw = issueMap[sIssue];
+  const targetDraw = issueMap[tIssue];
+  if (!sourceDraw || !targetDraw) {
+    console.error(`找不到配对数据: ${sIssue} → ${tIssue}`);
+    return;
+  }
+
+  const result = predict(sIssue, null, true);  // 不传target，避免泄露
+  if (!result) return;
+  result.targetFront = targetDraw.front;
+  result.targetTails = tails(targetDraw.front);
+
+  const targetSet = new Set(result.targetFront);
+  const poolNumbers = result.pool.map((n) => n.number);
+  const poolHits = poolNumbers.filter((n) => targetSet.has(n));
+  const top5 = result.combinations.slice(0, 5);
+  const top1hits = top5[0]?.numbers.filter((n) => targetSet.has(n)).length || 0;
+  const bestHit = Math.max(...top5.map((c) => c.numbers.filter((n) => targetSet.has(n)).length));
+
+  const srcIdx = ALL_DRAWS.map((d) => d.issue).indexOf(sIssue);
+  const hotness = computeHotness(srcIdx, 10);
+
+  console.log("╔══════════════════════════════════════════════════════════════════════════╗");
+  console.log("║        🔍 优化选号系统 v2 — 完整流程示例                               ║");
+  console.log("╚══════════════════════════════════════════════════════════════════════════╝\n");
+
+  // ══════════════ 第1步：输入信息 ══════════════
+  console.log("┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 1：输入数据                                                      │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  console.log(`  选中行 (${sIssue}): [${result.sourceFront.join(", ")}]`);
+  console.log(`  → 和值: ${sum(result.sourceFront)} | 跨度: ${span(result.sourceFront)} | 奇偶: ${oddCount(result.sourceFront)}`);
+  console.log(`  → 区间比: ${intervalRatio(result.sourceFront).join(":")} | 尾号: [${tails(result.sourceFront).join(", ")}]`);
+  console.log(`  目标行 (${tIssue}): [${result.targetFront.join(", ")}]`);
+  console.log(`  → 和值: ${sum(result.targetFront)} | 跨度: ${span(result.targetFront)} | 奇偶: ${oddCount(result.targetFront)}`);
+  console.log(`  → 区间比: ${intervalRatio(result.targetFront).join(":")} | 尾号: [${result.targetTails.join(", ")}]`);
+  console.log(`  变化: 和值${sum(result.targetFront) - sum(result.sourceFront) > 0 ? '+' : ''}${sum(result.targetFront) - sum(result.sourceFront)} | 奇偶${oddCount(result.targetFront) - oddCount(result.sourceFront) > 0 ? '+' : ''}${oddCount(result.targetFront) - oddCount(result.sourceFront)}`);
+
+  // ══════════════ 第2步：极端检测 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 2：极端期检测                                                    │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  const extremeItems = Object.entries(result.extremeFlags).filter(([, v]) => v);
+  if (extremeItems.length > 0) {
+    extremeItems.forEach(([k, v]) => {
+      const label = { sumCrash: "⚡ 和值暴跌", parityFlip: "🌀 奇偶翻转", narrowRange: "🎯 窄范围" }[k] || k;
+      console.log(`  ${label}: 触发 → 解锁额外候选号码`);
+    });
+  } else {
+    console.log(`  ☑ 无异常 → 常规模式选号`);
+  }
+
+  // ══════════════ 第3步：热号分析 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 3：热号分析 (近10期频率)                                          │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  const hotList = [...hotness.entries()]
+    .filter(([, cnt]) => cnt >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12);
+  if (hotList.length > 0) {
+    const tokens = hotList.map(([n, cnt]) => `${n}(${cnt}次)`).join("  ");
+    console.log(`  🔥 热号: ${tokens}`);
+  } else {
+    console.log(`  (热号数据不足)`);
+  }
+
+  // ══════════════ 第4步：尾号转移预测 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 4：尾号转移模式预测                                               │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  if (result.predictedTails) {
+    console.log(`  选中行尾号: [${tails(result.sourceFront).join(", ")}]`);
+    console.log(`  预测高概率尾号: [${result.predictedTails.slice(0, 5).map(([t, s]) => `${t}(${s})`).join(", ")}]`);
+    const targetSet2 = new Set(result.targetTails);
+    const predTop5Tails = result.predictedTails.slice(0, 5).map(([t]) => t);
+    const correctCount = predTop5Tails.filter((t) => targetSet2.has(t)).length;
+    console.log(`  🎯 Top5预测尾号命中: ${correctCount}/${result.targetTails.length}个目标尾号`);
+  }
+
+  // ══════════════ 第5步：候选号码池 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 5：候选号码池生成 (偏移+尾号+热号+极端加成)                        │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  console.log(`  池规模: ${CONFIG.poolSize}球 → 区间分布: [${intervalRatio(poolNumbers).join(":")}]`);
+
+  // 分区展示
+  [0, 1, 2].forEach((z) => {
+    const zNums = result.pool.filter((c) => c.zone === z);
+    const label = ["前区(01-12)", "中区(13-24)", "后区(25-35)"][z];
+    const tokens = zNums.map((c) => {
+      const hit = targetSet.has(c.number) ? `[${String(c.number).padStart(2)}]` : String(c.number).padStart(2);
+      return hit + `(${c.score})`;
+    }).join("  ");
+    const zHits = zNums.filter((c) => targetSet.has(c.number)).length;
+    console.log(`  ${label}: ${tokens}  ┃ 命中${zHits}/${zNums.length}`);
+  });
+  console.log(`  池内总命中: ${poolHits.length}/5 → [${poolHits.join(", ") || "无"}]`);
+
+  // 展示得分最高的候选号码详细评分
+  console.log("\n  📋 候选号码 Top8 详细评分:");
+  result.pool.slice(0, 8).forEach((c, i) => {
+    const hitMarker = targetSet.has(c.number) ? " ✅" : "";
+    console.log(`  ${String(i + 1).padStart(2)}. ${String(c.number).padStart(2)} ← ${c.bestAnchor} (偏移${c.minOffset}) | 尾号${tail(c.number)} | 区${c.zone} | 分${c.score}${hitMarker}`);
+    console.log(`      理由: ${c.reasons}`);
+  });
+
+  // ══════════════ 第6步：组合生成 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 6：组合生成 & 智能评分 (Top15回溯+结构加分)                        │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  console.log(`  生成方式: 从Top15球回溯组合 (C(15,5)=3003) → 综合评分排序`);
+  console.log(`  评分公式: 基础分(号码级) + 和值加分 + 跨度加分 + 奇偶平衡加分 + 区间加分 + 尾号加分`);
+
+  // ══════════════ 第7步：Top5组合 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 7：🏆 推荐组合 Top5                                               │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+
+  top5.forEach((combo, idx) => {
+    const hits = combo.numbers.filter((n) => targetSet.has(n));
+    const star = hits.length >= 4 ? " ⭐⭐⭐" : hits.length >= 3 ? " ⭐⭐" : hits.length >= 2 ? " ⭐" : "";
+    const ivShow = combo.iv.split(":");
+    const ivConf = !ivShow.includes("0") ? "三区" : `[${ivShow.join(":")}]`;
+    const oddConf = combo.odd === 2 || combo.odd === 3 ? "✓" : "";
+    console.log(`  #${idx + 1}: [${combo.numbers.map((n) => {
+      const s = String(n).padStart(2);
+      return targetSet.has(n) ? `[${s}]` : s;
+    }).join(", ")}]  → 命中${hits.length}/5${star}`);
+    console.log(`      分${combo.score}(基础${combo.baseScore}+加成${combo.comboBonus}) | 和${combo.sum}${combo.sum >= 60 && combo.sum <= 120 ? '✓' : ''} | 跨${combo.span}${combo.span >= 15 && combo.span <= 30 ? '✓' : ''} | 奇${combo.odd}${oddConf} | 区${ivConf}`);
+  });
+
+  // ══════════════ 第8步：后区预测 ══════════════
+  console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
+  console.log("│  📌 Step 8：后区预测 (近10期频率分析)                                       │");
+  console.log("└──────────────────────────────────────────────────────────────────────────┘");
+  const backPred = predictBack(srcIdx);
+  const tgtBack = targetDraw.back;
+  const backHitCount = tgtBack.filter((b) => backPred.includes(b)).length;
+  console.log(`  推荐后区 (6选2): [${backPred.join(", ")}]`);
+  console.log(`  实际: [${tgtBack.join(", ")}] → 命中${backHitCount}/2`);
+
+  // ══════════════ 总结 ══════════════
+  console.log("\n╔══════════════════════════════════════════════════════════════════════════╗");
+  console.log("║                           📊 预测结果总结                                ║");
+  console.log("╚══════════════════════════════════════════════════════════════════════════╝");
+  console.log(`  配对: ${sIssue} → ${tIssue}`);
+  console.log(`  号码池命中: ${poolHits.length}/5 → [${poolHits.join(", ") || "无"}]`);
+  console.log(`  Top1命中: ${top1hits}/5 | 最佳命中: ${bestHit}/5`);
+  console.log(`  后区命中: ${backHitCount}/2`);
+  console.log(`  综合评级: ${bestHit >= 4 ? "🏆 优秀" : bestHit >= 3 ? "✅ 良好" : bestHit >= 2 ? "⚠ 一般" : "❌ 较差"}`);
+
+  return result;
+}
+
+// ===================== 🛡️ 过拟合治理：滚动窗口验证 + 参数敏感度分析 =====================
+
+/**
+ * 滚动窗口交叉验证（Walk-Forward Validation）
+ * 核心思路：将数据分为多个时间窗口，每个窗口用前半段训练/后半段验证
+ * 如果参数在多个窗口上表现稳定（方差小），说明泛化能力好；否则过拟合
+ */
+function walkForwardValidation(windowCount = 4) {
+  const allPairs = buildPairs(10);
+  const totalPairs = allPairs.length;
+  const windowSize = Math.floor(totalPairs / windowCount);
+
+  console.log("\n" + "═".repeat(70));
+  console.log("║  🛡️ 滚动窗口交叉验证 (Walk-Forward Validation)                    ║");
+  console.log("═".repeat(70));
+  console.log(`  总配对: ${totalPairs} | 窗口数: ${windowCount} | 每窗口约: ${windowSize}对\n`);
+
+  const windowResults = [];
+
+  for (let w = 0; w < windowCount; w++) {
+    const start = w * windowSize;
+    const end = Math.min(start + windowSize, totalPairs);
+    const pairs = allPairs.slice(start, end);
+
+    let coverage = 0, topHits = 0, unionHits = 0, totalBalls = 0;
+
+    pairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);
+      if (!result) return;
+      const tgtDraw = issueMap[tIssue];
+      if (!tgtDraw) return;
+      result.targetFront = tgtDraw.front;
+
+      const targetSet = new Set(tgtDraw.front);
+      const poolNums = result.pool.map(n => n.number);
+      coverage += poolNums.filter(n => targetSet.has(n)).length;
+      totalBalls += 5;
+
+      if (result.combinations[0]) {
+        topHits += result.combinations[0].numbers.filter(n => targetSet.has(n)).length;
+      }
+
+      const union = new Set();
+      result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union.add(n)));
+      unionHits += [...targetSet].filter(n => union.has(n)).length;
+    });
+
+    const covRate = (coverage / totalBalls * 100).toFixed(1);
+    const hitRate = (topHits / totalBalls * 100).toFixed(1);
+    const unionRate = (unionHits / totalBalls * 100).toFixed(1);
+
+    windowResults.push({ covRate: parseFloat(covRate), hitRate: parseFloat(hitRate), unionRate: parseFloat(unionRate) });
+
+    const period = `${ALL_DRAWS[start]?.issue || '?'}~${ALL_DRAWS[end - 1]?.issue || '?'}`;
+    console.log(`  窗口${w + 1} [${period}]: 覆盖率=${covRate}% | Top1命中率=${hitRate}% | Top5联合覆盖=${unionRate}%`);
+  }
+
+  // 计算稳定性指标
+  const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const std = arr => {
+    const m = avg(arr);
+    return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
+  };
+
+  const covStd = std(windowResults.map(w => w.covRate));
+  const hitStd = std(windowResults.map(w => w.hitRate));
+  const unionStd = std(windowResults.map(w => w.unionRate));
+
+  console.log("\n  ── 稳定性分析 ──");
+  console.log(`  覆盖率  均值: ${avg(windowResults.map(w => w.covRate)).toFixed(1)}% | 标准差: ${covStd.toFixed(2)}%`);
+  console.log(`  命中率  均值: ${avg(windowResults.map(w => w.hitRate)).toFixed(1)}% | 标准差: ${hitStd.toFixed(2)}%`);
+  console.log(`  联合覆盖均值: ${avg(windowResults.map(w => w.unionRate)).toFixed(1)}% | 标准差: ${unionStd.toFixed(2)}%`);
+
+  // 过拟合风险判断
+  const maxStd = Math.max(covStd, hitStd, unionStd);
+  if (maxStd < 3) {
+    console.log(`\n  ✅ 低风险 (最大标准差=${maxStd.toFixed(2)}% < 3%)：参数泛化能力良好`);
+  } else if (maxStd < 6) {
+    console.log(`\n  ⚠️  中风险 (最大标准差=${maxStd.toFixed(2)}% 在3-6%)：部分参数可能过拟合，建议关注`);
+  } else {
+    console.log(`\n  ❌ 高风险 (最大标准差=${maxStd.toFixed(2)}% > 6%)：参数严重过拟合，需要简化或正则化`);
+  }
+
+  return windowResults;
+}
+
+/**
+ * 参数敏感度分析
+ * 核心思路：对每个关键参数做 ±30% 扰动，观察命中率+覆盖率变化
+ * 如果某个参数微调后指标剧烈变化（>3%），说明该参数过拟合
+ */
+function parameterSensitivity() {
+  console.log("\n" + "═".repeat(70));
+  console.log("║  🔬 参数敏感度分析 (Parameter Sensitivity)                          ║");
+  console.log("═".repeat(70));
+
+  // 关键参数及其当前值（全部从CONFIG读取）
+  const params = [
+    { name: "tailSameScore",        key: "tailSameScore",        current: CONFIG.tailSameScore },
+    { name: "tailNeighborScore",    key: "tailNeighborScore",    current: CONFIG.tailNeighborScore },
+    { name: "tailWithinSource",     key: "tailWithinSource",     current: CONFIG.tailWithinSource },
+    { name: "runPenaltyScale",      key: "runPenaltyScale",      current: CONFIG.runPenaltyScale },
+    { name: "repeatPenaltyScale",   key: "repeatPenaltyScale",   current: CONFIG.repeatPenaltyScale },
+    { name: "tailPatternWeight",    key: "tailPatternWeight",    current: CONFIG.tailPatternWeight },
+    { name: "diversityScoreWeight", key: "diversityScoreWeight", current: CONFIG.diversityScoreWeight },
+    { name: "hotBoostWeight",       key: "hotBoostWeight",       current: CONFIG.hotBoostWeight },
+    { name: "prevDrawTailsWeight",  key: "prevDrawTailsWeight",  current: CONFIG.prevDrawTailsWeight },
+    { name: "historyFreqWeight",    key: "historyFreqWeight",    current: CONFIG.historyFreqWeight },
+    { name: "recentFreqWeight",     key: "recentFreqWeight",     current: CONFIG.recentFreqWeight },
+    { name: "sumTolerance",         key: "sumTolerance",         current: CONFIG.sumTolerance },
+    { name: "spanTolerance",        key: "spanTolerance",        current: CONFIG.spanTolerance },
+  ];
+
+  // 用前5个配对做评估（优先速度）
+  const evalPairs = buildPairs(10).slice(0, 5);
+
+  function quickEval() {
+    let totalHits = 0, totalBalls = 0, totalCoverage = 0, totalUnion = 0;
+    evalPairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);
+      if (!result) return;
+      const tgtDraw = issueMap[tIssue];
+      if (!tgtDraw) return;
+      const targetSet = new Set(tgtDraw.front);
+      totalBalls += 5;
+
+      // 号码池覆盖率
+      const poolNums = result.pool.map(n => n.number);
+      totalCoverage += poolNums.filter(n => targetSet.has(n)).length;
+
+      // Top1命中率
+      if (result.combinations[0]) {
+        totalHits += result.combinations[0].numbers.filter(n => targetSet.has(n)).length;
+      }
+
+      // Top5联合覆盖率
+      const union = new Set();
+      result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union.add(n)));
+      totalUnion += [...targetSet].filter(n => union.has(n)).length;
+    });
+    return {
+      hitRate: totalBalls > 0 ? (totalHits / totalBalls * 100) : 0,
+      covRate: totalBalls > 0 ? (totalCoverage / totalBalls * 100) : 0,
+      unionRate: totalBalls > 0 ? (totalUnion / totalBalls * 100) : 0,
+    };
+  }
+
+  // 基线
+  const baseline = quickEval();
+  console.log(`\n  评估窗口: 前${evalPairs.length}对`);
+  console.log(`  基线 Top1命中率: ${baseline.hitRate.toFixed(2)}%`);
+  console.log(`  基线 号码池覆盖率: ${baseline.covRate.toFixed(2)}%`);
+  console.log(`  基线 Top5联合覆盖: ${baseline.unionRate.toFixed(2)}%\n`);
+
+  console.log(`  ${"参数名".padEnd(22)} | ${"当前值".padEnd(8)} | ${"命中率-30%".padEnd(12)} | ${"命中率+30%".padEnd(12)} | ${"覆盖率-30%".padEnd(12)} | ${"覆盖率+30%".padEnd(12)} | 敏感度`);
+  console.log("  " + "─".repeat(110));
+
+  const sensitivityResults = [];
+
+  params.forEach(param => {
+    const origValue = param.current;
+
+    // -30%
+    const low = Math.round(origValue * 0.7 * 1000) / 1000;
+    CONFIG[param.key] = low;
+    const lowResult = quickEval();
+    CONFIG[param.key] = origValue;
+
+    // +30%
+    const high = Math.round(origValue * 1.3 * 1000) / 1000;
+    CONFIG[param.key] = high;
+    const highResult = quickEval();
+    CONFIG[param.key] = origValue;
+
+    // 敏感度 = 命中率+覆盖率的综合最大波动
+    const hitSens = Math.max(Math.abs(lowResult.hitRate - baseline.hitRate), Math.abs(highResult.hitRate - baseline.hitRate));
+    const covSens = Math.max(Math.abs(lowResult.covRate - baseline.covRate), Math.abs(highResult.covRate - baseline.covRate));
+    const unionSens = Math.max(Math.abs(lowResult.unionRate - baseline.unionRate), Math.abs(highResult.unionRate - baseline.unionRate));
+    const sensitivity = Math.max(hitSens, covSens, unionSens);
+    const level = sensitivity > 5 ? "❌高" : sensitivity > 2 ? "⚠️中" : "✅低";
+
+    const fmtDelta = (val, base) => {
+      const d = val - base;
+      return (d >= 0 ? '+' : '') + d.toFixed(2) + '%';
+    };
+
+    console.log(`  ${param.name.padEnd(22)} | ${String(origValue).padEnd(8)} | ${fmtDelta(lowResult.hitRate, baseline.hitRate).padEnd(12)} | ${fmtDelta(highResult.hitRate, baseline.hitRate).padEnd(12)} | ${fmtDelta(lowResult.covRate, baseline.covRate).padEnd(12)} | ${fmtDelta(highResult.covRate, baseline.covRate).padEnd(12)} | ${level} (${sensitivity.toFixed(2)}%)`);
+
+    sensitivityResults.push({ name: param.name, sensitivity, hitSens, covSens, unionSens });
+  });
+
+  // 总结
+  const highSensitivity = sensitivityResults.filter(r => r.sensitivity > 5);
+  const midSensitivity = sensitivityResults.filter(r => r.sensitivity > 2 && r.sensitivity <= 5);
+  const lowSensitivity = sensitivityResults.filter(r => r.sensitivity <= 2);
+
+  console.log("\n  ── 过拟合风险评估 ──");
+  if (highSensitivity.length > 0) {
+    console.log(`  ❌ 高敏感参数 (${highSensitivity.length}个): ${highSensitivity.map(r => r.name).join(", ")}`);
+    console.log("     → 这些参数对结果影响过大，过拟合风险高");
+    console.log("     → 建议：改用区间评分（如尾号匹配 25-40 均给满分）替代精确值");
+  }
+  if (midSensitivity.length > 0) {
+    console.log(`  ⚠️  中敏感参数 (${midSensitivity.length}个): ${midSensitivity.map(r => r.name).join(", ")}`);
+    console.log("     → 建议：定期用新数据验证，适当放宽容忍范围");
+  }
+  if (highSensitivity.length === 0 && midSensitivity.length === 0) {
+    console.log("  ✅ 所有参数敏感度低，泛化能力良好");
+  }
+
+  // 针对性治理建议
+  console.log("\n  ── 针对性治理方案 ──");
+  sensitivityResults
+    .filter(r => r.sensitivity > 2)
+    .sort((a, b) => b.sensitivity - a.sensitivity)
+    .forEach(r => {
+      let advice = "";
+      if (r.name.includes("tail")) {
+        advice = "改用区间评分：如尾号匹配 25-40 均给满分，±1尾号 10-20 均给满分";
+      } else if (r.name.includes("Penalty")) {
+        advice = "改用概率分布匹配：根据历史连号/重复号分布动态调整，而非固定系数";
+      } else if (r.name.includes("diversity")) {
+        advice = "改用约束式：先保证分数≥Top1的60%，再在合格候选中最大化覆盖差异";
+      } else if (r.name.includes("hot") || r.name.includes("Freq")) {
+        advice = "降低权重或改用排名而非绝对值：如热号前10名加分，而非按出现次数";
+      } else if (r.name.includes("Tolerance")) {
+        advice = "改用自适应容忍度：根据近期和值/跨度波动范围动态调整";
+      } else {
+        advice = "建议扩大容忍范围或使用区间值替代精确值";
+      }
+      console.log(`  ${r.name.padEnd(22)} (敏感度${r.sensitivity.toFixed(2)}%): ${advice}`);
+    });
+
+  if (sensitivityResults.filter(r => r.sensitivity > 2).length === 0) {
+    console.log("  所有参数敏感度均≤2%，无需特殊治理。建议每20期重新运行监控。");
+  }
+
+  return sensitivityResults;
+}
+
+// ===================== 间隔互补策略测试 =====================
+function complementTest() {
+  console.log('╔══════════════════════════════════════════════════════════════════════╗');
+  console.log('║           间隔10和间隔12互补策略测试 (完整逻辑)                    ║');
+  console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+
+  const pairs10 = buildPairs(10);
+  const pairs12 = buildPairs(12);
+
+  console.log(`间隔10配对数: ${pairs10.length}`);
+  console.log(`间隔12配对数: ${pairs12.length}`);
+
+  // 构建目标期→源期映射
+  const targetMap10 = new Map();
+  pairs10.forEach(([s, t]) => targetMap10.set(t, s));
+  const targetMap12 = new Map();
+  pairs12.forEach(([s, t]) => targetMap12.set(t, s));
+
+  const commonTargets = [...targetMap10.keys()].filter(t => targetMap12.has(t));
+  console.log(`共同目标期数: ${commonTargets.length}\n`);
+
+  let totalPool10Hits = 0, totalPool12Hits = 0, totalUnionHits = 0;
+  let totalTop1_10Hits = 0, totalTop1_12Hits = 0, totalTop1_complementHits = 0;
+  let totalUnion5_10Hits = 0, totalUnion5_12Hits = 0, totalUnion5_complementHits = 0;
+  let totalPairs = 0;
+  let only10Better = 0, only12Better = 0, poolEqual = 0;
+  let bestHitSum10 = 0, bestHitSum12 = 0, bestHitSumComplement = 0;
+  let best3plus10 = 0, best3plus12 = 0, best3plusComplement = 0;
+  let best4plus10 = 0, best4plus12 = 0, best4plusComplement = 0;
+
+  commonTargets.forEach(targetIssue => {
+    const source10 = targetMap10.get(targetIssue);
+    const source12 = targetMap12.get(targetIssue);
+
+    const result10 = predict(source10, null, true);
+    const result12 = predict(source12, null, true);
+    if (!result10 || !result12) return;
+
+    const targetDraw = issueMap[targetIssue];
+    if (!targetDraw) return;
+    const targetSet = new Set(targetDraw.front);
+
+    // 池覆盖率
+    const pool10Set = new Set(result10.pool.map(p => p.number));
+    const pool12Set = new Set(result12.pool.map(p => p.number));
+    const unionPool = new Set([...pool10Set, ...pool12Set]);
+
+    const pH10 = [...pool10Set].filter(n => targetSet.has(n)).length;
+    const pH12 = [...pool12Set].filter(n => targetSet.has(n)).length;
+    const pHUnion = [...unionPool].filter(n => targetSet.has(n)).length;
+
+    totalPool10Hits += pH10;
+    totalPool12Hits += pH12;
+    totalUnionHits += pHUnion;
+
+    // Top1命中
+    const t1_10 = (result10.combinations[0]?.numbers || []).filter(n => targetSet.has(n)).length;
+    const t1_12 = (result12.combinations[0]?.numbers || []).filter(n => targetSet.has(n)).length;
+    totalTop1_10Hits += t1_10;
+    totalTop1_12Hits += t1_12;
+
+    // 🆕 优化互补Top5：提高Top1命中率策略
+    const allScores = new Map();
+    result10.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score));
+    result12.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score));
+    
+    // 策略：以间隔10的Top5为基础，用间隔12的高分号码替换低分号码
+    // 这样既保持间隔10的Top1优势，又融入间隔12的覆盖优势
+    
+    // 1. 获取间隔10的Top5组合
+    const top10Combo = result10.combinations[0]?.numbers || [];
+    const top10Set = new Set(top10Combo);
+    
+    // 2. 获取间隔12池中高分号码（不在间隔10 Top5中的）
+    const pool12High = result12.pool
+      .filter(p => !top10Set.has(p.number))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(p => p.number);
+    
+    // 3. 计算综合分数
+    const combinedScores = new Map();
+    for (const n of unionPool) {
+      const score10 = result10.pool.find(p => p.number === n)?.score || 0;
+      const score12 = result12.pool.find(p => p.number === n)?.score || 0;
+      // 间隔10权重更高
+      combinedScores.set(n, score10 * 0.7 + score12 * 0.3);
+    }
+    
+    // 4. 选择互补Top5：优先间隔10 Top5，然后用间隔12高分号码替换最低分
+    const compTop5 = [...top10Combo];
+    
+    // 如果间隔10 Top5中有低分号码，用间隔12高分号码替换
+    if (pool12High.length > 0) {
+      // 找到间隔10 Top5中分数最低的号码
+      let minScore = Infinity;
+      let minIdx = -1;
+      for (let i = 0; i < compTop5.length; i++) {
+        const score = combinedScores.get(compTop5[i]) || 0;
+        if (score < minScore) {
+          minScore = score;
+          minIdx = i;
+        }
+      }
+      
+      // 如果间隔12高分号码的综合分数更高，则替换
+      const best12 = pool12High[0];
+      const score12 = combinedScores.get(best12) || 0;
+      if (score12 > minScore * 1.2) { // 间隔12号码分数需要高出20%才替换
+        compTop5[minIdx] = best12;
+      }
+    }
+    
+    const compTop5Sorted = compTop5.sort((a, b) => a - b);
+    const t1_comp = compTop5Sorted.filter(n => targetSet.has(n)).length;
+    totalTop1_complementHits += t1_comp;
+
+    // Top5联合覆盖率
+    const u5_10 = new Set();
+    result10.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_10.add(n)));
+    const u5_12 = new Set();
+    result12.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_12.add(n)));
+    const u5_comp = new Set([...u5_10, ...u5_12]);
+
+    totalUnion5_10Hits += [...u5_10].filter(n => targetSet.has(n)).length;
+    totalUnion5_12Hits += [...u5_12].filter(n => targetSet.has(n)).length;
+    totalUnion5_complementHits += [...u5_comp].filter(n => targetSet.has(n)).length;
+
+    // 最佳组合命中
+    let b10 = 0, b12 = 0;
+    result10.combinations.slice(0, 5).forEach(c => { const h = c.numbers.filter(n => targetSet.has(n)).length; b10 = Math.max(b10, h); });
+    result12.combinations.slice(0, 5).forEach(c => { const h = c.numbers.filter(n => targetSet.has(n)).length; b12 = Math.max(b12, h); });
+    const bComp = Math.max(b10, b12);
+
+    bestHitSum10 += b10; bestHitSum12 += b12; bestHitSumComplement += bComp;
+    if (b10 >= 3) best3plus10++; if (b12 >= 3) best3plus12++; if (bComp >= 3) best3plusComplement++;
+    if (b10 >= 4) best4plus10++; if (b12 >= 4) best4plus12++; if (bComp >= 4) best4plusComplement++;
+
+    if (pH10 > pH12) only10Better++;
+    else if (pH12 > pH10) only12Better++;
+    else poolEqual++;
+
+    totalPairs++;
+  });
+
+  const B = totalPairs * 5;
+
+  console.log('─'.repeat(70));
+  console.log('  📊 互补策略汇总统计');
+  console.log('─'.repeat(70));
+  console.log(`\n  总测试期数: ${totalPairs}`);
+
+  console.log(`\n  📦 号码池覆盖率 (24球池):`);
+  console.log(`     间隔10池: ${totalPool10Hits}/${B} (${(totalPool10Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     间隔12池: ${totalPool12Hits}/${B} (${(totalPool12Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     并集池:   ${totalUnionHits}/${B} (${(totalUnionHits / B * 100).toFixed(1)}%)`);
+  console.log(`     提升:     +${totalUnionHits - Math.max(totalPool10Hits, totalPool12Hits)} 命中 (+${((totalUnionHits - Math.max(totalPool10Hits, totalPool12Hits)) / B * 100).toFixed(1)}%)`);
+
+  console.log(`\n  🎯 Top1命中率 (单组合):`);
+  console.log(`     间隔10 Top1: ${totalTop1_10Hits}/${B} (${(totalTop1_10Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     间隔12 Top1: ${totalTop1_12Hits}/${B} (${(totalTop1_12Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     互补Top1:    ${totalTop1_complementHits}/${B} (${(totalTop1_complementHits / B * 100).toFixed(1)}%)`);
+
+  console.log(`\n  🏆 Top5联合覆盖率 (5组合去重):`);
+  console.log(`     间隔10 Top5: ${totalUnion5_10Hits}/${B} (${(totalUnion5_10Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     间隔12 Top5: ${totalUnion5_12Hits}/${B} (${(totalUnion5_12Hits / B * 100).toFixed(1)}%)`);
+  console.log(`     互补Top5:    ${totalUnion5_complementHits}/${B} (${(totalUnion5_complementHits / B * 100).toFixed(1)}%)`);
+  console.log(`     提升:        +${totalUnion5_complementHits - Math.max(totalUnion5_10Hits, totalUnion5_12Hits)} 命中 (+${((totalUnion5_complementHits - Math.max(totalUnion5_10Hits, totalUnion5_12Hits)) / B * 100).toFixed(1)}%)`);
+
+  console.log(`\n  ⭐ 最佳组合命中 (Top5中最佳):`);
+  console.log(`     间隔10: ${bestHitSum10}球/${totalPairs}对(${(bestHitSum10/totalPairs).toFixed(2)}) | ≥3球:${best3plus10}/${totalPairs}(${(best3plus10/totalPairs*100).toFixed(1)}%) | ≥4球:${best4plus10}/${totalPairs}(${(best4plus10/totalPairs*100).toFixed(1)}%)`);
+  console.log(`     间隔12: ${bestHitSum12}球/${totalPairs}对(${(bestHitSum12/totalPairs).toFixed(2)}) | ≥3球:${best3plus12}/${totalPairs}(${(best3plus12/totalPairs*100).toFixed(1)}%) | ≥4球:${best4plus12}/${totalPairs}(${(best4plus12/totalPairs*100).toFixed(1)}%)`);
+  console.log(`     互补:   ${bestHitSumComplement}球/${totalPairs}对(${(bestHitSumComplement/totalPairs).toFixed(2)}) | ≥3球:${best3plusComplement}/${totalPairs}(${(best3plusComplement/totalPairs*100).toFixed(1)}%) | ≥4球:${best4plusComplement}/${totalPairs}(${(best4plusComplement/totalPairs*100).toFixed(1)}%)`);
+
+  console.log(`\n  📊 互补分析:`);
+  console.log(`     间隔10更好: ${only10Better}期 (${(only10Better/totalPairs*100).toFixed(1)}%)`);
+  console.log(`     间隔12更好: ${only12Better}期 (${(only12Better/totalPairs*100).toFixed(1)}%)`);
+  console.log(`     两者相同:   ${poolEqual}期 (${(poolEqual/totalPairs*100).toFixed(1)}%)`);
+}
+
+// ===================== 多间隔组合测试 =====================
+function multiIntervalTest() {
+  console.log('╔══════════════════════════════════════════════════════════════════════╗');
+  console.log('║           多间隔组合测试 (找出最佳组合)                            ║');
+  console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+
+  const intervals = [5, 6, 7, 8, 9, 10, 11, 12];
+  const results = {};
+
+  // 测试每个间隔单独的效果
+  console.log('📊 单间隔效果测试:\n');
+  console.log('间隔 | 配对数 | 池覆盖率 | Top1命中 | Top5联合 | ≥3球');
+  console.log('─'.repeat(60));
+
+  for (const interval of intervals) {
+    const pairs = buildPairs(interval);
+    if (pairs.length === 0) {
+      console.log(`${String(interval).padStart(4)} | 无配对`);
+      continue;
+    }
+
+    let totalPoolHits = 0, totalTop1 = 0, totalUnion5 = 0;
+    let totalBalls = 0, best3plus = 0;
+
+    pairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);
+      if (!result) return;
+
+      const targetDraw = issueMap[tIssue];
+      if (!targetDraw) return;
+      const targetSet = new Set(targetDraw.front);
+
+      totalBalls += 5;
+
+      // 池覆盖率
+      const poolNums = result.pool.map(p => p.number);
+      totalPoolHits += poolNums.filter(n => targetSet.has(n)).length;
+
+      // Top1命中
+      if (result.combinations[0]) {
+        totalTop1 += result.combinations[0].numbers.filter(n => targetSet.has(n)).length;
+      }
+
+      // Top5联合覆盖
+      const union = new Set();
+      result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union.add(n)));
+      totalUnion5 += [...targetSet].filter(n => union.has(n)).length;
+
+      // 最佳组合≥3球
+      let bestHit = 0;
+      result.combinations.slice(0, 5).forEach(c => {
+        const h = c.numbers.filter(n => targetSet.has(n)).length;
+        bestHit = Math.max(bestHit, h);
+      });
+      if (bestHit >= 3) best3plus++;
+    });
+
+    const pairCnt = pairs.length;
+    results[interval] = {
+      pairs: pairCnt,
+      poolRate: totalPoolHits / totalBalls * 100,
+      top1Rate: totalTop1 / totalBalls * 100,
+      union5Rate: totalUnion5 / totalBalls * 100,
+      best3plusRate: best3plus / pairCnt * 100
+    };
+
+    console.log(`${String(interval).padStart(4)} | ${String(pairCnt).padStart(5)} | ${(results[interval].poolRate).toFixed(1).padStart(6)}% | ${(results[interval].top1Rate).toFixed(1).padStart(6)}% | ${(results[interval].union5Rate).toFixed(1).padStart(6)}% | ${(results[interval].best3plusRate).toFixed(1).padStart(5)}%`);
+  }
+
+  // 找出最佳组合
+  console.log('\n\n📊 双间隔组合测试 (与间隔10组合):\n');
+  console.log('组合       | 共同期数 | 并集池覆盖率 | 互补Top1 | 互补Top5联合 | 提升');
+  console.log('─'.repeat(75));
+
+  const baseInterval = 10;
+  const basePairs = buildPairs(baseInterval);
+  const baseTargetMap = new Map();
+  basePairs.forEach(([s, t]) => baseTargetMap.set(t, s));
+
+  for (const interval of intervals) {
+    if (interval === baseInterval) continue;
+
+    const pairs2 = buildPairs(interval);
+    const targetMap2 = new Map();
+    pairs2.forEach(([s, t]) => targetMap2.set(t, s));
+
+    const commonTargets = [...baseTargetMap.keys()].filter(t => targetMap2.has(t));
+    if (commonTargets.length === 0) continue;
+
+    let totalPoolUnion = 0, totalTop1Comp = 0, totalUnion5Comp = 0;
+    let totalBalls = 0;
+
+    commonTargets.forEach(targetIssue => {
+      const source1 = baseTargetMap.get(targetIssue);
+      const source2 = targetMap2.get(targetIssue);
+
+      const result1 = predict(source1, null, true);
+      const result2 = predict(source2, null, true);
+      if (!result1 || !result2) return;
+
+      const targetDraw = issueMap[targetIssue];
+      if (!targetDraw) return;
+      const targetSet = new Set(targetDraw.front);
+
+      totalBalls += 5;
+
+      // 并集池覆盖率
+      const pool1Set = new Set(result1.pool.map(p => p.number));
+      const pool2Set = new Set(result2.pool.map(p => p.number));
+      const unionPool = new Set([...pool1Set, ...pool2Set]);
+      totalPoolUnion += [...unionPool].filter(n => targetSet.has(n)).length;
+
+      // 互补Top1
+      const allScores = new Map();
+      result1.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score));
+      result2.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score));
+      const sortedUnion = [...unionPool].sort((a, b) => (allScores.get(b) || 0) - (allScores.get(a) || 0));
+      const compTop5 = sortedUnion.slice(0, 5);
+      totalTop1Comp += compTop5.filter(n => targetSet.has(n)).length;
+
+      // 互补Top5联合覆盖率
+      const u5_1 = new Set();
+      result1.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_1.add(n)));
+      const u5_2 = new Set();
+      result2.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_2.add(n)));
+      const u5_comp = new Set([...u5_1, ...u5_2]);
+      totalUnion5Comp += [...u5_comp].filter(n => targetSet.has(n)).length;
+    });
+
+    const basePoolRate = results[baseInterval]?.poolRate || 0;
+    const baseUnion5Rate = results[baseInterval]?.union5Rate || 0;
+    const compPoolRate = totalPoolUnion / totalBalls * 100;
+    const compUnion5Rate = totalUnion5Comp / totalBalls * 100;
+    const poolImprovement = compPoolRate - basePoolRate;
+    const union5Improvement = compUnion5Rate - baseUnion5Rate;
+
+    const comboName = `${baseInterval}+${interval}`;
+    console.log(`${comboName.padEnd(10)} | ${String(commonTargets.length).padStart(6)} | ${(compPoolRate).toFixed(1).padStart(10)}% | ${(totalTop1Comp / totalBalls * 100).toFixed(1).padStart(6)}% | ${(compUnion5Rate).toFixed(1).padStart(10)}% | +${(union5Improvement).toFixed(1)}%`);
+  }
+
+  // 找出最佳三间隔组合
+  console.log('\n\n📊 三间隔组合测试 (间隔10 + 两个补充间隔):\n');
+
+  const bestCombos = [];
+  let testedCombos = 0;
+  let skippedCombos = 0;
+  for (let i = 0; i < intervals.length; i++) {
+    for (let j = i + 1; j < intervals.length; j++) {
+      const int1 = intervals[i];
+      const int2 = intervals[j];
+      if (int1 === 10 || int2 === 10) continue;
+
+      const pairs1 = buildPairs(int1);
+      const pairs2 = buildPairs(int2);
+      const targetMap1 = new Map();
+      const targetMap2 = new Map();
+      pairs1.forEach(([s, t]) => targetMap1.set(t, s));
+      pairs2.forEach(([s, t]) => targetMap2.set(t, s));
+
+      const commonTargets = [...baseTargetMap.keys()]
+        .filter(t => targetMap1.has(t) && targetMap2.has(t));
+      
+      testedCombos++;
+      if (commonTargets.length < 3) { // 进一步降低到3对
+        skippedCombos++;
+        continue;
+      }
+
+      let totalUnion5Comp = 0;
+      let totalBalls = 0;
+
+      commonTargets.forEach(targetIssue => {
+        const source1 = baseTargetMap.get(targetIssue);
+        const source2 = targetMap1.get(targetIssue);
+        const source3 = targetMap2.get(targetIssue);
+
+        const result1 = predict(source1, null, true);
+        const result2 = predict(source2, null, true);
+        const result3 = predict(source3, null, true);
+        if (!result1 || !result2 || !result3) return;
+
+        const targetDraw = issueMap[targetIssue];
+        if (!targetDraw) return;
+        const targetSet = new Set(targetDraw.front);
+
+        totalBalls += 5;
+
+        // 三间隔Top5联合覆盖率
+        const u5 = new Set();
+        result1.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5.add(n)));
+        result2.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5.add(n)));
+        result3.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5.add(n)));
+        totalUnion5Comp += [...u5].filter(n => targetSet.has(n)).length;
+      });
+
+      const rate = totalUnion5Comp / totalBalls * 100;
+      bestCombos.push({
+        combo: `10+${int1}+${int2}`,
+        rate: rate,
+        pairs: commonTargets.length
+      });
+    }
+  }
+
+  bestCombos.sort((a, b) => b.rate - a.rate);
+  console.log(`\n测试了 ${testedCombos} 个三间隔组合，跳过 ${skippedCombos} 个（共同期数<3），找到 ${bestCombos.length} 个有效组合`);
+  
+  if (bestCombos.length > 0) {
+    console.log('\n最佳三间隔组合 (Top5联合覆盖率):');
+    bestCombos.slice(0, 10).forEach((r, i) => {
+      console.log(`  ${i + 1}. ${r.combo}: ${(r.rate).toFixed(1)}% (${r.pairs}对)`);
+    });
+    
+    // 与最佳双间隔组合对比
+    const bestDouble = 10+9; // 从结果看10+9最好
+    console.log(`\n对比: 10+9双间隔组合: 57.6%`);
+    if (bestCombos[0]) {
+      console.log(`最佳三间隔组合提升: +${(bestCombos[0].rate - 57.6).toFixed(1)}%`);
+    }
+  } else {
+    console.log('\n⚠️ 没有找到有效的三间隔组合（共同期数不足）');
+    console.log('建议: 三间隔组合需要三个间隔都有共同目标期，数据量可能不足');
+  }
+
+  console.log('\n✅ 多间隔测试完成');
+}
+
+// ===================== 详细命中分析测试 =====================
+function detailedHitAnalysis() {
+  console.log('╔══════════════════════════════════════════════════════════════════════╗');
+  console.log('║           详细命中分析 (每期Top5每注命中 & 号码池覆盖)              ║');
+  console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+
+  // 测试间隔10（基准）和间隔9（最佳单间隔）
+  const testIntervals = [10, 9];
+  
+  for (const interval of testIntervals) {
+    console.log(`\n${'═'.repeat(70)}`);
+    console.log(`📊 间隔 ${interval} 详细分析`);
+    console.log(`${'═'.repeat(70)}\n`);
+
+    const pairs = buildPairs(interval);
+    if (pairs.length === 0) {
+      console.log('无配对数据');
+      continue;
+    }
+
+    // 统计变量
+    const top5HitDist = [0, 0, 0, 0, 0, 0]; // 0-5球命中分布
+    const top5HitsPerRank = [0, 0, 0, 0, 0]; // Top1-5各注总命中
+    const poolCoverageDist = [0, 0, 0, 0, 0, 0]; // 池覆盖0-5球分布
+    const totalPairs = pairs.length;
+    let totalBalls = 0;
+    let totalPoolHits = 0;
+    let totalTop5UnionHits = 0;
+
+    // 每期详细数据
+    const perPairDetails = [];
+
+    pairs.forEach(([sIssue, tIssue]) => {
+      const result = predict(sIssue, null, true);
+      if (!result) return;
+
+      const targetDraw = issueMap[tIssue];
+      if (!targetDraw) return;
+      const targetSet = new Set(targetDraw.front);
+
+      totalBalls += 5;
+
+      // 号码池覆盖分析
+      const poolNums = result.pool.map(p => p.number);
+      const poolHits = poolNums.filter(n => targetSet.has(n));
+      totalPoolHits += poolHits.length;
+      poolCoverageDist[poolHits.length]++;
+
+      // Top5每注命中分析
+      const comboHits = [];
+      const combos = result.combinations.slice(0, 5);
+      combos.forEach((combo, rank) => {
+        const hits = combo.numbers.filter(n => targetSet.has(n)).length;
+        comboHits.push(hits);
+        top5HitsPerRank[rank] += hits;
+      });
+
+      // Top5最佳命中
+      const bestHit = Math.max(...comboHits);
+      top5HitDist[bestHit]++;
+
+      // Top5联合覆盖
+      const union = new Set();
+      combos.forEach(c => c.numbers.forEach(n => union.add(n)));
+      const unionHits = [...targetSet].filter(n => union.has(n)).length;
+      totalTop5UnionHits += unionHits;
+
+      // 保存详细数据
+      perPairDetails.push({
+        sIssue, tIssue,
+        targetNums: targetDraw.front,
+        poolHits: poolHits.length,
+        poolHitNums: poolHits,
+        comboHits,
+        bestHit,
+        unionHits
+      });
+    });
+
+    // 输出统计结果
+    console.log(`总配对数: ${totalPairs} | 总目标球: ${totalBalls}\n`);
+
+    // 1. 号码池覆盖率
+    console.log('📦 号码池覆盖分析 (24球池):');
+    console.log(`   总命中: ${totalPoolHits}/${totalBalls} (${(totalPoolHits / totalBalls * 100).toFixed(1)}%)`);
+    console.log('   覆盖分布:');
+    for (let i = 5; i >= 0; i--) {
+      const cnt = poolCoverageDist[i];
+      const pct = (cnt / totalPairs * 100).toFixed(1);
+      const bar = '█'.repeat(Math.round(cnt / totalPairs * 30));
+      console.log(`     ${i}球: ${String(cnt).padStart(3)}期 (${pct.padStart(5)}%) ${bar}`);
+    }
+
+    // 2. Top5每注命中率
+    console.log('\n🎯 Top5每注命中率:');
+    console.log('   注数 | 总命中 | 命中率 | 平均/期');
+    console.log('   ' + '─'.repeat(40));
+    for (let rank = 0; rank < 5; rank++) {
+      const hits = top5HitsPerRank[rank];
+      const rate = (hits / totalBalls * 100).toFixed(1);
+      const avg = (hits / totalPairs).toFixed(2);
+      console.log(`   Top${rank + 1} | ${String(hits).padStart(4)}/${String(totalBalls).padStart(4)} | ${rate.padStart(5)}% | ${avg.padStart(5)}`);
+    }
+
+    // 3. Top5最佳命中分布
+    console.log('\n🏆 Top5最佳命中分布 (每期最佳注):');
+    console.log('   命中 | 期数 | 比例 | 累计');
+    console.log('   ' + '─'.repeat(40));
+    let cumulative = 0;
+    for (let i = 5; i >= 0; i--) {
+      const cnt = top5HitDist[i];
+      cumulative += cnt;
+      const pct = (cnt / totalPairs * 100).toFixed(1);
+      const cumPct = (cumulative / totalPairs * 100).toFixed(1);
+      console.log(`   ${i}球  | ${String(cnt).padStart(3)}期 | ${pct.padStart(5)}% | ${cumPct.padStart(5)}%`);
+    }
+
+    // 4. Top5联合覆盖率
+    console.log('\n🔗 Top5联合覆盖率:');
+    console.log(`   总命中: ${totalTop5UnionHits}/${totalBalls} (${(totalTop5UnionHits / totalBalls * 100).toFixed(1)}%)`);
+
+    // 5. 显示前5期的详细数据
+    console.log('\n📋 前5期详细数据:');
+    console.log('   期号      | 目标号码        | 池命中 | Top1-5命中 | 最佳');
+    console.log('   ' + '─'.repeat(70));
+    perPairDetails.slice(0, 5).forEach(d => {
+      const targetStr = d.targetNums.join(',').padEnd(15);
+      const comboStr = d.comboHits.join(', ');
+      console.log(`   ${d.sIssue}→${d.tIssue} | ${targetStr} | ${String(d.poolHits).padStart(4)}球  | ${comboStr.padEnd(10)} | ${d.bestHit}球`);
+    });
+  }
+
+  console.log('\n✅ 详细命中分析完成');
+}
+
+// ===================== 运行入口 =====================
+const args = process.argv.slice(2);
+
+if (args.includes("--demo")) {
+  const idx = args.indexOf("--demo");
+  const sIssue = args[idx + 1] || ALL_DRAWS[ALL_DRAWS.length - 12].issue;
+  const tIssue = args[idx + 2] || (() => {
+    const sNum = parseInt(sIssue.slice(4));
+    const tgt = sIssue.slice(0, 4) + String(sNum + 12).padStart(3, "0");
+    return issueMap[tgt] ? tgt : (issueMap[sIssue.slice(0, 4) + String(sNum + 5).padStart(3, "0")] || args[idx + 2] || null);
+  })();
+  demo(sIssue, tIssue);
+}
+
+if (args.includes("--backtest") || args.length === 0) {
+  // 默认：回测所有52→62对
+  backtest();
+  console.log("\n💡 使用以下命令查看更多功能:");
+  console.log("   --demo <源期号> <目标期号>  → 完整流程示例");
+  console.log("   --predict <issue>           → 基于最新期预测未来");
+  console.log("   --backtest                  → 全量回测报告");
+  console.log("   --complement                → 间隔10+12互补策略测试");
+  console.log("   --validate                  → 滚动窗口交叉验证(过拟合检测)");
+  console.log("   --sensitivity               → 参数敏感度分析");
+}
+
+if (args.includes("--complement")) {
+  complementTest();
+}
+
+if (args.includes("--multi-interval")) {
+  multiIntervalTest();
+}
+
+if (args.includes("--detailed")) {
+  detailedHitAnalysis();
+}
+
+if (args.includes("--validate")) {
+  walkForwardValidation(4);
+}
+
+if (args.includes("--sensitivity")) {
+  parameterSensitivity();
+}
+
+if (args.includes("--quicktest")) {
+  // 快速覆盖率测试：100对10期间隔
+  const pairs = buildPairs(10).slice(0, 100);
+  const allIssues = ALL_DRAWS.map(d => d.issue);
+  let totalCoverage = 0, totalBalls = 0, totalTop1 = 0, totalUnion5 = 0;
+  let validPairs = 0;
+  
+  console.log("\n" + "═".repeat(50));
+  console.log("  📊 快速覆盖率测试 (100对, 10期间隔)");
+  console.log("═".repeat(50));
+  
+  pairs.forEach(([sIssue, tIssue]) => {
+    const srcIdx = allIssues.indexOf(sIssue);
+    if (srcIdx + 9 >= ALL_DRAWS.length) return;
+    
+    const result = predict(sIssue, null, true);
+    if (!result) return;
+    
+    const tgtDraw = issueMap[tIssue];
+    if (!tgtDraw) return;
+    
+    const targetSet = new Set(tgtDraw.front);
+    totalBalls += 5;
+    validPairs++;
+    
+    // 号码池覆盖率
+    const poolNums = result.pool.map(n => n.number);
+    totalCoverage += poolNums.filter(n => targetSet.has(n)).length;
+    
+    // Top1命中
+    if (result.combinations[0]) {
+      totalTop1 += result.combinations[0].numbers.filter(n => targetSet.has(n)).length;
+    }
+    
+    // Top5联合覆盖
+    const union = new Set();
+    result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union.add(n)));
+    totalUnion5 += [...targetSet].filter(n => union.has(n)).length;
+  });
+  
+  if (validPairs > 0 && totalBalls > 0) {
+    console.log(`\n  有效配对: ${validPairs}对`);
+    console.log(`  号码池覆盖率: ${(totalCoverage / totalBalls * 100).toFixed(2)}%`);
+    console.log(`  Top1命中率: ${(totalTop1 / totalBalls * 100).toFixed(2)}%`);
+    console.log(`  Top5联合覆盖: ${(totalUnion5 / totalBalls * 100).toFixed(2)}%`);
+  }
+  console.log("\n✅ 测试完成");
+}
+
+if (args.includes("--ideal")) {
+  // 理想场景测试：传入真实目标数据（模拟用户手动选对区间比+尾号）
+  const pairs = buildPairs(10).slice(0, 40);
+  const allIssues = ALL_DRAWS.map(d => d.issue);
+  let totalCoverage = 0, totalBalls = 0, totalTop1 = 0, totalTop5 = 0, totalUnion5 = 0;
+  let validPairs = 0;
+  
+  console.log("\n" + "═".repeat(55));
+  console.log("  🎯 理想场景测试（传入真实目标数据作为参考）");
+  console.log("  模拟：用户手动选对区间比+尾号时的上限");
+  console.log("═".repeat(55));
+  
+  pairs.forEach(([sIssue, tIssue]) => {
+    const srcIdx = allIssues.indexOf(sIssue);
+    if (srcIdx + 9 >= ALL_DRAWS.length) return;
+    
+    // 传入targetIssue，让targetTails/targetIv基于真实数据
+    const result = predict(sIssue, tIssue, true);
+    if (!result) return;
+    
+    const tgtDraw = issueMap[tIssue];
+    if (!tgtDraw) return;
+    
+    const targetSet = new Set(tgtDraw.front);
+    totalBalls += 5;
+    validPairs++;
+    
+    // 号码池覆盖率
+    const poolNums = result.pool.map(n => n.number);
+    totalCoverage += poolNums.filter(n => targetSet.has(n)).length;
+    
+    // Top1命中
+    if (result.combinations[0]) {
+      totalTop1 += result.combinations[0].numbers.filter(n => targetSet.has(n)).length;
+    }
+    
+    // Top5总命中
+    result.combinations.slice(0, 5).forEach(c => {
+      totalTop5 += c.numbers.filter(n => targetSet.has(n)).length;
+    });
+    
+    // Top5联合覆盖
+    const union = new Set();
+    result.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => union.add(n)));
+    totalUnion5 += [...targetSet].filter(n => union.has(n)).length;
+  });
+  
+  if (validPairs > 0 && totalBalls > 0) {
+    console.log(`\n  有效配对: ${validPairs}对`);
+    console.log(`  ─────────────────────────────────`);
+    console.log(`  📦 号码池覆盖率: ${(totalCoverage / totalBalls * 100).toFixed(2)}% (${totalCoverage}/${totalBalls})`);
+    console.log(`  🎯 Top1命中率:   ${(totalTop1 / totalBalls * 100).toFixed(2)}%`);
+    console.log(`  📊 Top5总命中率: ${(totalTop5 / (totalBalls * 5) * 100).toFixed(2)}%`);
+    console.log(`  🔗 Top5联合覆盖: ${(totalUnion5 / totalBalls * 100).toFixed(2)}%`);
+    console.log(`  ─────────────────────────────────`);
+    console.log(`  💡 这是手动选对区间比+尾号时的理论上限`);
+  }
+  console.log("\n✅ 测试完成");
+}
+
+if (args.includes("--predict")) {
+  const idx = args.indexOf("--predict");
+  const issue = args[idx + 1] || ALL_DRAWS[ALL_DRAWS.length - 1].issue;
+  predictNext(issue);
+}
+
+if (args.includes("--single")) {
+  const idx = args.indexOf("--single");
+  const sIssue = args[idx + 1];
+  const tIssue = args[idx + 2];
+  if (sIssue && tIssue) {
+    const result = predict(sIssue, null, true);  // 不传target，避免泄露
+    if (result) {
+      const tgtDraw = issueMap[tIssue];
+      if (tgtDraw) { result.targetFront = tgtDraw.front; result.targetTails = tails(tgtDraw.front); }
+      console.log(`\n📋 ${sIssue} → ${tIssue} 详细分析`);
+      console.log(`   号码池覆盖: ${result.pool.filter((n) => new Set(result.targetFront).has(n.number)).length}/5`);
+      console.log(`   Top组合命中: ${result.combinations[0] ? result.combinations[0].numbers.filter((n) => new Set(result.targetFront).has(n)).length : 0}/5`);
+    }
+  }
+}
+
+// ===================== 间隔9+10权重优化测试 =====================
+function weightOptimizationTest() {
+  console.log('╔══════════════════════════════════════════════════════════════════════╗');
+  console.log('║           间隔9+10权重优化测试 (平衡Top1和覆盖率)                  ║');
+  console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+
+  const pairs9 = buildPairs(9);
+  const pairs10 = buildPairs(10);
+  
+  // 找到共同目标期
+  const targetMap9 = new Map();
+  pairs9.forEach(([s, t]) => targetMap9.set(t, s));
+  const targetMap10 = new Map();
+  pairs10.forEach(([s, t]) => targetMap10.set(t, s));
+  
+  const commonTargets = [...targetMap9.keys()].filter(t => targetMap10.has(t));
+  console.log(`📊 共同目标期数: ${commonTargets.length}\n`);
+  
+  if (commonTargets.length === 0) {
+    console.log('❌ 没有共同目标期，无法测试组合效果');
+    return;
+  }
+  
+  // 测试不同的权重组合
+  const weightConfigs = [
+    { name: '纯间隔9', w9: 1.0, w10: 0.0 },
+    { name: '纯间隔10', w9: 0.0, w10: 1.0 },
+    { name: '9主10辅 (0.8:0.2)', w9: 0.8, w10: 0.2 },
+    { name: '9主10辅 (0.7:0.3)', w9: 0.7, w10: 0.3 },
+    { name: '9主10辅 (0.6:0.4)', w9: 0.6, w10: 0.4 },
+    { name: '平衡 (0.5:0.5)', w9: 0.5, w10: 0.5 },
+    { name: '10主9辅 (0.4:0.6)', w9: 0.4, w10: 0.6 },
+    { name: '10主9辅 (0.3:0.7)', w9: 0.3, w10: 0.7 },
+  ];
+  
+  console.log('权重配置        | 池覆盖率 | Top1命中 | Top5联合 | ≥3球比例 | 综合得分');
+  console.log('─'.repeat(80));
+  
+  const results = [];
+  
+  for (const config of weightConfigs) {
+    let totalPoolHits = 0, totalTop1 = 0, totalUnion5 = 0;
+    let totalBalls = 0, best3plus = 0, totalPairs = 0;
+    
+    commonTargets.forEach(targetIssue => {
+      const source9 = targetMap9.get(targetIssue);
+      const source10 = targetMap10.get(targetIssue);
+      
+      const result9 = predict(source9, null, true);
+      const result10 = predict(source10, null, true);
+      if (!result9 || !result10) return;
+      
+      const targetDraw = issueMap[targetIssue];
+      if (!targetDraw) return;
+      const targetSet = new Set(targetDraw.front);
+      
+      totalBalls += 5;
+      totalPairs++;
+      
+      // 号码池覆盖率（并集）
+      const pool9Set = new Set(result9.pool.map(p => p.number));
+      const pool10Set = new Set(result10.pool.map(p => p.number));
+      const unionPool = new Set([...pool9Set, ...pool10Set]);
+      totalPoolHits += [...unionPool].filter(n => targetSet.has(n)).length;
+      
+      // 互补Top1（加权平均选择最优号码）
+      const allScores = new Map();
+      result9.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score * config.w9));
+      result10.pool.forEach(p => allScores.set(p.number, (allScores.get(p.number) || 0) + p.score * config.w10));
+      
+      // 选择综合分数最高的5个号码作为Top1
+      const sortedByScore = [...unionPool].sort((a, b) => (allScores.get(b) || 0) - (allScores.get(a) || 0));
+      const compTop5 = sortedByScore.slice(0, 5);
+      totalTop1 += compTop5.filter(n => targetSet.has(n)).length;
+      
+      // Top5联合覆盖率（两个间隔的Top5组合并集）
+      const u5_9 = new Set();
+      result9.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_9.add(n)));
+      const u5_10 = new Set();
+      result10.combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => u5_10.add(n)));
+      const u5_comp = new Set([...u5_9, ...u5_10]);
+      totalUnion5 += [...u5_comp].filter(n => targetSet.has(n)).length;
+      
+      // 最佳组合≥3球
+      let bestHit = 0;
+      result9.combinations.slice(0, 5).forEach(c => {
+        const h = c.numbers.filter(n => targetSet.has(n)).length;
+        bestHit = Math.max(bestHit, h);
+      });
+      result10.combinations.slice(0, 5).forEach(c => {
+        const h = c.numbers.filter(n => targetSet.has(n)).length;
+        bestHit = Math.max(bestHit, h);
+      });
+      if (bestHit >= 3) best3plus++;
+    });
+    
+    const poolRate = totalPoolHits / totalBalls * 100;
+    const top1Rate = totalTop1 / totalBalls * 100;
+    const union5Rate = totalUnion5 / totalBalls * 100;
+    const best3plusRate = best3plus / totalPairs * 100;
+    
+    // 综合得分：池覆盖率40% + Top1命中30% + Top5联合20% + ≥3球比例10%
+    const compositeScore = poolRate * 0.4 + top1Rate * 0.3 + union5Rate * 0.2 + best3plusRate * 0.1;
+    
+    results.push({
+      name: config.name,
+      poolRate,
+      top1Rate,
+      union5Rate,
+      best3plusRate,
+      compositeScore
+    });
+    
+    console.log(`${config.name.padEnd(16)} | ${(poolRate).toFixed(1).padStart(6)}% | ${(top1Rate).toFixed(1).padStart(6)}% | ${(union5Rate).toFixed(1).padStart(6)}% | ${(best3plusRate).toFixed(1).padStart(6)}% | ${(compositeScore).toFixed(1).padStart(6)}`);
+  }
+  
+  // 找出最佳配置
+  results.sort((a, b) => b.compositeScore - a.compositeScore);
+  console.log('\n' + '─'.repeat(80));
+  console.log('🏆 最佳权重配置:');
+  console.log(`   ${results[0].name}: 综合得分 ${results[0].compositeScore.toFixed(1)}`);
+  console.log(`   池覆盖率: ${results[0].poolRate.toFixed(1)}% | Top1命中: ${results[0].top1Rate.toFixed(1)}% | Top5联合: ${results[0].union5Rate.toFixed(1)}%`);
+  
+  // 显示Top3配置
+  console.log('\n📊 Top3配置:');
+  results.slice(0, 3).forEach((r, i) => {
+    console.log(`   ${i + 1}. ${r.name}: ${r.compositeScore.toFixed(1)} (池${r.poolRate.toFixed(1)}% | T1${r.top1Rate.toFixed(1)}% | T5${r.union5Rate.toFixed(1)}%)`);
+  });
+  
+  console.log('\n✅ 权重优化测试完成');
+}
+
+if (args.includes("--weight-opt")) {
+  weightOptimizationTest();
+}
+
+console.log("\n✅ 分析完成\n");
