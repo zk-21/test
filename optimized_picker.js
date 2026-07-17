@@ -2066,6 +2066,12 @@ function predict(sourceIssue, targetIssue, fastMode = false) {
   // 获取相邻期数据用于极端检测
   const allIssues = ALL_DRAWS.map((d) => d.issue);
   const srcIdx = allIssues.indexOf(sourceIssue);
+  
+  // 🆕 前区评分改用目标行前一期(srcIdx+9)作为锚点/桥梁/热号参考
+  const _tpIdx = srcIdx + 9;
+  const _tpDraw = (_tpIdx < ALL_DRAWS.length && ALL_DRAWS[_tpIdx]) ? ALL_DRAWS[_tpIdx] : sourceDraw;
+  const frontRefDraw = _tpDraw;
+  
   const neighbors = [];
   for (let i = srcIdx - 1; i >= 0 && neighbors.length < 3; i--) {
     if (allIssues[i] !== targetIssue) {
@@ -2075,8 +2081,8 @@ function predict(sourceIssue, targetIssue, fastMode = false) {
 
   const extremeFlags = detectExtreme(sourceDraw, neighbors);
 
-  // 🆕 计算热号分布
-  const hotness = computeHotness(srcIdx, 10);
+  // 🆕 计算热号分布（改用目标行前一期作为参考）
+  const hotness = computeHotness(Math.min(_tpIdx, ALL_DRAWS.length - 1), 10);
 
   // 🆕 S1: +10期趋势映射（间隔+13）
   const plusTenTrend = buildPlusTenTrendMap(srcIdx, 50, 13);
@@ -2086,11 +2092,11 @@ function predict(sourceIssue, targetIssue, fastMode = false) {
   const src12Idx = srcIdx - 2;
   const plus12Trend = src12Idx >= 0 ? buildPlusTenTrendMap(src12Idx, 50, 13) : { targetMap: new Map(), neighborMap: new Map() };
 
-  // 🆕 S2: 桥梁分析
-  const bridgeMap = buildBridgeMap(sourceDraw.front, sourceDraw.front);
+  // 🆕 S2: 桥梁分析（改用目标行前一期作为锚点）
+  const bridgeMap = buildBridgeMap(frontRefDraw.front, frontRefDraw.front);
 
-  // 🆕 S3: 等距端点分析
-  const arithmeticMap = buildArithmeticEndpointMap(sourceDraw.front, sourceDraw.front, 6);
+  // 🆕 S3: 等距端点分析（改用目标行前一期作为锚点）
+  const arithmeticMap = buildArithmeticEndpointMap(frontRefDraw.front, frontRefDraw.front, 6);
 
   // 🆕 S5: 参考行
   const referenceRows = buildReferenceWindow(srcIdx, 6);
@@ -2165,13 +2171,13 @@ function predict(sourceIssue, targetIssue, fastMode = false) {
     srcIdx, // 传递源行索引，用于尾号遗漏和连续出现分析
   };
 
-  // 生成号码池（传入所有新分析结果 + v5区间比预测 + 尾号预测）
-  const pool = generateCandidatePool(sourceDraw, targetTails, targetIv, extremeFlags, hotness, extraMaps, ivPrediction, targetDraw, predictedTails);
+  // 生成号码池（改用目标行前一期作为锚点参考）
+  const pool = generateCandidatePool(frontRefDraw, targetTails, targetIv, extremeFlags, hotness, extraMaps, ivPrediction, targetDraw, predictedTails);
 
-  // 生成组合（v8: 传入IV预测+源期和值用于自适应重复惩罚和动态和值预测）
-  const sourceSum = sourceDraw.front.reduce((a, b) => a + b, 0);
+  // 生成组合（v8: 改用目标行前一期作为锚点和和值参考）
+  const sourceSum = frontRefDraw.front.reduce((a, b) => a + b, 0);
   const combinations = fastMode
-    ? generateCombinationsFast(pool, CONFIG.pickCount, sourceTails, predictedTails, referenceRows, sourceDraw.front, sourceDraw.front, ivPrediction, sourceSum)
+    ? generateCombinationsFast(pool, CONFIG.pickCount, sourceTails, predictedTails, referenceRows, frontRefDraw.front, frontRefDraw.front, ivPrediction, sourceSum)
     : generateCombinations(pool, CONFIG.pickCount);
 
   // ===== 补漏6生成（补盲区策略） =====
@@ -2180,12 +2186,13 @@ function predict(sourceIssue, targetIssue, fastMode = false) {
   const _top5Freq = new Map();
   combinations.slice(0, 5).forEach(c => c.numbers.forEach(n => _top5Freq.set(n, (_top5Freq.get(n) || 0) + 1)));
 
-  // 计算遗漏/热号
+  // 计算遗漏/热号（改用目标行前一期作为参考）
   const _missMap = new Map(), _hotMap = new Map();
+  const _tpIdxSafe = Math.min(_tpIdx, ALL_DRAWS.length - 1);
   for (let n = 1; n <= 35; n++) {
     let m = 0, h = 0;
-    for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - 20); i--) { if (ALL_DRAWS[i].front.includes(n)) break; m++; }
-    for (let i = srcIdx - 1; i >= Math.max(0, srcIdx - 10); i--) { if (ALL_DRAWS[i].front.includes(n)) h++; }
+    for (let i = _tpIdxSafe - 1; i >= Math.max(0, _tpIdxSafe - 20); i--) { if (ALL_DRAWS[i].front.includes(n)) break; m++; }
+    for (let i = _tpIdxSafe - 1; i >= Math.max(0, _tpIdxSafe - 10); i--) { if (ALL_DRAWS[i].front.includes(n)) h++; }
     _missMap.set(n, m); _hotMap.set(n, h);
   }
   // 区间平衡
@@ -2255,96 +2262,77 @@ function buildPairs(interval) {
   return pairs;
 }
 
-// ===================== 后区预测 (v6: 桥接效应 + 前区尾号关联 + 奇偶轮转) =====================
+// ===================== 后区预测 (采用 predict_unified.py 逻辑: 桥接池+和值/差值常量+联合转移) =====================
+
+// 后区转移表 TOP3 (与 predict_unified.py 一致, 全历史统计)
+const BACK_TRANSFER = {1:[1,2,8],2:[2,8,12],3:[11,1,10],4:[5,4,10],5:[5,1,8],
+                       6:[10,8,6],7:[8,1,5],8:[12,8,4],9:[6,2,10],10:[10,4,2],
+                       11:[11,1,10],12:[2,12,5]};
+
+// 后区组合常量 (与间隔无关, 全历史统计)
+const BACK_SUM_PREF  = {13:6, 14:5, 9:4, 15:3, 16:3, 6:2, 12:2, 10:2, 11:2};
+const BACK_DIFF_PREF = {1:6, 4:5, 6:4, 3:4, 5:3, 2:2};
+
+// 构建后区联合转移表 (上期(a,b) -> 下期(x,y))
+function buildBackJointTrans(srcIdx) {
+  const jointCount = {};
+  for (let i = 0; i < srcIdx; i++) {
+    const cur = ALL_DRAWS[i], nxt = ALL_DRAWS[i + 1];
+    if (!cur || !cur.back || !nxt || !nxt.back) continue;
+    const prev = [...cur.back].sort((a, b) => a - b).join(',');
+    const next = [...nxt.back].sort((a, b) => a - b).join(',');
+    if (!jointCount[prev]) jointCount[prev] = {};
+    jointCount[prev][next] = (jointCount[prev][next] || 0) + 1;
+  }
+  return jointCount;
+}
+
 function predictBack(sourceDrawIdx) {
-  const gap = new Array(13).fill(0);
-  const bridgeScore = new Array(13).fill(0);
-  const tailBackScore = new Array(13).fill(0);
-  const parityScore = new Array(13).fill(0);
+  // 取目标行前一期的后区号 (sourceDrawIdx + 9)，无数据时回退到 sourceDrawIdx
+  let prevDraw = ALL_DRAWS[sourceDrawIdx + 9];
+  if (!prevDraw || !prevDraw.back) prevDraw = ALL_DRAWS[sourceDrawIdx];
+  if (!prevDraw || !prevDraw.back) return { top6: [], combos: [], layer: {}, ranked: [] };
 
-  // ① 计算每个号码的遗漏期数
-  for (let n = 1; n <= 12; n++) {
-    let g = 0;
-    for (let i = sourceDrawIdx; i >= 0; i--) {
-      if (ALL_DRAWS[i] && ALL_DRAWS[i].back && ALL_DRAWS[i].back.includes(n)) break;
-      g++;
-    }
-    gap[n] = g;
+  const [a, b] = prevDraw.back;
+  const layer = {};
+
+  // ① 桥接池: p±1~5 (平权 +1), p±1 相邻, p 重复, 转移表 TOP3 (与 predict_unified.py 一致)
+  const add = (x) => { if (x >= 1 && x <= 12) layer[x] = (layer[x] || 0) + 1; };
+  for (const p of [a, b]) {
+    for (let d = 1; d <= 5; d++) { add(p + d); add(p - d); }
+    add(p - 1); add(p + 1); add(p);
+    for (const t of (BACK_TRANSFER[p] || [])) add(t);
   }
 
-  // ② 桥接效应：前一期后区号码的±1、±2、±3邻居加分
-  const prevDraw = ALL_DRAWS[sourceDrawIdx - 1];
-  if (prevDraw && prevDraw.back) {
-    prevDraw.back.forEach(p => {
-      bridgeScore[p] += 2; // 重复加分
-      for (let offset = -3; offset <= 3; offset++) {
-        if (offset === 0) continue;
-        const nb = p + offset;
-        if (nb >= 1 && nb <= 12) {
-          bridgeScore[nb] += Math.max(0, 4 - Math.abs(offset));
-        }
-      }
-    });
-  }
+  const pool = Object.keys(layer).map(Number);
+  const strong = pool.filter(x => layer[x] >= 2);
+  const cand = strong.length >= 2 ? strong : pool;
 
-  // ③ v6新增：前区尾号→后区号码关联统计
-  // 核心思路：前区尾号与后区号码存在统计关联（如尾号=3时后区倾向出3/7/11）
-  const srcDraw = ALL_DRAWS[sourceDrawIdx];
-  if (srcDraw && srcDraw.front) {
-    const srcTails = srcDraw.front.map(n => n % 10);
-    // 统计历史上相同尾号组合出现时，后区各号码的频率
-    const tailBackFreq = new Array(13).fill(0);
-    const windowSize = Math.min(80, sourceDrawIdx);
-    for (let i = Math.max(0, sourceDrawIdx - windowSize); i < sourceDrawIdx; i++) {
-      const d = ALL_DRAWS[i];
-      if (!d || !d.front || !d.back) continue;
-      const dTails = d.front.map(n => n % 10);
-      // 计算尾号重叠度
-      const tailOverlap = srcTails.filter(t => dTails.includes(t)).length;
-      if (tailOverlap >= 2) {
-        // 尾号重叠≥2个时，该期后区号码有参考价值
-        d.back.forEach(b => { tailBackFreq[b] += (1 + tailOverlap * 0.5); });
-      }
-    }
-    // 归一化并写入评分
-    const maxTBF = Math.max(1, ...tailBackFreq);
-    for (let n = 1; n <= 12; n++) {
-      tailBackScore[n] = Math.round(tailBackFreq[n] / maxTBF * 15);
-    }
-  }
+  // ② 联合转移统计
+  const jointCount = buildBackJointTrans(sourceDrawIdx);
+  const prevk = [...prevDraw.back].sort((x, y) => x - y).join(',');
 
-  // ④ v6新增：后区奇偶轮转模式
-  // 核心思路：连续多期出奇数后，偶数概率上升；反之亦然
-  const recentBackOddCount = [];
-  for (let i = sourceDrawIdx - 1; i >= Math.max(0, sourceDrawIdx - 5); i--) {
-    const d = ALL_DRAWS[i];
-    if (d && d.back) {
-      const oddCnt = d.back.filter(b => b % 2 === 1).length;
-      recentBackOddCount.push(oddCnt);
+  // ③ 组合打分: SUM_PREF + DIFF_PREF + joint * 2.0, 硬过滤 和值10~20 差值3~7
+  const combos = [];
+  for (let ii = 0; ii < cand.length; ii++) {
+    for (let jj = ii + 1; jj < cand.length; jj++) {
+      const x = cand[ii], y = cand[jj];
+      const sm = x + y, df = Math.abs(x - y);
+      if (sm < 10 || sm > 20 || df < 3 || df > 7) continue;
+      const ck = x < y ? x + ',' + y : y + ',' + x;
+      const j = (jointCount[prevk] && jointCount[prevk][ck]) || 0;
+      const constScore = (BACK_SUM_PREF[sm] || 0) + (BACK_DIFF_PREF[df] || 0);
+      const fin = constScore + j * 2.0;
+      combos.push({ score: fin, numbers: [Math.min(x, y), Math.max(x, y)], sum: sm, diff: df });
     }
   }
-  if (recentBackOddCount.length >= 3) {
-    const avgOdd = recentBackOddCount.reduce((a, b) => a + b, 0) / recentBackOddCount.length;
-    // 近期偏奇→偶数加分；近期偏偶→奇数加分
-    for (let n = 1; n <= 12; n++) {
-      if (avgOdd >= 1.5 && n % 2 === 0) {
-        parityScore[n] = Math.round((avgOdd - 1) * 3); // 偏奇→偶数加3-6分
-      } else if (avgOdd <= 0.5 && n % 2 === 1) {
-        parityScore[n] = Math.round((1 - avgOdd) * 3); // 偏偶→奇数加3-6分
-      }
-    }
-  }
+  combos.sort((p, q) => q.score - p.score);
 
-  // ⑤ 综合排序：桥接 + 尾号关联 + 奇偶轮转 + 遗漏回归
-  return [...Array(12).keys()].map(i => i + 1)
-    .sort((a, b) => {
-      const gapBonusA = gap[a] >= 6 ? gap[a] * 0.3 : 0;
-      const gapBonusB = gap[b] >= 6 ? gap[b] * 0.3 : 0;
-      const sa = bridgeScore[a] * 4 + tailBackScore[a] + parityScore[a] + gapBonusA;
-      const sb = bridgeScore[b] * 4 + tailBackScore[b] + parityScore[b] + gapBonusB;
-      return sb - sa || b - a;
-    })
-    .slice(0, 6);
+  // 号码排名 (按 layer 票数)
+  const ranked = pool.sort((x, y) => (layer[y] || 0) - (layer[x] || 0));
+  const top6 = ranked.slice(0, 6);
+
+  return { top6, combos, layer, ranked };
 }
 
 // ===================== 回测验证（全量+多间隔） =====================
@@ -2359,9 +2347,9 @@ function backtest() {
   console.log("╚══════════════════════════════════════════════════════════════════════╝\n");
   console.log(`  可用数据: ${ALL_DRAWS.length}期 (${ALL_DRAWS[0].issue} ~ ${ALL_DRAWS[ALL_DRAWS.length - 1].issue})`);
   console.log(`  优化配置: 组合池Top${CONFIG.comboPoolTop} | 采样上限${CONFIG.comboSampleMax}`);
-  console.log(`  10期配对: ${fullPairs.length}对 | 12期配对: ${pairs12.length}对 | 5期配对: ${shortPairs.length}对 | 15期配对: ${longPairs.length}对\n`);
+  console.log(`  间隔10配对数: ${fullPairs.length} | 间隔12: ${pairs12.length} | 间隔5: ${shortPairs.length} | 间隔15: ${longPairs.length}\n`);
 
-  // ===== 详细回测：全量10期配对 =====
+  // ===== 详细回测：全量10期间隔配对回测 (详细) =====
   console.log("─".repeat(70));
   console.log("  📋 全量10期间隔配对回测 (详细)");
   console.log("─".repeat(70));
@@ -2404,7 +2392,8 @@ function backtest() {
 
     // 后区预测
     const backPred = predictBack(srcIdx);
-    const backHits = tgtDraw ? tgtDraw.back.filter((b) => backPred.includes(b)).length : 0;
+    const backTop6 = backPred.top6;
+    const backHits = tgtDraw ? tgtDraw.back.filter((b) => backTop6.includes(b)).length : 0;
     totalBackHits += backHits;
 
     // 前5组合命中
@@ -3593,9 +3582,10 @@ function demo(sIssue, tIssue) {
   console.log("│  📌 Step 8：后区预测 (近10期频率分析)                                       │");
   console.log("└──────────────────────────────────────────────────────────────────────────┘");
   const backPred = predictBack(srcIdx);
+  const backTop6 = backPred.top6;
   const tgtBack = targetDraw.back;
-  const backHitCount = tgtBack.filter((b) => backPred.includes(b)).length;
-  console.log(`  推荐后区 (6选2): [${backPred.join(", ")}]`);
+  const backHitCount = tgtBack.filter((b) => backTop6.includes(b)).length;
+  console.log(`  推荐后区 (6选2): [${backTop6.join(", ")}]`);
   console.log(`  实际: [${tgtBack.join(", ")}] → 命中${backHitCount}/2`);
 
   // ══════════════ 总结 ══════════════

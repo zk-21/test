@@ -2966,16 +2966,75 @@ function calculateHighFreqMissNums(allBalls, lookbackRows = 50) {
   return highFreqNums.slice(0, 4); // 返回前4个高频号码
 }
 
+// ═══ 后区预测 (采用 predict_unified.py 逻辑: 桥接池+和值/差值常量+联合转移) ═══
+const PU_BACK_TRANSFER = {1:[1,2,8],2:[2,8,12],3:[11,1,10],4:[5,4,10],5:[5,1,8],
+                          6:[10,8,6],7:[8,1,5],8:[12,8,4],9:[6,2,10],10:[10,4,2],
+                          11:[11,1,10],12:[2,12,5]};
+const PU_BACK_SUM_PREF  = {13:6, 14:5, 9:4, 15:3, 16:3, 6:2, 12:2, 10:2, 11:2};
+const PU_BACK_DIFF_PREF = {1:6, 4:5, 6:4, 3:4, 5:3, 2:2};
+
+function predictBackPU(prevBack) {
+  // prevBack: [a, b] 上期后区2个号码
+  if (!prevBack || prevBack.length < 2) return { top6: [], combos: [], layer: {} };
+  const [a, b] = prevBack;
+  const layer = {};
+  const add = (x) => { if (x >= 1 && x <= 12) layer[x] = (layer[x] || 0) + 1; };
+  for (const p of [a, b]) {
+    for (let d = 1; d <= 5; d++) { add(p + d); add(p - d); }
+    add(p - 1); add(p + 1); add(p);
+    for (const t of (PU_BACK_TRANSFER[p] || [])) add(t);
+  }
+  const pool = Object.keys(layer).map(Number);
+  const strong = pool.filter(x => layer[x] >= 2);
+  const cand = strong.length >= 2 ? strong : pool;
+
+  // 联合转移统计 (从内置数据构建)
+  const draws = typeof getBuiltInDrawData === 'function' ? getBuiltInDrawData() : [];
+  const jointCount = {};
+  for (let i = 0; i < draws.length - 1; i++) {
+    const cur = draws[i], nxt = draws[i + 1];
+    if (!cur || !cur.back || !nxt || !nxt.back) continue;
+    const pk = [...cur.back].sort((x, y) => x - y).join(',');
+    const nk = [...nxt.back].sort((x, y) => x - y).join(',');
+    if (!jointCount[pk]) jointCount[pk] = {};
+    jointCount[pk][nk] = (jointCount[pk][nk] || 0) + 1;
+  }
+  const prevk = [...prevBack].sort((x, y) => x - y).join(',');
+
+  const combos = [];
+  for (let ii = 0; ii < cand.length; ii++) {
+    for (let jj = ii + 1; jj < cand.length; jj++) {
+      const x = cand[ii], y = cand[jj];
+      const sm = x + y, df = Math.abs(x - y);
+      if (sm < 10 || sm > 20 || df < 3 || df > 7) continue;
+      const ck = x < y ? x + ',' + y : y + ',' + x;
+      const j = (jointCount[prevk] && jointCount[prevk][ck]) || 0;
+      const constScore = (PU_BACK_SUM_PREF[sm] || 0) + (PU_BACK_DIFF_PREF[df] || 0);
+      combos.push({ score: constScore + j * 2.0, numbers: [Math.min(x, y), Math.max(x, y)], sum: sm, diff: df });
+    }
+  }
+  combos.sort((p, q) => q.score - p.score);
+  const ranked = pool.sort((x, y) => (layer[y] || 0) - (layer[x] || 0));
+  return { top6: ranked.slice(0, 6), combos, layer, ranked };
+}
+
 // ═══ 后区桥接策略（热号融合优化版）：基于源行后区+8期窗口热号生成5组变体 ═══
-function generateBackBridgeCombos(sourceRow, allBalls, highFreqMissNums = null) {
+function generateBackBridgeCombos(sourceRow, allBalls, highFreqMissNums = null, targetPrevRow = null) {
   // 如果没有传入高频未命中号码，则动态计算
   if (!highFreqMissNums) {
     highFreqMissNums = calculateHighFreqMissNums(allBalls);
   }
-  
+
   const sourceColor = sampleBlueColor;
-  const sourceBalls = allBalls.filter(b => b.zone === "back" && b.row === sourceRow && ballHasColor(b, sourceColor));
-  const sourceNums = [...new Set(sourceBalls.map(b => b.number))].sort((a, b) => a - b).slice(0, 2);
+  // 优先取目标行前一期的后区号（与区间比预测一致），无数据时回退到 sourceRow
+  const refRow = targetPrevRow || sourceRow;
+  let sourceBalls = allBalls.filter(b => b.zone === "back" && b.row === refRow && ballHasColor(b, sourceColor));
+  let sourceNums = [...new Set(sourceBalls.map(b => b.number))].sort((a, b) => a - b).slice(0, 2);
+  // 目标行前一期无后区号时回退到 sourceRow
+  if (sourceNums.length < 2 && targetPrevRow) {
+    sourceBalls = allBalls.filter(b => b.zone === "back" && b.row === sourceRow && ballHasColor(b, sourceColor));
+    sourceNums = [...new Set(sourceBalls.map(b => b.number))].sort((a, b) => a - b).slice(0, 2);
+  }
   
   // 源行无后区号码时降级
   if (sourceNums.length < 2) {
@@ -2990,6 +3049,11 @@ function generateBackBridgeCombos(sourceRow, allBalls, highFreqMissNums = null) 
   }
   
   const [s1, s2] = sourceNums;
+
+  // 🆕 优先使用 predict_unified.py 后区组合打分 (Top5组合, 按和值/差值常量+联合转移排序)
+  const puResult = predictBackPU(sourceNums);
+  const puCombos = (puResult.combos || []).slice(0, 5).map(c => c.numbers);
+
   const gap = s2 - s1;
   const backMax = 12;
   
@@ -3224,7 +3288,11 @@ function generateBackBridgeCombos(sourceRow, allBalls, highFreqMissNums = null) 
     "冷号:", coldNums.slice(0, 3), "高频未命中:", highFreqMissNums,
     "最终9组:", results.slice(0, 9).map(r => `${r.numbers.join("-")}(${r.label},s${r.score})`));
   
-  return results.slice(0, 9).map(r => r.numbers);
+  // 🆕 将 PU 后区组合 (predict_unified.py 逻辑) 优先插入结果前面
+  const allCombos = results.slice(0, 9).map(r => r.numbers);
+  const allKeys = new Set(allCombos.map(c => c.join("-")));
+  const puUnique = puCombos.filter(c => !allKeys.has(c.join("-")));
+  return [...puUnique, ...allCombos].slice(0, 9);
 }
 
 function shuffleSampleIndexes(indexes = []) {
@@ -5652,6 +5720,297 @@ function getArithmeticTails(tails) {
   return [...arithTails];
 }
 
+// ═══ PU尾号组合模式 (移植自 predict_unified.py) ═══
+
+function _puFindRuns(tails) {
+  if (!tails || tails.length === 0) return [];
+  const s = [...tails].sort((a, b) => a - b);
+  const runs = [[s[0]]];
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === s[i - 1] + 1) runs[runs.length - 1].push(s[i]);
+    else runs.push([s[i]]);
+  }
+  if (runs.length > 1 && runs[runs.length - 1].includes(9) && runs[0].includes(0)) {
+    runs[0] = [...runs[runs.length - 1], ...runs[0]];
+    runs.pop();
+  }
+  return runs.filter(r => r.length >= 2).map(r => [...r]);
+}
+
+function _puFindTriples(pool) {
+  const s = [...pool].sort((a, b) => a - b);
+  const pset = new Set(pool);
+  const triples = [];
+  for (let i = 0; i < s.length - 2; i++) {
+    if (s[i + 1] === s[i] + 1 && s[i + 2] === s[i] + 2) triples.push([s[i], s[i + 1], s[i + 2]]);
+  }
+  if (pset.has(8) && pset.has(9) && pset.has(0)) triples.push([8, 9, 0]);
+  return triples;
+}
+
+function _puFindPairs(pool) {
+  const s = [...pool].sort((a, b) => a - b);
+  const pset = new Set(pool);
+  const pairs = [];
+  for (let i = 0; i < s.length - 1; i++) {
+    if (s[i + 1] === s[i] + 1) pairs.push([s[i], s[i + 1]]);
+  }
+  if (pset.has(9) && pset.has(0)) pairs.push([9, 0]);
+  return pairs;
+}
+
+function _puFindAP3(pool, minD = 2) {
+  const s = [...pool].sort((a, b) => a - b);
+  const pset = new Set(pool);
+  const aps = new Set();
+  for (let i = 0; i < s.length; i++) {
+    for (let j = i + 1; j < s.length; j++) {
+      const d = s[j] - s[i];
+      if (d < minD) continue;
+      const nxt = (s[j] + d) % 10;
+      if (pset.has(nxt) && nxt !== s[i] && nxt !== s[j]) {
+        aps.add(JSON.stringify([s[i], s[j], nxt].sort((a, b) => a - b)));
+      }
+    }
+  }
+  return [...aps].map(s => JSON.parse(s));
+}
+
+function _puComboStruct(combo) {
+  const s = [...combo].sort((a, b) => a - b);
+  const runs = _puFindRuns(s);
+  const ht = runs.some(r => r.length >= 3);
+  const hp = runs.some(r => r.length === 2);
+  const ns = runs.length;
+  let ha = false;
+  const sset = new Set(s);
+  for (let i = 0; i < s.length && !ha; i++) {
+    for (let j = i + 1; j < s.length && !ha; j++) {
+      const d = s[j] - s[i];
+      if (d >= 2 && sset.has(s[j] + d)) ha = true;
+    }
+  }
+  return { ht, hp, ns, ha };
+}
+
+function _puGenTriple(pool, ranked, score) {
+  const tris = _puFindTriples(pool);
+  if (!tris.length) return null;
+  tris.sort((a, b) => -(score[a[0]] + score[a[1]] + score[a[2]]) + (score[b[0]] + score[b[1]] + score[b[2]]));
+  const tri = tris[0]; const ts = new Set(tri);
+  const others = ranked.filter(t => !ts.has(t)).slice(0, 2);
+  if (others.length < 2) return null;
+  return [...tri, ...others].sort((a, b) => a - b);
+}
+
+function _puGenDouble(pool, ranked, score) {
+  const pairs = _puFindPairs(pool);
+  if (!pairs.length) return null;
+  pairs.sort((a, b) => -(score[a[0]] + score[a[1]]) + (score[b[0]] + score[b[1]]));
+  for (const pair of pairs) {
+    const ps = new Set(pair);
+    const others = ranked.filter(t => !ps.has(t));
+    for (let o1 = 0; o1 < others.length; o1++) {
+      for (let o2 = o1 + 1; o2 < others.length; o2++) {
+        for (let o3 = o2 + 1; o3 < others.length; o3++) {
+          const combo = [...pair, others[o1], others[o2], others[o3]].sort((a, b) => a - b);
+          const st = _puComboStruct(combo);
+          if (!st.ht && st.hp) return combo;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function _puGenMultiSeg(pool, ranked, score) {
+  const pairs = _puFindPairs(pool);
+  if (pairs.length < 2) return null;
+  pairs.sort((a, b) => -(score[a[0]] + score[a[1]]) + (score[b[0]] + score[b[1]]));
+  for (let i = 0; i < pairs.length; i++) {
+    for (let j = i + 1; j < pairs.length; j++) {
+      if (new Set([...pairs[i], ...pairs[j]]).size === 4) {
+        const used = new Set([...pairs[i], ...pairs[j]]);
+        const other = ranked.find(t => !used.has(t));
+        if (other !== undefined) {
+          const combo = [...pairs[i], ...pairs[j], other].sort((a, b) => a - b);
+          const st = _puComboStruct(combo);
+          if (!st.ht && st.hp && st.ns >= 2) return combo;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function _puGenConsecAP(pool, ranked, score) {
+  const pairs = _puFindPairs(pool);
+  const aps = _puFindAP3(pool, 2);
+  if (!pairs.length || !aps.length) return null;
+  const pair = pairs[0];
+  for (const ap of aps) {
+    const combined = new Set([...pair, ...ap]);
+    if (combined.size === 5) {
+      const combo = [...combined].sort((a, b) => a - b);
+      const st = _puComboStruct(combo);
+      if (st.hp && st.ha) return combo;
+    }
+  }
+  return null;
+}
+
+function _puGenPureAP(pool, ranked, score) {
+  const aps = _puFindAP3(pool, 2);
+  if (!aps.length) return null;
+  for (const ap of aps) {
+    const aps2 = new Set(ap);
+    for (const ap2 of aps) {
+      if (new Set([...ap, ...ap2]).size >= 4) {
+        const combined = [...new Set([...ap, ...ap2])];
+        if (combined.length <= 5) {
+          const need = 5 - combined.length;
+          const rest = ranked.filter(t => !new Set(combined).has(t)).slice(0, need);
+          const combo = [...combined, ...rest].sort((a, b) => a - b);
+          const st = _puComboStruct(combo);
+          if (st.ha) return combo;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** PU 共识+互补策略: 生成6组尾号组合 */
+function genPUTailCombos(pool, ranked, score, nCombos = 6) {
+  const modeNames = ['A_三连', 'B_双连', 'C_多段连续', 'D_连续+等差', 'E_纯等差'];
+  const genFuncs = [_puGenTriple, _puGenDouble, _puGenMultiSeg, _puGenConsecAP, _puGenPureAP];
+
+  const voteCombos = {};
+  for (let mi = 0; mi < genFuncs.length; mi++) {
+    const c = genFuncs[mi](pool, ranked, score);
+    if (c) voteCombos[modeNames[mi]] = c;
+  }
+  voteCombos['F_基线Top5'] = ranked.slice(0, 5);
+
+  // 投票统计
+  const tailModes = {};
+  for (let t = 0; t <= 9; t++) tailModes[t] = new Set();
+  for (const [mn, combo] of Object.entries(voteCombos)) {
+    for (const t of combo) tailModes[t].add(mn);
+  }
+
+  const consensus = [...Array(10).keys()].filter(t => tailModes[t].size >= 4).sort((a, b) => -(score[b] || 0) + (score[a] || 0));
+  const subConsensus = [...Array(10).keys()].filter(t => tailModes[t].size >= 2 && tailModes[t].size <= 3).sort((a, b) => -(score[b] || 0) + (score[a] || 0));
+  const complement = [...Array(10).keys()].filter(t => tailModes[t].size === 1).sort((a, b) => -(score[b] || 0) + (score[a] || 0));
+
+  // 去重候选
+  const seen = new Set();
+  const uniqueCandidates = [];
+  for (const [mn, combo] of Object.entries(voteCombos)) {
+    const key = JSON.stringify([...combo].sort((a, b) => a - b));
+    if (!seen.has(key)) { seen.add(key); uniqueCandidates.push({ combo, mode: mn }); }
+  }
+
+  // 贪心多样性选择
+  const results = [];
+  const modeCombos = {};
+  const nStruct = nCombos - 1;
+  for (let i = 0; i < nStruct; i++) {
+    const covered = new Set();
+    results.forEach(c => c.combo.forEach(t => covered.add(t)));
+    let best = null, bestMarginal = -1, bestMode = '';
+    for (const cand of uniqueCandidates) {
+      const key = JSON.stringify([...cand.combo].sort((a, b) => a - b));
+      if (results.some(r => JSON.stringify([...r.combo].sort((a, b) => a - b)) === key)) continue;
+      const newTails = cand.combo.filter(t => !covered.has(t));
+      const marginal = newTails.reduce((s, t) => s + (score[t] || 0), 0);
+      if (marginal > bestMarginal) { bestMarginal = marginal; best = cand; bestMode = cand.mode; }
+    }
+    if (best) {
+      results.push(best);
+      if (!modeCombos[bestMode]) modeCombos[bestMode] = [];
+      modeCombos[bestMode].push(best.combo);
+    }
+  }
+
+  // 覆盖补全
+  const covered = new Set();
+  results.forEach(r => r.combo.forEach(t => covered.add(t)));
+  const uncovered = [...Array(10).keys()].filter(t => !covered.has(t));
+  if (uncovered.length > 0) {
+    const uncRanked = uncovered.sort((a, b) => -(score[b] || 0) + (score[a] || 0));
+    const covRanked = [...covered].sort((a, b) => -(score[b] || 0) + (score[a] || 0));
+    let bestFill = null, bestFillScore = -1;
+    for (let nUnc = Math.min(5, uncRanked.length); nUnc > 0; nUnc--) {
+      // 简化: 取前nUnc个未覆盖 + 补足已覆盖
+      const uncCombo = uncRanked.slice(0, nUnc);
+      const need = 5 - nUnc;
+      const fillCombos = [];
+      if (need === 0) {
+        fillCombos.push(uncCombo);
+      } else {
+        for (const c of _combinations(covRanked, need)) {
+          fillCombos.push([...uncCombo, ...c]);
+        }
+      }
+      for (const fc of fillCombos) {
+        const sc = fc.reduce((s, t) => s + (score[t] || 0), 0);
+        if (sc > bestFillScore) { bestFillScore = sc; bestFill = fc.sort((a, b) => a - b); }
+      }
+      if (bestFill) break;
+    }
+    if (bestFill) {
+      results.push({ combo: bestFill, mode: 'G_覆盖补全' });
+      modeCombos['G_覆盖补全'] = [bestFill];
+    } else {
+      results.push({ combo: ranked.slice(0, 5), mode: 'F_基线Top5' });
+      modeCombos['F_基线Top5'] = [ranked.slice(0, 5)];
+    }
+  } else {
+    results.push({ combo: ranked.slice(0, 5), mode: 'F_基线Top5' });
+    modeCombos['F_基线Top5'] = [ranked.slice(0, 5)];
+  }
+
+  return { results: results.slice(0, nCombos), consensus, subConsensus, complement, modeCombos };
+}
+
+/** PU 得分排序组合: 从top-N中穷举5尾组合按总分排序 */
+function genPUScoreCombos(ranked, score, nCombos = 5) {
+  let topN = 6;
+  for (let tn = 6; tn <= ranked.length; tn++) {
+    if (_combCount(tn, 5) >= nCombos) { topN = tn; break; }
+  }
+  topN = Math.min(topN, ranked.length);
+  const topTails = ranked.slice(0, topN);
+  const candidates = [];
+  for (const combo of _combinations(topTails, 5)) {
+    const totalSc = combo.reduce((s, t) => s + (score[t] || 0), 0);
+    candidates.push({ combo: [...combo].sort((a, b) => a - b), score: totalSc });
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates.slice(0, nCombos);
+}
+
+function _combinations(arr, k) {
+  const result = [];
+  function backtrack(start, current) {
+    if (current.length === k) { result.push([...current]); return; }
+    for (let i = start; i < arr.length; i++) {
+      current.push(arr[i]);
+      backtrack(i + 1, current);
+      current.pop();
+    }
+  }
+  backtrack(0, []);
+  return result;
+}
+
+function _combCount(n, k) {
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+
 // ═══ 增强版尾号预测（融合参考行关系+等差延伸+跨行尾号+组内规则）═══
 // 消融实验配置：设置为true禁用对应信号
 const ABLATION_CONFIG = {
@@ -7121,9 +7480,15 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
     }
   });
 
-  // 预处理映射
-  const bridgeMap = buildV4BridgeMap(selectedNumbers, selectedNumbers);
-  const arithMap = buildV4ArithmeticMap(selectedNumbers, 6, selectedNumbers);
+  // 🆕 前区锚点/桥梁/热号改用目标行前一期(sourceRow+9)作为参考
+  const _tpRow = sourceRow + 9;
+  const _tpBalls = (_sharedBbrColor.get(_tpRow) || []);
+  const _tpNums = [...new Set(_tpBalls.map(b => b.number))].sort((a, b) => a - b);
+  const frontRefNumbers = _tpNums.length >= 5 ? _tpNums : selectedNumbers;
+
+  // 预处理映射（改用目标行前一期作为锚点）
+  const bridgeMap = buildV4BridgeMap(frontRefNumbers, frontRefNumbers);
+  const arithMap = buildV4ArithmeticMap(frontRefNumbers, 6, frontRefNumbers);
   const plusTenTrend = buildV4PlusTenTrendMap(sourceRow, selectedNumbers, allBalls, _sharedBbrColor);
   const refRows = buildV4FullReferenceRows(sourceRow, allBalls, _sharedBbrColor);
 
@@ -8122,9 +8487,15 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
   var srcTails = [].concat(Array.from(new Set(src.map(function (n) { return n % 10; }))));
   var topPT = predictTails ? new Set(predictTails.slice(0, 5).map(function (p) { return p[0]; })) : new Set();
 
-  // 热号
+  // 🆕 前区锚点/桥梁/热号改用目标行前一期(sourceRow+9)作为参考
+  var _tpRow = sourceRow + 9;
+  var _tpBalls = allBalls.filter(function (b) { return b.zone === "front" && b.row === _tpRow && ballHasColor(b, sampleRedColor); });
+  var _tpNums = [...new Set(_tpBalls.map(function (b) { return b.number; }))].sort(function (a, b) { return a - b; });
+  var frontRefNumbers = _tpNums.length >= 5 ? _tpNums : selectedNumbers;
+
+  // 热号（改用目标行前一期作为参考窗口中心）
   var hotness = new Map();
-  for (var r = Math.max(1, sourceRow - 5); r < sourceRow; r++) {
+  for (var r = Math.max(1, _tpRow - 5); r < _tpRow; r++) {
     allBalls.filter(function (b) { return b.zone === "front" && b.row === r && ballHasColor(b, sampleRedColor); })
       .forEach(function (b) { hotness.set(b.number, (hotness.get(b.number) || 0) + 1); });
   }
@@ -8136,9 +8507,9 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
   var histFreq = histMetrics ? histMetrics.historyFreq : new Array(36).fill(0);
   var recentFreq = histMetrics ? histMetrics.recentFreq : new Array(36).fill(0);
 
-  // 桥接 + 等差
-  var bridgeMap = buildV4BridgeMap(selectedNumbers, selectedNumbers);
-  var arithMap = buildV4ArithmeticMap(selectedNumbers, 6, selectedNumbers);
+  // 桥接 + 等差（改用目标行前一期作为锚点）
+  var bridgeMap = buildV4BridgeMap(frontRefNumbers, frontRefNumbers);
+  var arithMap = buildV4ArithmeticMap(frontRefNumbers, 6, frontRefNumbers);
 
   // ========== 6维度独立评分 ==========
 
@@ -8153,11 +8524,12 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
   }
   dimTail.sort(function (a, b) { return b.score - a.score; });
 
-  // 维度2：偏移
+  // 维度2：偏移（改用目标行前一期作为锚点）
   var dimOff = [];
+  var _refSorted = frontRefNumbers.slice().sort(function (a, b) { return a - b; });
   for (var n = 1; n <= 35; n++) {
     var mo = Infinity;
-    src.forEach(function (a) { mo = Math.min(mo, Math.abs(n - a)); });
+    _refSorted.forEach(function (a) { mo = Math.min(mo, Math.abs(n - a)); });
     dimOff.push({ number: n, score: V4_OFFSET_SCORE[mo] || 0 });
   }
   dimOff.sort(function (a, b) { return b.score - a.score; });
@@ -8180,7 +8552,7 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
     var s = 0;
     if (fr > 1.2) s += Math.round((fr - 1) * 15);
     if (r5 > 1.3) s += Math.round((r5 - 1) * 10);
-    if (src.some(function (a) { return Math.abs(a - n) === 1; })) s += 12;
+    if (_refSorted.some(function (a) { return Math.abs(a - n) === 1; })) s += 12;
     dimFreq.push({ number: n, score: s });
   }
   dimFreq.sort(function (a, b) { return b.score - a.score; });
@@ -8201,9 +8573,9 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
   }
   dimAr.sort(function (a, b) { return b.score - a.score; });
 
-  // 维度7：重复号码（与上期重号，历史重号率约47%）
+  // 维度7：重复号码（与目标行前一期重号，历史重号率约47%）
   var dimRepeat = [];
-  var srcSet = new Set(src);
+  var srcSet = new Set(frontRefNumbers);
   for (var n = 1; n <= 35; n++) {
     var s = 0;
     if (srcSet.has(n)) s += 30;
@@ -9303,8 +9675,17 @@ function getBuiltInDrawData() {
   // 若无则回退到 localStorage 缓存
   if (window.ALL_DRAWS_DATA && Array.isArray(window.ALL_DRAWS_DATA) && window.ALL_DRAWS_DATA.length > 0) {
     const draws = window.ALL_DRAWS_DATA;
-    return sortDrawsByIssue(draws).filter((draw, index, list) => {
-      return index === 0 || list[index - 1]?.issue !== draw.issue;
+    const sorted = sortDrawsByIssue(draws);
+    // 去重：先按 issue，再按号码（front+back），防止不同期号格式但号码相同的重复副本
+    const seenIssues = new Set();
+    const seenNumbers = new Set();
+    return sorted.filter((draw) => {
+      const issueKey = String(draw.issue);
+      const numKey = [...draw.front].sort((a, b) => a - b).join(",") + "|" + [...draw.back].sort((a, b) => a - b).join(",");
+      if (seenIssues.has(issueKey) || seenNumbers.has(numKey)) return false;
+      seenIssues.add(issueKey);
+      seenNumbers.add(numKey);
+      return true;
     });
   }
   // 回退：提示加载失败
@@ -10337,12 +10718,76 @@ function updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredicti
       ratiosHTML += `<span class="prediction-value ${className}">${index + 1}. ${ratio}${scoreInfo}</span>`;
     });
     
+    // 区间比变化分析
+    const srcIv = selectedNumbers.length > 0 ? intervalRatio(selectedNumbers) : [0,0,0];
+    const predIv = ivPrediction.predictedIv;
+    const zoneNames = ["I区(01-12)", "II区(13-24)", "III区(25-35)"];
+    let changeAnalysisHTML = '';
+    const changes = [];
+    for (let z = 0; z < 3; z++) {
+      const diff = predIv[z] - srcIv[z];
+      if (diff !== 0) {
+        changes.push({ zone: z, diff, from: srcIv[z], to: predIv[z] });
+      }
+    }
+    if (changes.length > 0) {
+      const increaseZones = changes.filter(c => c.diff > 0).map(c => zoneNames[c.zone]);
+      const decreaseZones = changes.filter(c => c.diff < 0).map(c => zoneNames[c.zone]);
+
+      // 重号建议: 缩减区中上期出现的号码更可能保留
+      const repeatSuggestions = [];
+      if (decreaseZones.length > 0) {
+        for (const n of selectedNumbers) {
+          const z = n <= 12 ? 0 : n <= 24 ? 1 : 2;
+          if (changes.some(c => c.zone === z && c.diff < 0)) {
+            repeatSuggestions.push(n);
+          }
+        }
+      }
+      // 新区号码建议: 扩张区中上期未出现的号码
+      const newZoneSuggestions = [];
+      if (increaseZones.length > 0) {
+        const allBalls = _preCollected || collectBalls();
+        const _bbr = new Map();
+        allBalls.filter(b => b.zone === "front").forEach(b => { if (!_bbr.has(b.row)) _bbr.set(b.row, []); _bbr.get(b.row).push(b.number); });
+        // 热号
+        const hotMap = new Map();
+        for (let r = Math.max(1, sourceRow - 5); r < sourceRow; r++) {
+          (_bbr.get(r) || []).forEach(n => hotMap.set(n, (hotMap.get(n) || 0) + 1));
+        }
+        const sourceSet = new Set(selectedNumbers);
+        for (let n = 1; n <= 35; n++) {
+          const z = n <= 12 ? 0 : n <= 24 ? 1 : 2;
+          if (changes.some(c => c.zone === z && c.diff > 0) && !sourceSet.has(n)) {
+            newZoneSuggestions.push({ number: n, hot: hotMap.get(n) || 0 });
+          }
+        }
+        newZoneSuggestions.sort((a, b) => b.hot - a.hot);
+      }
+
+      changeAnalysisHTML = '<div class="iv-change-analysis">';
+      if (increaseZones.length > 0) {
+        changeAnalysisHTML += `<div class="iv-change-up">扩: ${increaseZones.join(", ")}</div>`;
+      }
+      if (decreaseZones.length > 0) {
+        changeAnalysisHTML += `<div class="iv-change-down">缩: ${decreaseZones.join(", ")}</div>`;
+      }
+      if (repeatSuggestions.length > 0) {
+        changeAnalysisHTML += `<div class="iv-repeat-suggest">重号建议: ${repeatSuggestions.map(n => String(n).padStart(2, '0')).join(' ')}</div>`;
+      }
+      if (newZoneSuggestions.length > 0) {
+        const topNew = newZoneSuggestions.slice(0, 5).map(s => String(s.number).padStart(2, '0')).join(' ');
+        changeAnalysisHTML += `<div class="iv-new-suggest">新区推荐: ${topNew}</div>`;
+      }
+      changeAnalysisHTML += '</div>';
+    }
+
     intervalRatioDiv.innerHTML = `
       <div class="ratios-container">
         ${ratiosHTML}
       </div>
-      <span class="prediction-value">源: ${sourceRatio}</span>
-      <div class="prediction-info">基于历史转移模式+规律增强</div>
+      <span class="prediction-value">源: ${sourceRatio} -> 预: ${predIv.join(":")}</span>
+      ${changeAnalysisHTML}
     `;
   } else {
     intervalRatioDiv.innerHTML = '<span class="prediction-placeholder">区间比预测数据不足</span>';
@@ -10601,6 +11046,37 @@ function updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredicti
       bestNumbers.map(n => `<span class="num-ball">${String(n).padStart(2, '0')}</span>`).join('') : 
       '<span class="num-na">-</span>';
     
+    // PU模式组合 (移植自 predict_unified.py)
+    const puPool = [...Array(10).keys()];
+    const puRanked = predictedTails.map(([t]) => t);
+    const puScore = {};
+    predictedTails.forEach(([t, s]) => { puScore[t] = s; });
+    for (let t = 0; t <= 9; t++) { if (!(t in puScore)) puScore[t] = 0; }
+
+    const puConsensus = genPUTailCombos(puPool, puRanked, puScore, 6);
+    const puScoreCombos = genPUScoreCombos(puRanked, puScore, 5);
+
+    let puModesHTML = '';
+    puConsensus.results.forEach((r, idx) => {
+      const tHTML = r.combo.map(t => `<span class="tail-item pu-tail">${t}</span>`).join('');
+      const nums = tailsToNumbers(r.combo, []);
+      const nHTML = nums.length === 5 ? nums.map(n => `<span class="num-ball">${String(n).padStart(2, '0')}</span>`).join('') : '<span class="num-na">-</span>';
+      puModesHTML += `<div class="mode-item pu-mode"><span class="mode-idx pu">${r.mode || 'PU' + (idx + 1)}</span><span class="mode-tails">${tHTML}</span><span class="mode-arrow">-></span><span class="mode-nums">${nHTML}</span></div>`;
+    });
+
+    let puScoreHTML = '';
+    puScoreCombos.forEach((c, idx) => {
+      const tHTML = c.combo.map(t => `<span class="tail-item pu-score-tail">${t}</span>`).join('');
+      const nums = tailsToNumbers(c.combo, []);
+      const nHTML = nums.length === 5 ? nums.map(n => `<span class="num-ball">${String(n).padStart(2, '0')}</span>`).join('') : '<span class="num-na">-</span>';
+      puScoreHTML += `<div class="mode-item pu-score"><span class="mode-idx pu-score">S${idx + 1}</span><span class="mode-tails">${tHTML}</span><span class="mode-arrow">-></span><span class="mode-nums">${nHTML}</span></div>`;
+    });
+
+    let consensusHTML = '';
+    if (puConsensus.consensus.length > 0) consensusHTML += `<span class="pu-consensus">共识: ${puConsensus.consensus.join(' ')}</span> `;
+    if (puConsensus.subConsensus.length > 0) consensusHTML += `<span class="pu-sub">次共识: ${puConsensus.subConsensus.join(' ')}</span> `;
+    if (puConsensus.complement.length > 0) consensusHTML += `<span class="pu-comp">互补: ${puConsensus.complement.join(' ')}</span>`;
+
     tailPredictionDiv.innerHTML = `
       <div class="modes-container">
         ${modesHTML}
@@ -10608,10 +11084,18 @@ function updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredicti
       <div class="best-recommend">
         <span class="best-label">最优推荐</span>
         <span class="best-tails">${bestTailsHTML}</span>
-        <span class="mode-arrow">→</span>
+        <span class="mode-arrow">-></span>
         <span class="best-nums">${bestNumsHTML}</span>
       </div>
-      <div class="prediction-info">基于${modes.length}种模式分析 + 间隔填充规则优化</div>
+      <div class="pu-section">
+        <div class="pu-header">PU共识+互补组合 (predict_unified)</div>
+        ${puModesHTML}
+        ${consensusHTML ? `<div class="pu-consensus-info">${consensusHTML}</div>` : ''}
+      </div>
+      <div class="pu-section">
+        <div class="pu-header">PU得分排序组合 (Top5)</div>
+        ${puScoreHTML}
+      </div>
     `;
   } else {
     tailPredictionDiv.innerHTML = '<span class="prediction-placeholder">尾号预测数据不足</span>';
@@ -10910,8 +11394,9 @@ sampleButton.addEventListener("click", () => {
     const allBalls = collectBalls();
     const backSample = buildSampleNumbers(requestedRow, "back");
     let backCombos = buildSampleFreeCombos(backSample.candidateEntries, sampleBackPickCount, backRepeatTarget, backSample.selectedNumbers);
-    // 🆕 后区桥接组合优先插入到最前面
-    const backBridgeNums = generateBackBridgeCombos(sourceStartRow, allBalls);
+    // 🆕 后区桥接组合优先插入到最前面 (用目标行前一期的后区号)
+    const targetPrevRow = sourceStartRow + 9; // 目的行=sourceStartRow+10, 前一期=sourceStartRow+9
+    const backBridgeNums = generateBackBridgeCombos(sourceStartRow, allBalls, null, targetPrevRow);
     const bridgeCombos = backBridgeNums
       .filter(nums => !backCombos.some(c => c.key === nums.join("-")))
       .map(nums => ({ numbers: nums, key: nums.join("-"), score: 999, ratioText: "桥接" }));
@@ -11019,9 +11504,15 @@ sampleButton.addEventListener("click", () => {
       tailPool = expandedPool;
     }
     
-    // 预处理映射
-    const bridgeMap = buildV4BridgeMap(selectedNumbers, selectedNumbers);
-    const arithMap = buildV4ArithmeticMap(selectedNumbers, 6, selectedNumbers);
+    // 🆕 前区锚点/桥梁/热号改用目标行前一期(sourceRow+9)作为参考
+    const _tpRow = sourceRow + 9;
+    const _tpBalls = _sharedBbrColor.get(_tpRow) || [];
+    const _tpNums = [...new Set(_tpBalls.map(b => b.number))].sort((a, b) => a - b);
+    const frontRefNumbers = _tpNums.length >= 5 ? _tpNums : selectedNumbers;
+
+    // 预处理映射（改用目标行前一期作为锚点）
+    const bridgeMap = buildV4BridgeMap(frontRefNumbers, frontRefNumbers);
+    const arithMap = buildV4ArithmeticMap(frontRefNumbers, 6, frontRefNumbers);
     const plusTenTrend = buildV4PlusTenTrendMap(sourceRow, selectedNumbers, allBalls, _sharedBbrColor);
     const refRows = buildV4FullReferenceRows(sourceRow, allBalls, _sharedBbrColor);
     
@@ -12015,8 +12506,9 @@ sampleButton.addEventListener("click", () => {
         : buildSampleFrontCombos(frontSample.candidateEntries, ratioPlan, samplePickCount, sampleIntervals, frontSample.ratioSupportMap, frontSample.referenceRows, frontRepeatTarget, frontSample.selectedNumbers, frontSample.selectedNumbers);
     }
     backCombos = buildSampleFreeCombos(backSample.candidateEntries, sampleBackPickCount, backRepeatTarget, backSample.selectedNumbers);
-    // 🆕 后区桥接组合优先插入到最前面
-    const backBridgeNums = generateBackBridgeCombos(sourceStartRow, _v4AllBalls);
+    // 🆕 后区桥接组合优先插入到最前面 (用目标行前一期的后区号)
+    const targetPrevRowV4 = sourceStartRow + 9;
+    const backBridgeNums = generateBackBridgeCombos(sourceStartRow, _v4AllBalls, null, targetPrevRowV4);
     const bridgeCombos = backBridgeNums
       .filter(nums => !backCombos.some(c => c.key === nums.join("-")))
       .map(nums => ({ numbers: nums, key: nums.join("-"), score: 999, ratioText: "桥接" }));
