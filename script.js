@@ -9044,8 +9044,13 @@ function clearFrontRow(row) {
 function clearSampleZoneRow(row, zone) {
   for (let number = 1; number <= zones[zone].max; number += 1) {
     const cell = getCell(row, zone, number);
-    const ball = cell?.querySelector(".ball");
-    if (!ball || ball.dataset.generated !== "sample") continue;
+    if (!cell) continue;
+    const ball = cell.querySelector(".ball");
+    if (!ball) continue;
+    // 清除所有示例球：优先检查 data-generated="sample"，也检查紫色示例球
+    const isSample = ball.dataset.generated === "sample";
+    const isPurpleSample = normalizeColor(ball.dataset.color) === normalizeColor(samplePurpleColor);
+    if (!isSample && !isPurpleSample) continue;
     if (ball.dataset.sampleBase) {
       try {
         const baseBall = JSON.parse(ball.dataset.sampleBase);
@@ -11078,23 +11083,10 @@ function updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredicti
     if (puConsensus.complement.length > 0) consensusHTML += `<span class="pu-comp">互补: ${puConsensus.complement.join(' ')}</span>`;
 
     tailPredictionDiv.innerHTML = `
-      <div class="modes-container">
-        ${modesHTML}
-      </div>
-      <div class="best-recommend">
-        <span class="best-label">最优推荐</span>
-        <span class="best-tails">${bestTailsHTML}</span>
-        <span class="mode-arrow">-></span>
-        <span class="best-nums">${bestNumsHTML}</span>
-      </div>
       <div class="pu-section">
         <div class="pu-header">PU共识+互补组合 (predict_unified)</div>
         ${puModesHTML}
         ${consensusHTML ? `<div class="pu-consensus-info">${consensusHTML}</div>` : ''}
-      </div>
-      <div class="pu-section">
-        <div class="pu-header">PU得分排序组合 (Top5)</div>
-        ${puScoreHTML}
       </div>
     `;
   } else {
@@ -13380,13 +13372,4 @@ function applyHitStyles(ws, drawFrontSet, drawBackSet, variantPlan) {
     }
     
     for (let j = 0; j < 2; j++) {
-      const addr = XLSX.utils.encode_cell({ r: row, c: j + 6 });
-      if (ws[addr] && backNumbers[j] && drawBackSet.has(backNumbers[j])) {
-        ws[addr].s = {
-          font: { color: { rgb: "FF0000" }, bold: true },
-          fill: { patternType: 'solid', fgColor: { rgb: "FFFF00" } }
-        };
-      }
-    }
-  }
-}
+      const addr = XLSX.utils.enco
