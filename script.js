@@ -13372,4 +13372,13 @@ function applyHitStyles(ws, drawFrontSet, drawBackSet, variantPlan) {
     }
     
     for (let j = 0; j < 2; j++) {
-      const addr = XLSX.utils.enco
+      const addr = XLSX.utils.encode_cell({ r: row, c: j + 6 });
+      if (ws[addr] && backNumbers[j] && drawBackSet.has(backNumbers[j])) {
+        ws[addr].s = {
+          font: { color: { rgb: "FF0000" }, bold: true },
+          fill: { patternType: 'solid', fgColor: { rgb: "FFFF00" } }
+        };
+      }
+    }
+  }
+}
