@@ -3006,7 +3006,7 @@ function predictBackPU(prevBack) {
     for (let jj = ii + 1; jj < cand.length; jj++) {
       const x = cand[ii], y = cand[jj];
       const sm = x + y, df = Math.abs(x - y);
-      if (sm < 10 || sm > 20 || df < 3 || df > 7) continue;
+      if (sm < 3 || sm > 23) continue;  // 放宽：仅排除不可能组合，打分通过SUM_PREF/DIFF_PREF自然排序
       const ck = x < y ? x + ',' + y : y + ',' + x;
       const j = (jointCount[prevk] && jointCount[prevk][ck]) || 0;
       const constScore = (PU_BACK_SUM_PREF[sm] || 0) + (PU_BACK_DIFF_PREF[df] || 0);
@@ -4388,7 +4388,7 @@ function v4GetRepeatPenalty(numbers, sourceNumbers = []) {
   let bonus = 0;
   if (repeatCount === 1) bonus = 8;      // 1个重号：强信号
   else if (repeatCount === 2) bonus = 3; // 2个重号：中性偏强
-  else if (repeatCount === 0) bonus = -5;// 0个重号：弱信号，轻微惩罚
+  else if (repeatCount === 0) bonus = -2;// 0个重号：轻微惩罚（25%真实概率，不宜过重）
   else if (repeatCount >= 3) bonus = -12;// 3+个重号：过度重叠，较强惩罚
   // repeatPenalty 保留为负数兼容名（正值=扣分，负值=加分，调用方用减法）
   return { repeatCount, repeatPenalty: -bonus, repeatBonus: bonus };
@@ -4494,27 +4494,28 @@ function v4ScoreComboAgainstRefs(comboNumbers, refs) {
 
 // ═══ 组合综合评分（完整移植 optimized_picker scoreCombo）═══
 const V4_OFFSET_SCORE = { 0:20, 1:15, 2:13, 3:12, 4:10, 5:8, 6:6, 7:5, 8:4, 9:3, 10:2 };
-const V4_TAIL_SAME = 35, V4_TAIL_NEIGHBOR = 15, V4_TAIL_WITHIN = 8;
+const V4_TAIL_SAME = 50, V4_TAIL_NEIGHBOR = 20, V4_TAIL_WITHIN = 10;
 
-function v4ScoreCombo(sorted, selectedEntries, anchors, sourceNums, refs, predictedTails = null, ivPrediction = null, firstBallPredictions = null, extremeFlags = null) {
+function v4ScoreCombo(sorted, selectedEntries, anchors, sourceNums, refs, predictedTails = null, ivPrediction = null, firstBallPredictions = null, extremeFlags = null, manualRatio = null) {
   const s = sum(sorted);
   const sp = sorted[sorted.length - 1] - sorted[0];
   const odd = oddCount(sorted);
-  // 硬过滤
-  if (odd === 0 || odd === 5) return null;
-  if (sp < 3 || sp > 34) return null;
-  if (s < 20 || s > 170) return null;  // 宽泛安全网，动态约束在下方
+  // 硬过滤 -> 软惩罚（保留真实组合，仅降低排名）
+  let hardPenalty = 0;
+  if (odd === 0 || odd === 5) hardPenalty += 30;
+  if (sp < 3 || sp > 34) hardPenalty += 25;
+  if (s < 20 || s > 170) hardPenalty += 25;
   let maxConsec = 1, run = 1;
   for (let i = 1; i < sorted.length; i++) {
     if (sorted[i] - sorted[i - 1] === 1) { run++; maxConsec = Math.max(maxConsec, run); }
     else run = 1;
   }
-  if (maxConsec > 3) return null;
+  if (maxConsec > 3) hardPenalty += 20;
   const iv = [0, 0, 0]; sorted.forEach((n) => iv[getSampleIntervalIndex(n, sampleIntervals)]++);
-  if (iv[0] >= 5 || iv[2] >= 5) return null;
+  if (iv[0] >= 5 || iv[2] >= 5) hardPenalty += 25;
 
   const baseScore = selectedEntries.reduce((a, b) => a + b.score, 0);
-  let comboBonus = 0;
+  let comboBonus = -hardPenalty;
 
   // === 🆕 动态区间比-和值约束（基于119期历史数据P10-P90范围） ===
   const ivKey = iv.join(":");
@@ -4544,11 +4545,11 @@ function v4ScoreCombo(sorted, selectedEntries, anchors, sourceNums, refs, predic
   };
   const sumRange = ivSumRanges[ivKey];
   if (sumRange) {
-    // 硬过滤：超出理论极限的组合直接淘汰
-    const hardMargin = 20;
-    if (s < sumRange.lo - hardMargin || s > sumRange.hi + hardMargin) return null;
-    // 软惩罚：偏离P10-P90范围越多，惩罚越重
-    if (s < sumRange.lo) {
+    // 软惩罚：超出范围越多，惩罚越重（不再硬过滤）
+    if (s < sumRange.lo - 20 || s > sumRange.hi + 20) {
+      const deviation = s < sumRange.lo - 20 ? (sumRange.lo - 20 - s) : (s - sumRange.hi - 20);
+      comboBonus -= Math.min(deviation * 2.0, 40);
+    } else if (s < sumRange.lo) {
       const deviation = sumRange.lo - s;
       comboBonus -= Math.min(deviation * 1.5, 25);
     } else if (s > sumRange.hi) {
@@ -4576,23 +4577,26 @@ function v4ScoreCombo(sorted, selectedEntries, anchors, sourceNums, refs, predic
   const ratioIndex = commonRatios.indexOf(ivKey);
   if (ratioIndex >= 0) comboBonus += ratioIndex < 3 ? 8 : 4;
 
-  // 🆕 S13: 预测区间比匹配加分（关键缺失项！直接影响命中率）
-  // 注意：预测准确率约20%，使用保守权重避免预测错误时误导
+  // 手动选区间比时加分（用户明确选择，可信度高）；自动预测准确率低不加分
   let hasIvMatch = false;
-  if (ivPrediction && ivPrediction.predictedIv) {
-    const predIv = ivPrediction.predictedIv;
-    const ivDist = getIntervalRatioDistance(iv, predIv);
-    if (ivDist === 0) {
-      comboBonus += 12;  // 精确匹配预测区间比
+  if (manualRatio && manualRatio.length > 0) {
+    const manualKeys = new Set(manualRatio.map(r => Array.isArray(r) ? r.join(":") : ""));
+    if (manualKeys.has(iv.join(":"))) {
+      comboBonus += 12;
       hasIvMatch = true;
-    } else if (ivDist === 1) {
-      comboBonus += 6;   // 接近预测区间比
-      hasIvMatch = true;
+    } else {
+      // 检查偏差1的情况
+      for (const mr of manualRatio) {
+        if (Array.isArray(mr) && getIntervalRatioDistance(iv, mr) === 1) {
+          comboBonus += 6;
+          hasIvMatch = true;
+          break;
+        }
+      }
     }
-    // 距离>1不加分（预测准确率有限，避免过度约束）
   }
 
-  // 🆕 多信号协同加分（组合级别：区间匹配+尾号匹配+等距关系同时满足）
+  // 多信号协同加分（组合级别：尾号匹配+等距关系同时满足）
   // 命中3+模式分析：100%命中3+期次同时具备这三个特征
   {
     // 检查尾号匹配：组合尾号与源/预测尾号重叠≥2
@@ -4613,11 +4617,11 @@ function v4ScoreCombo(sorted, selectedEntries, anchors, sourceNums, refs, predic
       if (hasArithPairs) break;
     }
     
-    // 三重协同：区间匹配+尾号匹配+等距关系
+    // 三重协同：区间匹配+尾号匹配+等距关系（仅手动选区间比时）
     if (hasIvMatch && hasTailMatch && hasArithPairs) {
       comboBonus += 8;
     }
-    // 双重协同：区间匹配+尾号匹配
+    // 双重协同：区间匹配+尾号匹配（仅手动选区间比时）
     else if (hasIvMatch && hasTailMatch) {
       comboBonus += 5;
     }
@@ -4894,51 +4898,19 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
   }
 
   const sourceIvKey = sourceIv.join(":");
-  const transitions = new Map();
-  // 优化：窗口 60→70，利用更多区间转移样本
-  const windowSize = Math.min(70, draws.length);
-
-  // ① 收集同源区间比特定转移 + 全局平均转移距离
-  let specificCount = 0;
-  let globalDistSum = 0, globalDistCount = 0;
-  for (let i = 0; i < draws.length - 1; i++) {
-    const sIv = intervalRatio(draws[i]);
-    const tIv = intervalRatio(draws[i + 1]);
-    globalDistSum += getIntervalRatioDistance(sIv, tIv);
-    globalDistCount++;
-    const sKey = sIv.join(":");
-    if (sKey !== sourceIvKey) continue;
-    specificCount++;
-    const tKey = tIv.join(":");
-    const recency = 1 + (i - Math.max(0, draws.length - 2 - windowSize)) / windowSize * 2;
-    const entry = transitions.get(tKey) || { count: 0, weight: 0 };
-    entry.count++;
-    entry.weight += recency;
-    transitions.set(tKey, entry);
-  }
-
-  const globalAvgDist = globalDistCount > 0 ? globalDistSum / globalDistCount : 3.0;
-  const minSpecific = 4;
-  const blendWeight = Math.min(1, specificCount / minSpecific);
-
-  const maxWeight = Math.max(1, ...[...transitions.values()].map((d) => d.weight));
-  const sorted = [...transitions.entries()]
-    .map(([ivKey, data]) => ({
-      iv: ivKey.split(":").map(Number),
-      ivKey,
-      score: data.count * 0.7 + (data.weight / maxWeight) * 30,
-      count: data.count,
-      weight: data.weight
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  if (sorted.length === 0) {
-    const neutralDist = Math.round(globalAvgDist);
-    return { predictedIv: sourceIv, predictedIvKey: sourceIvKey, distance: neutralDist, confidence: 0, topCandidates: [{ iv: sourceIv, score: 1 }], globalAvgDist };
-  }
-
-  // 🆕 规律增强：区间变化模式检测
+  const zoneNames = ["I区", "II区", "III区"];
+  // 所有合法区间比（回测验证: 规律增强only 17.9% > 转移表+规律 13.4%）
+  const ALL_IVS = [];
+  for (let a = 0; a <= 5; a++)
+    for (let b = 0; b <= 5 - a; b++)
+      ALL_IVS.push([a, b, 5 - a - b]);
+  const sorted = new Map();
+  for (const iv of ALL_IVS) sorted.set(iv.join(":"), 0);
+  const globalAvgDist = 3.0;
+  const blendWeight = 1;
+    // 规律增强：区间变化模式检测（回测验证: 17.9% > 转移表13.4%）
   const patternBoost = new Map(); // 区间比 -> 额外加分
+  const triggeredRules = []; // 记录触发的规律
   
   if (draws.length >= 3) {
     const recentIvs = [];
@@ -4961,6 +4933,7 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
       const currentKey = sourceIv.join(":");
       const boost = patternBoost.get(currentKey) || 0;
       patternBoost.set(currentKey, boost + sameCount * 3);
+      triggeredRules.push({ rule: '区间不变', detail: `连续${sameCount + 1}期相同区间比，倾向延续`, score: sameCount * 3 });
     }
     
     // 规律2: 极值后回归（概率78-100%）
@@ -4972,6 +4945,7 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
         const key = predicted.join(":");
         const boost = patternBoost.get(key) || 0;
         patternBoost.set(key, boost + 8); // 高置信度
+        triggeredRules.push({ rule: '极值回归', detail: `${zoneNames[zone]}=0(空区)，预期回填+1~2`, score: 8, targetIv: key });
         
         // 也考虑+1的情况
         const predicted2 = [...sourceIv];
@@ -4987,6 +4961,7 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
         const key = predicted.join(":");
         const boost = patternBoost.get(key) || 0;
         patternBoost.set(key, boost + 8);
+        triggeredRules.push({ rule: '极值回归', detail: `${zoneNames[zone]}=${sourceIv[zone]}(过满)，预期回落-1~2`, score: 8, targetIv: key });
         
         const predicted2 = [...sourceIv];
         predicted2[zone] = Math.max(0, predicted2[zone] - 1);
@@ -5013,6 +4988,7 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
           const key = predicted.join(":");
           const boost = patternBoost.get(key) || 0;
           patternBoost.set(key, boost + 4); // 中等置信度
+          triggeredRules.push({ rule: '同向反转', detail: `${zoneNames[zone]}连续2期增，预期减1`, score: 4, targetIv: key });
         }
         // 连续2期减小后，预期增大
         if (diff1 < 0 && diff2 < 0) {
@@ -5021,38 +4997,105 @@ function predictTargetIntervalRatio(sourceRow, sourceIv, boardBalls, _bbr) {
           const key = predicted.join(":");
           const boost = patternBoost.get(key) || 0;
           patternBoost.set(key, boost + 4);
+          triggeredRules.push({ rule: '同向反转', detail: `${zoneNames[zone]}连续2期减，预期增1`, score: 4, targetIv: key });
         }
       }
     }
   }
   
-  // 应用规律加分到候选
-  const enhanced = sorted.map(candidate => {
-    const patternBonus = patternBoost.get(candidate.ivKey) || 0;
-    return {
-      ...candidate,
-      score: candidate.score + patternBonus,
-      patternBonus
-    };
-  }).sort((a, b) => b.score - a.score);
+  // 将规律加分合并到sorted
+  for (const [k, s] of patternBoost) {
+    if (sorted.has(k)) sorted.set(k, sorted.get(k) + s);
+  }
 
-  const topCandidates = enhanced.slice(0, 3);
-  const rawDistance = getIntervalRatioDistance(sourceIv, topCandidates[0].iv);
-  const totalScore = topCandidates.reduce((s, c) => s + c.score, 0);
-  const rawConfidence = topCandidates[0].score / Math.max(0.1, totalScore);
+  // 找最高分候选
+  let bestIv = sourceIv, bestScore = -1;
+  for (const [k, s] of sorted) {
+    if (s > bestScore) { bestScore = s; bestIv = k.split(":").map(Number); }
+  }
 
-  // ② 与全局均值融合：防止小样本过拟合
-  const blendedDistance = Math.round(rawDistance * blendWeight + globalAvgDist * (1 - blendWeight));
-  const confidence = rawConfidence * blendWeight;
+  // 计算历史最常见比例（提前算，多处用到）
+  const freqIv = new Map();
+  for (const d of draws) {
+    const k = intervalRatio(d).join(":");
+    freqIv.set(k, (freqIv.get(k) || 0) + 1);
+  }
+  let mostCommonIv = sourceIv;
+  if (freqIv.size > 0) {
+    let bestCnt = 0;
+    for (const [k, cnt] of freqIv) {
+      if (cnt > bestCnt) { bestCnt = cnt; mostCommonIv = k.split(":").map(Number); }
+    }
+  }
 
-  return { 
-    predictedIv: topCandidates[0].iv, 
-    predictedIvKey: topCandidates[0].ivKey, 
-    distance: blendedDistance, 
-    confidence, 
-    topCandidates: topCandidates.slice(0, 5), // 返回更多候选供参考
+  // 无规律触发时，回退到历史最常见比例
+  if (bestScore <= 0 && triggeredRules.length === 0) {
+    bestIv = mostCommonIv;
+  }
+
+  // 构建topCandidates（按分数排序取前5）
+  let topCandidates = [...sorted.entries()]
+    .filter(([, s]) => s > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([k, s]) => ({ iv: k.split(":").map(Number), ivKey: k, score: s }));
+
+  // 不足5个时用最常见比例补
+  if (topCandidates.length < 5 && freqIv.size > 0) {
+    const fallback = [...freqIv.entries()].sort((a, b) => b[1] - a[1]);
+    const existing = new Set(topCandidates.map(c2 => c2.ivKey));
+    for (const [k] of fallback) {
+      if (topCandidates.length >= 5) break;
+      if (!existing.has(k)) {
+        topCandidates.push({ iv: k.split(":").map(Number), ivKey: k, score: 0 });
+      }
+    }
+  }
+  // 如果还是不足5个，用常见区间比补
+  if (topCandidates.length < 5) {
+    const commonRatios = [[2,2,1], [2,1,2], [1,2,2], [3,1,1], [1,3,1], [1,1,3]];
+    const existing = new Set(topCandidates.map(c2 => c2.ivKey));
+    for (const r of commonRatios) {
+      if (topCandidates.length >= 5) break;
+      const k = r.join(":");
+      if (!existing.has(k)) topCandidates.push({ iv: r, ivKey: k, score: 0 });
+    }
+  }
+
+  // 确保predictedIv是topCandidates的第一个
+  const bestIdx = topCandidates.findIndex(c => c.ivKey === bestIv.join(":"));
+  if (bestIdx > 0) {
+    [topCandidates[0], topCandidates[bestIdx]] = [topCandidates[bestIdx], topCandidates[0]];
+  } else if (bestIdx < 0) {
+    topCandidates.unshift({ iv: bestIv, ivKey: bestIv.join(":"), score: bestScore });
+  }
+
+  const distance = getIntervalRatioDistance(sourceIv, bestIv);
+  const confidence = bestScore > 0 ? Math.min(1, bestScore / 20) : 0;
+
+  // 预测区间比对应的和值范围
+  const ivSumRanges = {
+    "0:1:4": [125,155], "0:2:3": [110,135], "0:3:2": [95,130], "0:4:1": [85,125],
+    "1:0:4": [100,140], "2:0:3": [85,125], "3:0:2": [60,100], "4:0:1": [35,77],
+    "1:1:3": [95,135], "1:2:2": [82,118], "1:3:1": [75,112], "2:1:2": [78,112],
+    "2:2:1": [58,97], "3:1:1": [52,78], "1:4:0": [59,90], "2:3:0": [48,80],
+    "3:2:0": [38,76], "4:1:0": [35,63],
+  };
+  const predSumRange = ivSumRanges[bestIv.join(":")] || null;
+  // 判断是否回退到最常见比例
+  const isFallback = bestScore <= 0;
+
+  return {
+    predictedIv: bestIv,
+    predictedIvKey: bestIv.join(":"),
+    distance,
+    confidence,
+    topCandidates: topCandidates.length > 0 ? topCandidates : [{ iv: bestIv, score: 1 }],
     globalAvgDist,
-    patternBoost: Object.fromEntries(patternBoost) // 返回规律加分信息
+    triggeredRules,
+    sumRange: predSumRange,
+    isFallback,
+    sourceIv,
   };
 }
 
@@ -6026,6 +6069,89 @@ const ABLATION_CONFIG = {
   disable_gapFill: true,            // ⚠️ 禁用间隔填充模式（回测发现与现有规则重叠，反而降低指标）
 };
 
+// ═══ P0: predict_unified.py的front_predict逻辑移植（99%召回率）═══
+// 核心信号: 等差延伸(d=1~4) + 跨期转移表TOP3 + 全局频率校正 + 重复加成
+// 候选池固定全10尾号(避免漏号), 回测验证: 召回率99%, prec@5=4.31
+function frontPredictUnified(prevTailsRaw, transData, allBalls, sourceRow, _bbr) {
+  const inner = {};
+  prevTailsRaw.forEach(t => { inner[t] = (inner[t] || 0) + 1; });
+  const multi = new Set(Object.entries(inner).filter(([, c]) => c >= 2).map(([t]) => parseInt(t)));
+  const T = new Set(prevTailsRaw);
+  const size = T.size;
+  const vote = {};
+  for (let t = 0; t <= 9; t++) vote[t] = 0;
+  const ts = [...T].sort((a, b) => a - b);
+
+  // 等差延伸: d=1~4, 邻号+1.0, 延伸点本身+0.5
+  for (let ii = 0; ii < ts.length; ii++) {
+    for (let jj = ii + 1; jj < ts.length; jj++) {
+      const x = ts[ii], y = ts[jj], d = Math.abs(x - y);
+      if (d >= 1 && d <= 4) {
+        for (const ep of [Math.max(x, y) + d, Math.min(x, y) - d]) {
+          if (ep >= 0 && ep <= 9) {
+            for (const nb of [ep - 1, ep + 1]) {
+              if (nb >= 0 && nb <= 9) vote[nb] += 1.0;
+            }
+            vote[ep] += 0.5;
+          }
+        }
+      }
+    }
+  }
+
+  // 跨期转移表TOP3加成
+  if (transData && transData.transFreq) {
+    for (const t of T) {
+      let tot = 0;
+      for (let tt = 0; tt <= 9; tt++) tot += (transData.transFreq.get(`${t}->${tt}`) || 0);
+      tot = Math.max(1, tot);
+      const topTargets = [];
+      for (let tt = 0; tt <= 9; tt++) {
+        topTargets.push([tt, transData.transFreq.get(`${t}->${tt}`) || 0]);
+      }
+      topTargets.sort((a, b) => b[1] - a[1]);
+      for (let i = 0; i < Math.min(3, topTargets.length); i++) {
+        const [tt, cnt] = topTargets[i];
+        vote[tt] += (cnt / tot) * 3.0;
+      }
+    }
+  }
+
+  // 全局尾号出现频率(去重, ~185期统计)
+  const TAIL_OCCUR_FREQ = {0:37.8, 1:48.8, 2:51.7, 3:52.2, 4:47.8,
+                           5:46.9, 6:38.8, 7:31.6, 8:39.7, 9:43.1};
+  const TAIL_OCCUR_BASELINE = 46.5;
+  const TAIL_OCCUR_MIN = 31.6;
+
+  const score = {};
+  for (let t = 0; t <= 9; t++) {
+    let sc = vote[t] * 10.0;
+    // 重复加成
+    if (T.has(t)) {
+      if (size < 5) {
+        if (multi.has(t)) sc += 70.0;
+        else sc += 45.0;
+      } else {
+        sc += 60.0;
+      }
+    }
+    // 全局频率校正: 低频尾号补偿(最高+15)
+    const freqDev = TAIL_OCCUR_BASELINE - TAIL_OCCUR_FREQ[t];
+    if (freqDev > 0) {
+      const maxDev = TAIL_OCCUR_BASELINE - TAIL_OCCUR_MIN;
+      sc += (freqDev / maxDev) * 15.0;
+    }
+    // 热号
+    if (t === 2 || t === 3) sc += 25.0;
+    // 常见新尾号
+    if ((t === 5 || t === 6) && !T.has(t)) sc += 20.0;
+    score[t] = sc;
+  }
+
+  const ranked = [...Array(10).keys()].sort((a, b) => score[b] - score[a]);
+  return ranked.map(t => [t, score[t]]);
+}
+
 function predictLikelyTailsV4Enhanced(sourceTails, transData, refRows, sourceRow, allBalls = null, _bbr) {
   // 🆕 优化权重（基于回测效果最好配置）
   const weights = {
@@ -6318,7 +6444,7 @@ function predictLikelyTailsV4Enhanced(sourceTails, transData, refRows, sourceRow
     scores.set(tail, scores.get(tail) + frequencyBonus);
   });
 
-  // 🆕 增强版尾号多样性保障机制（解决预测偏向奇数的问题）
+  // 🆕 尾号奇偶平衡软约束（不再强制篡改分数，仅极端不平衡时轻微微调）
   const sortedScores = [...scores.entries()].sort((a, b) => b[1] - a[1]);
   let top5Tails = sortedScores.slice(0, 5).map(([tail]) => tail);
   const evenTails = [0, 2, 4, 6, 8];
@@ -6327,59 +6453,19 @@ function predictLikelyTailsV4Enhanced(sourceTails, transData, refRows, sourceRow
   let evenCount = top5Tails.filter(t => evenTails.includes(t)).length;
   let oddCount = top5Tails.filter(t => oddTails.includes(t)).length;
   
-  const MIN_EVEN_IN_TOP5 = 2;
-  const MIN_ODD_IN_TOP5 = 2;
-  
-  // 如果奇数尾号过多（>3个），则提升偶数尾号的分数
-  while (oddCount > 3 || evenCount < MIN_EVEN_IN_TOP5) {
-    const lowestOddTail = top5Tails.filter(t => oddTails.includes(t)).reduce((lowest, tail) => {
-      return scores.get(tail) < scores.get(lowest) ? tail : lowest;
-    });
-    
+  // 仅当全奇或全偶（极端不平衡）时，给缺失类型最高分尾号+5微调
+  if (oddCount === 5) {
     const candidateEvenTails = evenTails.filter(t => !top5Tails.includes(t));
     if (candidateEvenTails.length > 0) {
-      const bestEvenTail = candidateEvenTails.reduce((best, tail) => {
-        return scores.get(tail) > scores.get(best) ? tail : best;
-      });
-      
-      const boostAmount = scores.get(lowestOddTail) - scores.get(bestEvenTail) + 10;
-      if (boostAmount > 0) {
-        scores.set(bestEvenTail, scores.get(bestEvenTail) + boostAmount);
-      }
+      const bestEvenTail = candidateEvenTails.reduce((best, tail) => scores.get(tail) > scores.get(best) ? tail : best);
+      scores.set(bestEvenTail, scores.get(bestEvenTail) + 5);
     }
-    
-    const newSortedScores = [...scores.entries()].sort((a, b) => b[1] - a[1]);
-    top5Tails = newSortedScores.slice(0, 5).map(([tail]) => tail);
-    evenCount = top5Tails.filter(t => evenTails.includes(t)).length;
-    oddCount = top5Tails.filter(t => oddTails.includes(t)).length;
-    
-    if (oddCount <= 3) break;
-  }
-  
-  // 如果偶数尾号过多（>3个），则提升奇数尾号的分数
-  while (evenCount > 3 || oddCount < MIN_ODD_IN_TOP5) {
-    const lowestEvenTail = top5Tails.filter(t => evenTails.includes(t)).reduce((lowest, tail) => {
-      return scores.get(tail) < scores.get(lowest) ? tail : lowest;
-    });
-    
+  } else if (evenCount === 5) {
     const candidateOddTails = oddTails.filter(t => !top5Tails.includes(t));
     if (candidateOddTails.length > 0) {
-      const bestOddTail = candidateOddTails.reduce((best, tail) => {
-        return scores.get(tail) > scores.get(best) ? tail : best;
-      });
-      
-      const boostAmount = scores.get(lowestEvenTail) - scores.get(bestOddTail) + 10;
-      if (boostAmount > 0) {
-        scores.set(bestOddTail, scores.get(bestOddTail) + boostAmount);
-      }
+      const bestOddTail = candidateOddTails.reduce((best, tail) => scores.get(tail) > scores.get(best) ? tail : best);
+      scores.set(bestOddTail, scores.get(bestOddTail) + 5);
     }
-    
-    const newSortedScores = [...scores.entries()].sort((a, b) => b[1] - a[1]);
-    top5Tails = newSortedScores.slice(0, 5).map(([tail]) => tail);
-    evenCount = top5Tails.filter(t => evenTails.includes(t)).length;
-    oddCount = top5Tails.filter(t => oddTails.includes(t)).length;
-    
-    if (evenCount <= 3) break;
   }
 
   // 🆕 组合优化：从 top8 尾号中选择最符合历史规律的 5 个组合
@@ -7450,7 +7536,7 @@ const V4_HISTORY_FREQ_WEIGHT = 0.15;
 const V4_RECENT_FREQ_WEIGHT = 0.10;
 const V4_REPEAT_RATE_WEIGHT = 0.05;
 
-const V4_POOL_SIZE = 30; // 最优池大小30：Top5=34.4%，联合=64.3%，池=88.8%，三区=72.4%
+const V4_POOL_SIZE = 35; // 扩大到35：全覆盖，消除池截断导致的漏号
 function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
   zone = zone || "front";
   const sourceColor = sampleRedColor;
@@ -7496,6 +7582,10 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
   // 优化：lookback 70→30，共享ballsByRow
   const tailTransData = analyzeTailTransitionsV4(sourceRow, 30, allBalls, _sharedBbrAll);
   const predictedTails = predictLikelyTailsV4Enhanced(sourceTails, tailTransData, refRows, sourceRow, allBalls, _sharedBbrAll);
+
+  // P0: 用predict_unified的front_predict逻辑计算高召回率尾号得分（99%召回率）
+  // 用于候选池评分，替代低召回率的predictLikelyTailsV4Enhanced输出
+  const predictedTailsForPool = frontPredictUnified(sourceTails, tailTransData, allBalls, sourceRow, _sharedBbrAll);
 
   // 🆕 首位球综合动态预测（融合5种回测规律：±3范围、±1相邻、+9期、等差延伸、尾号转移）
   const firstBallPredictions = predictFirstBallComprehensive(sourceRow, allBalls, _sharedBbrAll);
@@ -7592,18 +7682,17 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
     score += V4_OFFSET_SCORE[minOffset] || 0;
     if (minOffset <= 2) signals.push('close_offset');
 
-    // 尾号关联（优先级：predictedTails匹配 > 邻号 > sourceTails）
+    // 尾号关联（使用PU高召回率尾号预测，99%召回率 vs 原版50.9%）
     const t = n % 10;
-    if (predictedTails && predictedTails.length > 0) {
-      const topTails = new Set(predictedTails.slice(0, 5).map(([tt]) => tt));
+    if (predictedTailsForPool && predictedTailsForPool.length > 0) {
+      const topTails = new Set(predictedTailsForPool.slice(0, 5).map(([tt]) => tt));
       if (topTails.has(t)) {
         score += V4_TAIL_SAME;
         signals.push('tail_same');
-        // 🆕 区间稳定时尾号加成（179期数据：区间不变时尾重率0.66-0.73，显著高于变化时）
         if (isIntervalStable) score += 10;
       }
-      else if (predictedTails.some(([tt]) => Math.abs(t - tt) === 1)) score += V4_TAIL_NEIGHBOR;
-      else if (sourceTails.includes(t)) score += V4_TAIL_WITHIN;
+      else if (predictedTailsForPool.some(([tt]) => Math.abs(t - tt) === 1)) score += V4_TAIL_NEIGHBOR + 15;  // 20->35 缩小断崖
+      else if (sourceTails.includes(t)) score += V4_TAIL_WITHIN + 25;  // 10->35 缩小断崖，源尾号重复率~47%应高分
     } else {
       if (sourceTails.includes(t)) score += V4_TAIL_WITHIN;
     }
@@ -7652,15 +7741,7 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
     });
     if (nearConsec) score += 7;
     
-    // 🆕 号码池优化：区间平衡、奇偶平衡、和值贡献
-    // 1. 区间平衡奖励：如果该区间需要补充
-    const iv = getSampleIntervalIndex(n, sampleIntervals);
-    const predictedIv = ivPrediction.predictedIv || sourceIv;
-    if (sourceIv[iv] < predictedIv[iv]) {
-      score += 3;
-      signals.push('iv_pred');
-    }
-    
+    // 号码池优化：奇偶平衡、和值贡献（区间比预测准确率低，移除区间平衡+3分）
     // 2. 奇偶平衡奖励：如果奇偶数需要调整
     if (n % 2 === 1 && sourceOdd < targetOdd) {
       score += 2;
@@ -7735,16 +7816,19 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
       if (selectedNumbers.includes(26) || selectedNumbers.includes(28)) score += 5;  // 有相邻号时加分
     }
 
-    // 方案三：区间基础分优化（反向配置，命中3+提升100%）
-    // 一区(1-12): +5分
+    // 方案三：区间基础分优化（均等化，消除三区系统性劣势）
+    // 一区(1-12): +3分
     if (n >= 1 && n <= 12) {
-      score += 5;
+      score += 3;
     }
     // 二区(13-24): +3分
     if (n >= 13 && n <= 24) {
       score += 3;
     }
-    // 三区(25-35): +0分（不加分）
+    // 三区(25-35): +3分（之前+0，导致三区号码被系统性排除）
+    if (n >= 25 && n <= 35) {
+      score += 3;
+    }
 
     // 🆕 多信号协同加分（命中3+模式分析：100%命中3+期次同时具备区间匹配+尾号匹配+等距关系）
     {
@@ -7766,7 +7850,31 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
       }
     }
 
-    candidates.push({ number: n, score, signals });
+    // === 多行关系信号放大 + 信号计数（用于动态池构建）===
+    const _ss = new Set(selectedNumbers);
+    var _sigCount = 0;
+    if (_ss.has(n)) { score += 200; _sigCount += 2; }           // 重复号 +200, 权重x2
+    if (selectedNumbers.some(function(s) { return Math.abs(s - n) === 1; })) { score += 100; _sigCount += 1; }  // 邻号 +100
+    for (var _i = 0; _i < selectedNumbers.length; _i++) {
+      for (var _j = _i + 1; _j < selectedNumbers.length; _j++) {
+        // 桥接：源行号码对的中点
+        if (Math.abs(selectedNumbers[_i] - selectedNumbers[_j]) <= 10 && Math.round((selectedNumbers[_i] + selectedNumbers[_j]) / 2) === n) { score += 50; _sigCount += 1; }
+        // 等差延伸：源行等差对的延伸点
+        var _d = selectedNumbers[_j] - selectedNumbers[_i];
+        if (_d >= 2 && _d <= 8 && (selectedNumbers[_j] + _d === n || selectedNumbers[_i] - _d === n)) { score += 40; _sigCount += 1; }
+      }
+    }
+    // 等差延伸邻号
+    for (var _i2 = 0; _i2 < selectedNumbers.length; _i2++) {
+      for (var _j2 = _i2 + 1; _j2 < selectedNumbers.length; _j2++) {
+        var _d2 = selectedNumbers[_j2] - selectedNumbers[_i2];
+        if (_d2 >= 2 && _d2 <= 8) {
+          if (Math.abs((selectedNumbers[_j2] + _d2) - n) === 1 || Math.abs((selectedNumbers[_i2] - _d2) - n) === 1) { score += 20; _sigCount += 1; }
+        }
+      }
+    }
+
+    candidates.push({ number: n, score, signals, sigCount: _sigCount });
   }
 
   // 排序 + 区间保底（每个区间至少3个）
@@ -7839,18 +7947,67 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
   const zoneCount = [0, 0, 0];
   const seen = new Set();
   
-  // 第一轮：按分数排序添加，同时检查区间保底
+  // === 动态候选池：按多行关系信号命中数分层组建 ===
+  // 按信号数降序排序
+  candidates.sort(function(a, b) { return (b.sigCount || 0) - (a.sigCount || 0) || b.score - a.score; });
+  
+  // PU尾号保底
+  const puTop5Tails = new Set();
+  if (predictedTailsForPool && predictedTailsForPool.length > 0) {
+    predictedTailsForPool.slice(0, 5).forEach(([t]) => puTop5Tails.add(t));
+  }
+  const tailCountInPool = new Map();
+  const MIN_PER_PU_TAIL = 2;
+
+  // 第零轮：PU尾号保底
+  for (const c of candidates) {
+    if (pool.length >= V4_POOL_SIZE) break;
+    const t = c.number % 10;
+    if (puTop5Tails.has(t)) {
+      const cnt = tailCountInPool.get(t) || 0;
+      if (cnt < MIN_PER_PU_TAIL) {
+        pool.push(c);
+        seen.add(c.number);
+        tailCountInPool.set(t, cnt + 1);
+        const z = getSampleIntervalIndex(c.number, sampleIntervals);
+        zoneCount[z]++;
+      }
+    }
+  }
+  
+  // 第一轮：信号≥3的号码优先入池（多行关系强命中）
+  for (const c of candidates) {
+    if (pool.length >= V4_POOL_SIZE) break;
+    if ((c.sigCount || 0) >= 3 && !seen.has(c.number)) {
+      pool.push(c);
+      seen.add(c.number);
+      const z = getSampleIntervalIndex(c.number, sampleIntervals);
+      zoneCount[z]++;
+    }
+  }
+  
+  // 第二轮：区间保底
   for (const c of candidates) {
     if (pool.length >= V4_POOL_SIZE) break;
     const z = getSampleIntervalIndex(c.number, sampleIntervals);
-    if (zoneCount[z] < minIv[z]) {
+    if (zoneCount[z] < minIv[z] && !seen.has(c.number)) {
       pool.push(c);
       zoneCount[z]++;
       seen.add(c.number);
     }
   }
   
-  // 第二轮：填充剩余位置
+  // 第三轮：信号≥2的号码补充
+  for (const c of candidates) {
+    if (pool.length >= V4_POOL_SIZE) break;
+    if ((c.sigCount || 0) >= 2 && !seen.has(c.number)) {
+      pool.push(c);
+      seen.add(c.number);
+    }
+  }
+  
+  // 第四轮：按评分填充剩余位置
+  candidates.sort(function(a, b) { return b.score - a.score; });
   for (const c of candidates) {
     if (pool.length >= V4_POOL_SIZE) break;
     if (!seen.has(c.number)) {
@@ -7859,6 +8016,7 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
     }
   }
   
+  // 最终按评分排序
   pool.sort((a, b) => b.score - a.score);
   const finalPool = pool.slice(0, V4_POOL_SIZE);
 
@@ -7879,7 +8037,8 @@ function buildSampleNumbersV4(selectedRow, zone, ratios, _preCollected) {
     candidates: candidateEntries.map((e) => e.number),
     candidateEntries,
     numbers: candidateEntries.slice(0, 5).map((e) => e.number),
-    predictedTails, // 🆕 尾号预测结果（供v4.1组合评分使用）
+    predictedTails, // 尾号预测结果（供展示用）
+    predictedTailsForPool, // P0: PU高召回率尾号预测（供组合评分用）
     ivPrediction,  // 🆕 v5: 区间比预测（供组合评分IV微调使用）
     extremeFlags,  // 🆕 极端期检测标志（供组合评分使用）
     firstBallPredictions, // 🆕 首位球预测（供下游复用，避免重复计算）
@@ -7952,7 +8111,7 @@ function buildSampleFrontCombosV4(entries, refs, anchorNumbers, selectedNumbers,
         const key = nums.join("-");
         if (seenLocal.has(key) || seenGlobal.has(key)) return;
         seenLocal.add(key);
-        const result = v4ScoreCombo(nums, entriesChosen, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags);
+        const result = v4ScoreCombo(nums, entriesChosen, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags, manualRatio);
         if (result) { result.key = key; result.ratioKey = ratio.join(":"); ratioCombos.push(result); }
         return;
       }
@@ -7975,8 +8134,8 @@ function buildSampleFrontCombosV4(entries, refs, anchorNumbers, selectedNumbers,
     });
   });
 
-  // 策略2: 自由回溯 Top20 候选 C(20,5)，最多150个
-  const topCands = pool.slice(0, 20);
+  // 策略2: 自由回溯 Top30 候选 C(30,5)，最多150个
+  const topCands = pool.slice(0, 30);
   if (topCands.length >= 5) {
     const freeCombos = [];
     const maxFree = 150;  // 性能保护：最多150个自由组合
@@ -7986,7 +8145,7 @@ function buildSampleFrontCombosV4(entries, refs, anchorNumbers, selectedNumbers,
         const nums = [...chosen].sort((a, b) => a - b);
         const key = nums.join("-");
         if (seenGlobal.has(key)) return;
-        const result = v4ScoreCombo(nums, ep, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags);
+        const result = v4ScoreCombo(nums, ep, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags, manualRatio);
         if (result) { result.key = key; result.ratioKey = intervalRatio(nums).join(":"); freeCombos.push(result); }
         return;
       }
@@ -8025,7 +8184,7 @@ function buildSampleFrontCombosV4(entries, refs, anchorNumbers, selectedNumbers,
         const nums = combo.map((c) => c.number).sort((a, b) => a - b);
         const key = nums.join("-");
         if (!seenKeys.has(key)) {
-          const result = v4ScoreCombo(nums, combo, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags);
+          const result = v4ScoreCombo(nums, combo, selectedNumbers, selectedNumbers, refs, predictTails, ivPrediction, firstBallPredictions, extremeFlags, manualRatio);
           if (result) { result.key = key; result.ratioKey = intervalRatio(nums).join(":"); seenKeys.add(key); unique.push(result); }
         }
       }
@@ -8058,7 +8217,7 @@ function buildSampleFrontCombosV4(entries, refs, anchorNumbers, selectedNumbers,
 
 // --- V5 组合生成工具（维度内独立选号） ---
 function v5GenCombos(dimPool, count, maxPool) {
-  maxPool = maxPool || 13;
+  maxPool = maxPool || 15;
   const topN = [...dimPool].sort((a, b) => b.score - a.score).slice(0, maxPool);
   const combos = [], seenKeys = new Set();
   const loopLimit = count * 20;
@@ -8070,24 +8229,29 @@ function v5GenCombos(dimPool, count, maxPool) {
             const nums = [topN[a].number, topN[b].number, topN[c].number, topN[d].number, topN[e].number].sort((x, y) => x - y);
             if (new Set(nums).size !== 5) continue;
             const sp = nums[4] - nums[0], odd = nums.filter(function (v) { return v % 2 === 1; }).length;
-            if (odd === 0 || odd === 5 || sp < 14 || sp > 32) continue;
+            var penalty = 0;
+            if (odd === 0 || odd === 5) penalty += 30;
+            if (sp < 14) penalty += 22;
+            if (sp > 32) penalty += 15;
             var ivX = [0, 0, 0]; nums.forEach(function (v) { ivX[getSampleIntervalIndex(v, sampleIntervals)]++; });
-            if (Math.max.apply(Math, ivX) >= 4) continue;
+            if (Math.max.apply(Math, ivX) >= 4) penalty += 20;
             var run = 1, mc = 1;
             for (var i = 1; i < nums.length; i++) { if (nums[i] - nums[i - 1] === 1) { run++; mc = Math.max(mc, run); } else run = 1; }
-            if (mc > 3) continue;
-            // 🆕 密集度控制：间距≤2的相邻对≤2个，间距≤1的≤1个
+            if (mc > 3) penalty += 20;
+            // 🆕 密集度控制（改为软惩罚）
             var dense2 = 0, dense1 = 0;
             for (var gi = 1; gi < nums.length; gi++) {
               var gap = nums[gi] - nums[gi - 1];
               if (gap <= 2) dense2++;
               if (gap <= 1) dense1++;
             }
-            if (dense2 > 2 || dense1 > 1) continue;
+            if (dense2 > 2) penalty += 12;
+            if (dense1 > 1) penalty += 8;
             var key = nums.join("-");
             if (seenKeys.has(key)) continue;
             seenKeys.add(key);
             var score = nums.reduce(function (s, n) { var c = topN.find(function (x) { return x.number === n; }); return s + (c ? c.score : 0); }, 0);
+            score -= penalty;
             combos.push({ key: key, numbers: nums, score: score });
           }
         }
@@ -8265,7 +8429,7 @@ function predictIntervalDirection(sourceRow, allBalls) {
   return predictions;
 }
 
-function v5RescoreCombos(combos, srcNums, predictTails, ivPrediction, firstBallPredictions, intervalDirectionPreds) {
+function v5RescoreCombos(combos, srcNums, predictTails, ivPrediction, firstBallPredictions, intervalDirectionPreds, manualRatio) {
   var srcSet = new Set(srcNums);
   var sumRanges = {
     "0:1:4": { lo: 125, hi: 155 }, "0:2:3": { lo: 110, hi: 135 }, "0:3:2": { lo: 95, hi: 130 }, "0:4:1": { lo: 85, hi: 125 },
@@ -8301,12 +8465,20 @@ function v5RescoreCombos(combos, srcNums, predictTails, ivPrediction, firstBallP
     var ratioIndex = commonRatios.indexOf(ivKey);
     if (ratioIndex >= 0) bonus += ratioIndex < 3 ? 8 : 4;
 
-    // === 预测区间比匹配 S13 ===
-    if (ivPrediction && ivPrediction.predictedIv) {
-      var predIv = ivPrediction.predictedIv;
-      var ivDist = Math.abs(iv[0] - predIv[0]) + Math.abs(iv[1] - predIv[1]) + Math.abs(iv[2] - predIv[2]) / 2;
-      if (ivDist === 0) bonus += 12;
-      else if (ivDist <= 1) bonus += 6;
+    // 手动选区间比时加分（用户明确选择可信度高）；自动预测准确率低不加分
+    if (manualRatio && manualRatio.length > 0) {
+      var manualKeys = {};
+      manualRatio.forEach(function(mr) { if (Array.isArray(mr)) manualKeys[mr.join(":")] = true; });
+      if (manualKeys[ivKey]) {
+        bonus += 12;
+      } else {
+        for (var mi = 0; mi < manualRatio.length; mi++) {
+          if (Array.isArray(manualRatio[mi]) && Math.abs(iv[0]-manualRatio[mi][0]) + Math.abs(iv[1]-manualRatio[mi][1]) + Math.abs(iv[2]-manualRatio[mi][2]) === 1) {
+            bonus += 6;
+            break;
+          }
+        }
+      }
     }
 
     // === S7: 锚点变换评分 ===
@@ -8657,7 +8829,7 @@ function buildSampleFrontCombosV5(entries, refs, anchorNumbers, selectedNumbers,
   // ========== 组合级智能评分（全约束：区间比/和值/奇偶/跨度/尾号/首位球/锚点）==========
   // 🆕 计算区间方向预测
   var intervalDirectionPreds = predictIntervalDirection(sourceRow, allBalls);
-  var rescored = v5RescoreCombos(allCombos, src, predictTails, ivPrediction, firstBallPredictions, intervalDirectionPreds);
+  var rescored = v5RescoreCombos(allCombos, src, predictTails, ivPrediction, firstBallPredictions, intervalDirectionPreds, manualRatio);
   rescored.sort(function (a, b) { return b.score - a.score; });
 
   // ========== 跨维度去重（重叠≥3跳过，回测验证：阈值3优于4，命中率+0.2%覆盖率+0.4%）==========
@@ -10787,11 +10959,31 @@ function updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredicti
       changeAnalysisHTML += '</div>';
     }
 
+    // 规律触发信息
+    let rulesHTML = '';
+    if (ivPrediction.triggeredRules && ivPrediction.triggeredRules.length > 0) {
+      rulesHTML = '<div class="iv-rules">';
+      for (const r of ivPrediction.triggeredRules) {
+        rulesHTML += `<div class="iv-rule"><span class="iv-rule-name">${r.rule}</span><span class="iv-rule-detail">${r.detail}</span><span class="iv-rule-score">+${r.score}</span></div>`;
+      }
+      rulesHTML += '</div>';
+    } else if (ivPrediction.isFallback) {
+      rulesHTML = '<div class="iv-rules"><div class="iv-rule"><span class="iv-rule-name">回退</span><span class="iv-rule-detail">无规律触发，取历史最常见比例</span></div></div>';
+    }
+
+    // 和值范围信息
+    let sumRangeHTML = '';
+    if (ivPrediction.sumRange) {
+      sumRangeHTML = `<div class="iv-sum-range">和值范围: ${ivPrediction.sumRange[0]}~${ivPrediction.sumRange[1]}</div>`;
+    }
+
     intervalRatioDiv.innerHTML = `
       <div class="ratios-container">
         ${ratiosHTML}
       </div>
       <span class="prediction-value">源: ${sourceRatio} -> 预: ${predIv.join(":")}</span>
+      ${sumRangeHTML}
+      ${rulesHTML}
       ${changeAnalysisHTML}
     `;
   } else {
@@ -12494,7 +12686,7 @@ sampleButton.addEventListener("click", () => {
     } else {
       // 单源或非V4：从合并池生成组合
       frontCombos = isV4
-        ? buildSampleFrontCombosV5(frontSample.candidateEntries, v4Refs, frontSample.selectedNumbers, frontSample.selectedNumbers, frontSample.predictedTails || null, frontSample.ivPrediction || null, firstBallPreds, frontSample.extremeFlags || null, ratioPlan, sourceStartRow, _v4AllBalls)
+        ? buildSampleFrontCombosV5(frontSample.candidateEntries, v4Refs, frontSample.selectedNumbers, frontSample.selectedNumbers, frontSample.predictedTailsForPool || frontSample.predictedTails || null, frontSample.ivPrediction || null, firstBallPreds, frontSample.extremeFlags || null, ratioPlan, sourceStartRow, _v4AllBalls)
         : buildSampleFrontCombos(frontSample.candidateEntries, ratioPlan, samplePickCount, sampleIntervals, frontSample.ratioSupportMap, frontSample.referenceRows, frontRepeatTarget, frontSample.selectedNumbers, frontSample.selectedNumbers);
     }
     backCombos = buildSampleFreeCombos(backSample.candidateEntries, sampleBackPickCount, backRepeatTarget, backSample.selectedNumbers);
@@ -12727,7 +12919,8 @@ refreshPredictionButton?.addEventListener("click", () => {
     const predictedTails = predictLikelyTailsV4Enhanced(sourceTails, tailTransData, refRows, fallbackRow, allBalls, _bbr);
     const firstBallPredictions = predictFirstBallComprehensive(fallbackRow, allBalls, _bbr);
     const sourceIv = intervalRatio(fallbackNumbers);
-    const ivPrediction = predictTargetIntervalRatio(fallbackRow, sourceIv, allBalls, _bbr);
+    const predSourceIv = getTargetPrevIntervalRatio(fallbackRow, sourceIv, allBalls, 10);
+    const ivPrediction = predictTargetIntervalRatio(fallbackRow + 9, predSourceIv, allBalls, _bbr);
     
     updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredictions, fallbackRow, fallbackNumbers, allBalls);
     return;
@@ -12741,7 +12934,8 @@ refreshPredictionButton?.addEventListener("click", () => {
   const predictedTails = predictLikelyTailsV4Enhanced(sourceTails, tailTransData, refRows, sourceRow, allBalls, _bbr);
   const firstBallPredictions = predictFirstBallComprehensive(sourceRow, allBalls, _bbr);
   const sourceIv = intervalRatio(selectedNumbers);
-  const ivPrediction = predictTargetIntervalRatio(sourceRow, sourceIv, allBalls, _bbr);
+  const predSourceIv = getTargetPrevIntervalRatio(sourceRow, sourceIv, allBalls, 10);
+  const ivPrediction = predictTargetIntervalRatio(sourceRow + 9, predSourceIv, allBalls, _bbr);
   
   updatePredictionDisplay(predictedTails, ivPrediction, firstBallPredictions, sourceRow, selectedNumbers, allBalls);
 });
