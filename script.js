@@ -8978,8 +8978,175 @@ function generateHotColdCombosScript(allBalls, srcIdx, candidateEntries, hotCoun
   return combos.length >= 5 ? combos : null;
 }
 
+// ═══ v21: src为主+窗口信号comboRelationBonus（从optimized_picker.js同步） ═══
+// 关键发现：src关系全部>基线(15.0-15.6%)，prev关系全部<基线(13.1-13.7%)
+// 最强交集是src内部交集（src重号∩src桥接=19.2%, src等差d3∩src桥接=20.0%）
+//
+// v21权重设计（按实际命中率）：
+// - src等差d3∩src桥接g2-4: 15分 (20.0%, 1.40x) ← 最强！
+// - src等差d2∩prev重号:     14分 (23.8%, 1.67x) 但仅21样本，谨慎给分
+// - src重号∩src桥接g2-4:   12分 (19.2%, 1.35x)
+// - src邻号∩prev重号:       10分 (19.3%, 1.35x) 212样本可靠
+// - src重号:                 8分 (15.6%, 1.09x) ← 单信号最强
+// - src等差d2:               7分 (15.5%, 1.09x)
+// - src邻号:                 6分 (15.3%, 1.07x)
+// - src桥接g2-4:             5分 (15.0%, 1.05x)
+// - src+窗口重号:            3分 (低权重辅助)
+// - prev重号∩prev邻号:       1分 (15.5%, 1.08x) ← 降为最低
+// - prev单关系:              0分 (13.1-13.7%) ← 不加分
+function computeComboRelationBonusScript(allBalls, srcIdx) {
+  const bonusMap = new Map();
+  if (!allBalls || allBalls.length === 0) return bonusMap;
+
+  const src0 = srcIdx - 1;
+  if (src0 < 0 || src0 >= allBalls.length) return bonusMap;
+
+  const sourceDraw = allBalls[src0];
+  if (!sourceDraw || !sourceDraw.front) return bonusMap;
+
+  const srcNums = sourceDraw.front;
+  if (!srcNums || srcNums.length < 2) return bonusMap;
+
+  // src关系集合
+  const srcRep = new Set(srcNums);                        // src重号
+  const srcNb = new Set();                                // src邻号(±1)
+  srcNums.forEach(n => { if (n > 1) srcNb.add(n - 1); if (n < 35) srcNb.add(n + 1); });
+
+  // src等差d2延伸点
+  const srcArithD2 = new Set();
+  const sSorted = [...srcNums].sort((a, b) => a - b);
+  for (let i = 0; i < sSorted.length; i++) {
+    for (let j = i + 1; j < sSorted.length; j++) {
+      const d = sSorted[j] - sSorted[i];
+      if (d === 2) {
+        if (sSorted[i] - 2 >= 1) srcArithD2.add(sSorted[i] - 2);
+        if (sSorted[j] + 2 <= 35) srcArithD2.add(sSorted[j] + 2);
+      }
+    }
+  }
+
+  // src等差d3延伸点（最强信号源）
+  const srcArithD3 = new Set();
+  for (let i = 0; i < sSorted.length; i++) {
+    for (let j = i + 1; j < sSorted.length; j++) {
+      const d = sSorted[j] - sSorted[i];
+      if (d === 3) {
+        if (sSorted[i] - 3 >= 1) srcArithD3.add(sSorted[i] - 3);
+        if (sSorted[j] + 3 <= 35) srcArithD3.add(sSorted[j] + 3);
+      }
+    }
+  }
+
+  // src桥接g2-4: src号码间距2-4的中点
+  const srcBridge = new Set();
+  for (let i = 0; i < sSorted.length; i++) {
+    for (let j = i + 1; j < sSorted.length; j++) {
+      const dist = sSorted[j] - sSorted[i];
+      if (dist >= 2 && dist <= 4) {
+        for (let mid = sSorted[i] + 1; mid < sSorted[j]; mid++) {
+          srcBridge.add(mid);
+        }
+      }
+    }
+  }
+
+  // 前一期关系集合（权重低）
+  // allBalls新到旧: src0+1是前一期
+  let prevRep = new Set(), prevNb = new Set();
+  const frontRefIdx = src0 + 1;
+  if (frontRefIdx < allBalls.length && allBalls[frontRefIdx] && allBalls[frontRefIdx].front) {
+    const prevNums = allBalls[frontRefIdx].front;
+    prevRep = new Set(prevNums);
+    prevNums.forEach(n => { if (n > 1) prevNb.add(n - 1); if (n < 35) prevNb.add(n + 1); });
+  }
+
+  // 窗口信号（前5期, allBalls新到旧所以用src0+1~src0+5）
+  const windowNumbers = [];
+  for (let i = src0 + 1; i <= src0 + 5 && i < allBalls.length; i++) {
+    if (allBalls[i] && allBalls[i].front) {
+      windowNumbers.push(...allBalls[i].front);
+    }
+  }
+  const uniqueWindow = [...new Set(windowNumbers)];
+  
+  // 窗口重号（窗口内出现>=2次的号码）
+  const windowRep = new Set();
+  const windowCount = new Map();
+  windowNumbers.forEach(n => {
+    windowCount.set(n, (windowCount.get(n) || 0) + 1);
+    if (windowCount.get(n) >= 2) windowRep.add(n);
+  });
+  
+  // 窗口桥接（窗口内号码间距3-5的中点）
+  const windowBridge = new Set();
+  for (let i = 0; i < uniqueWindow.length; i++) {
+    for (let j = i + 1; j < uniqueWindow.length; j++) {
+      const dist = Math.abs(uniqueWindow[j] - uniqueWindow[i]);
+      if (dist >= 3 && dist <= 5) {
+        const mid = Math.round((uniqueWindow[i] + uniqueWindow[j]) / 2);
+        if (mid >= 1 && mid <= 35 && mid !== uniqueWindow[i] && mid !== uniqueWindow[j]) {
+          windowBridge.add(mid);
+        }
+      }
+    }
+  }
+  
+  // 窗口邻号
+  const windowNb = new Set();
+  uniqueWindow.forEach(n => {
+    if (n > 1) windowNb.add(n - 1);
+    if (n < 35) windowNb.add(n + 1);
+  });
+
+  for (let n = 1; n <= 35; n++) {
+    const a3 = srcArithD3.has(n);  // src等差d3
+    const a2 = srcArithD2.has(n);  // src等差d2
+    const b = srcNb.has(n);        // src邻号
+    const e = srcRep.has(n);       // src重号
+    const g = srcBridge.has(n);    // src桥接g2-4
+    const c = prevRep.has(n);      // prev重号
+    const d = prevNb.has(n);       // prev邻号
+    const wRep = windowRep.has(n); // 窗口重号
+    const wBr = windowBridge.has(n); // 窗口桥接
+    const wNb = windowNb.has(n);   // 窗口邻号
+
+    // 计算src信号（用于判断src∩窗口组合）
+    const hasSrc = e || a2 || b || g || a3;
+
+    let score = 0;
+
+    // ═══ src内部交集（最强信号） ═══
+    if (a3 && g) score = 15;            // src等差d3∩src桥接 = 20.0% (1.40x)
+    else if (a2 && c) score = 14;       // src等差d2∩prev重号 = 23.8% (1.67x)
+    else if (e && g) score = 12;        // src重号∩src桥接 = 19.2% (1.35x)
+
+    // ═══ src + prev交集 ═══
+    else if (b && c) score = 10;        // src邻号∩prev重号 = 19.3% (1.35x)
+
+    // ═══ 窗口信号（低权重，v23） ═══
+    else if (hasSrc && wRep) score = 3; // src + 窗口重号（低权重辅助）
+
+    // ═══ src单关系（全部>基线14.3%） ═══
+    else if (e) score = 8;              // src重号 = 15.6% (1.09x)
+    else if (a2) score = 7;             // src等差d2 = 15.5% (1.09x)
+    else if (b) score = 6;              // src邻号 = 15.3% (1.07x)
+    else if (g) score = 5;              // src桥接g2-4 = 15.0% (1.05x)
+
+    // ═══ prev弱信号 ═══
+    else if (c && d) score = 1;         // prev重号∩prev邻号 = 15.5% (1.08x)
+
+    // 窗口邻号/桥接不单独给分（覆盖太广：77%/66%，会稀释信号）
+
+    if (score > 0) bonusMap.set(n, score);
+  }
+
+  return bonusMap;
+}
+
 // ═══ v10: 策略多样性 - 重号偏重 ═══
 // 策略: 选中行号码占主导(4个) + 前一期号码(1个) + 桥接补全
+
+
 
 // ═══ v27: 分组锚定 + 动态窗口关系补全 + 交集检测（从optimized_picker.js移植） ═══
 function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
@@ -9020,6 +9187,19 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
   wDraws.forEach(d => d.forEach(n => wFreq[n]++));
   const gapDist = new Array(36).fill(99);
   for (let g = 0; g < wDraws.length; g++) { const d = wDraws[wDraws.length - 1 - g]; for (const n of d) { if (gapDist[n] === 99) gapDist[n] = g; } }
+  // 远窗口≤1信号
+  const farStart = src0 + 6, farEnd = src0 + 10;
+  const farFreq = new Array(36).fill(0);
+  for (let i = farStart; i <= farEnd; i++) {
+    if (i < allBalls.length && allBalls[i]) {
+      const draw = allBalls[i].front || allBalls[i];
+      draw.forEach(n => farFreq[n]++);
+    }
+  }
+  const farLeq1Set = new Set();
+  for (let n = 1; n <= 35; n++) {
+    if (farFreq[n] <= 1) farLeq1Set.add(n);
+  }
   const coOccur = {};
   for (const d of wDraws) { for (let i = 0; i < d.length; i++) { for (let j = i + 1; j < d.length; j++) { const pk = d[i] < d[j] ? d[i] + '-' + d[j] : d[j] + '-' + d[i]; coOccur[pk] = (coOccur[pk] || 0) + 1; } } }
   const wNums = wDraws.flat();
@@ -9040,7 +9220,7 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
   const winBridgeFreq = new Array(36).fill(0);
   for (let i = 0; i < wUnique.length; i++) { for (let j = i + 1; j < wUnique.length; j++) { const lo = Math.min(wUnique[i], wUnique[j]), hi = Math.max(wUnique[i], wUnique[j]); if (hi - lo >= 2 && hi - lo <= 6) { for (let b = lo + 1; b < hi; b++) winBridgeFreq[b]++; } } }
 
-  // comboRelationBonus
+  // comboRelationBonus (同步自optimized_picker.js v21权重)
   const comboRelationBonus = computeComboRelationBonusScript(allBalls, srcIdx);
 
   // src等差d2/d3
@@ -9072,8 +9252,8 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
     { anchors: srcBrAnchors.concat([...prevSet]), count: [2, 3], w: defaultW },
     { anchors: srcNbAnchors.concat([...prevSet]), count: [2, 3], w: defaultW },
     { anchors: srcNbAnchors.concat(winRepAnchors), count: [2, 3], w: defaultW },
-    { anchors: srcArithD3Anchors.concat(srcBrAnchors).concat(winRepAnchors).concat(srcAnchors), count: [2, 3], w: defaultW },
-    { anchors: nonSrcAnchors, count: [2, 3], w: nonSrcW, mixSrc: true },
+    { diversityMode: 'allPoolFreqTop5' },
+    { diversityMode: 'allPoolFreqNext5' },
   ];
 
   // PRNG
@@ -9112,24 +9292,24 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
     }
   }
 
-  // 评分函数
+  // 评分函数（强信号提权版）
   function scoreCombo(combo) {
     let score = 0, srcHit = 0;
     for (const n of combo) {
-      if (srcSet.has(n)) { score += 20; srcHit++; }
-      if (prevSet.has(n)) score += 15;
-      if (nbSet.has(n)) score += 12;
-      score += bridgeFreq[n] * 6;
+      if (srcSet.has(n)) { score += 8; srcHit++; }
+      if (prevSet.has(n)) score += 10;
+      if (nbSet.has(n)) score += 5;
+      score += bridgeFreq[n] * 3;
       score += winBridgeFreq[n] * 2;
-      score += arithFreq[n] * 8;
-      const wf = wFreq[n]; if (wf > 0) score += wf * 5;
+      score += arithFreq[n] * 5;
+      const wf = wFreq[n]; if (wf > 0) score += wf * 3;
       const gap = gapDist[n];
-      if (gap >= 2 && gap <= 4) score += 10; else if (gap === 1) score += 5; else if (gap >= 5 && gap <= 8) score += 8; else if (gap === 99 && wf === 0) score -= 3;
-      score += (poolMap.get(n) || 0) * 0.4;
+      if (gap >= 2 && gap <= 4) score += 6; else if (gap === 1) score += 3; else if (gap >= 5 && gap <= 8) score += 5; else if (gap === 99 && wf === 0) score -= 3;
+      score += (poolMap.get(n) || 0) * 0.3;
       score += (comboRelationBonus && comboRelationBonus.get(n)) || 0;
     }
-    for (let i = 0; i < combo.length; i++) { for (let j = i + 1; j < combo.length; j++) { const pk = combo[i] < combo[j] ? combo[i] + '-' + combo[j] : combo[j] + '-' + combo[i]; if (coOccur[pk]) score += coOccur[pk] * 4; } }
-    // 交集对检测
+    for (let i = 0; i < combo.length; i++) { for (let j = i + 1; j < combo.length; j++) { const pk = combo[i] < combo[j] ? combo[i] + '-' + combo[j] : combo[j] + '-' + combo[i]; if (coOccur[pk]) score += coOccur[pk] * 3; } }
+    let strongPairs = 0;
     for (let i = 0; i < combo.length; i++) { for (let j = i + 1; j < combo.length; j++) {
       const a = combo[i], b = combo[j];
       const aBr = srcBridgeG24.has(a) || srcBridgeG24.has(b);
@@ -9138,13 +9318,61 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
       const bWr = winRepSet.has(a) || winRepSet.has(b);
       const aD3 = srcArithD3.has(a) || srcArithD3.has(b);
       const bWbr = winBrSet.has(a) || winBrSet.has(b);
-      if (aBr && bPr) score += 8;
-      if (aNb && bPr) score += 6;
-      if (aNb && bWr) score += 5;
-      if (aD3 && bWbr) score += 4;
+      if (aBr && bPr) { score += 25; strongPairs++; }
+      if (aNb && bPr) { score += 18; strongPairs++; }
+      if (aNb && bWr) { score += 15; strongPairs++; }
+      if (aD3 && bWbr) { score += 12; strongPairs++; }
     } }
-    if (srcHit >= 2) score += 15;
-    if (srcHit >= 3) score += 10;
+    if (strongPairs >= 2) score = Math.floor(score * 1.3);
+    if (srcHit >= 2) score += 10;
+    if (srcHit >= 3) score += 5;
+    for (const n of combo) {
+      let nSig = (srcSet.has(n)?1:0) + (nbSet.has(n)?1:0) + (srcBridgeG24.has(n)?1:0) + (srcArithD3.has(n)?1:0) + (prevSet.has(n)?1:0) + (winRepSet.has(n)?1:0);
+      if (nSig === 3) score += 3;
+      if (nSig >= 5) score -= 4;
+    }
+    return score;
+  }
+
+  // 屏蔽版评分（第5组专用：弱信号0分）
+  function scoreComboShielded(combo) {
+    let score = 0, srcHit = 0;
+    for (const n of combo) {
+      if (srcSet.has(n)) srcHit++;
+      if (prevSet.has(n)) score += 10;
+      score += winBridgeFreq[n] * 2;
+      score += arithFreq[n] * 3;
+      const wf = wFreq[n]; if (wf > 0) score += wf * 2;
+      const gap = gapDist[n];
+      if (gap >= 2 && gap <= 4) score += 4; else if (gap >= 5 && gap <= 8) score += 3; else if (gap === 99 && wf === 0) score -= 3;
+      // 远窗口≤1信号
+      if (farLeq1Set.has(n)) score += 4;
+      score += (poolMap.get(n) || 0) * 0.3;
+      score += (comboRelationBonus && comboRelationBonus.get(n)) || 0;
+    }
+    for (let i = 0; i < combo.length; i++) { for (let j = i + 1; j < combo.length; j++) { const pk = combo[i] < combo[j] ? combo[i] + '-' + combo[j] : combo[j] + '-' + combo[i]; if (coOccur[pk]) score += coOccur[pk] * 3; } }
+    let strongPairs = 0;
+    for (let i = 0; i < combo.length; i++) { for (let j = i + 1; j < combo.length; j++) {
+      const a = combo[i], b = combo[j];
+      const aBr = srcBridgeG24.has(a) || srcBridgeG24.has(b);
+      const bPr = prevSet.has(a) || prevSet.has(b);
+      const aNb = nbSet.has(a) || nbSet.has(b);
+      const bWr = winRepSet.has(a) || winRepSet.has(b);
+      const aD3 = srcArithD3.has(a) || srcArithD3.has(b);
+      const bWbr = winBrSet.has(a) || winBrSet.has(b);
+      if (aBr && bPr) { score += 25; strongPairs++; }
+      if (aNb && bPr) { score += 18; strongPairs++; }
+      if (aNb && bWr) { score += 15; strongPairs++; }
+      if (aD3 && bWbr) { score += 12; strongPairs++; }
+    } }
+    if (strongPairs >= 2) score = Math.floor(score * 1.3);
+    if (srcHit >= 2) score += 6;
+    if (srcHit >= 3) score += 3;
+    for (const n of combo) {
+      let nSig = (srcSet.has(n)?1:0) + (nbSet.has(n)?1:0) + (srcBridgeG24.has(n)?1:0) + (srcArithD3.has(n)?1:0) + (prevSet.has(n)?1:0) + (winRepSet.has(n)?1:0);
+      if (nSig === 3) score += 3;
+      if (nSig >= 5) score -= 4;
+    }
     return score;
   }
 
@@ -9167,7 +9395,7 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
       const key = JSON.stringify(combo);
       if (seen.has(key)) continue; seen.add(key);
       if (usedKeys.has(key)) continue;
-      const sc = scoreCombo(combo);
+      const sc = grp.mixSrc ? scoreComboShielded(combo) : scoreCombo(combo);
       if (sc > bestScore) { bestScore = sc; bestCombo = combo; }
     }
     if (bestCombo) { usedKeys.add(JSON.stringify(bestCombo)); selected.push(bestCombo); }
@@ -9192,495 +9420,13 @@ function generate5CombosNewScript(allBalls, srcIdx, candidateEntries) {
   return selected.slice(0, 5);
 }
 
-function generateRepeatCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-  const prevRow = (src0 + 9 < allBalls.length) ? allBalls[src0 + 9] : allBalls[src0];
-  if (!prevRow || !prevRow.front) return null;
-  
-  const srcSet = new Set(srcRow.front);
-  const prevSet = new Set(prevRow.front);
-  const prevNb = new Set();
-  prevRow.front.forEach(n => { if (n > 1) prevNb.add(n - 1); if (n < 35) prevNb.add(n + 1); });
-  
-  // 重号评分: 选中行号码+15, 前一期重号+12, 邻号+8
-  const scored = [];
-  for (let n = 1; n <= 35; n++) {
-    let s = 0;
-    if (srcSet.has(n)) s += 15;
-    if (prevSet.has(n)) s += 12;
-    if (prevNb.has(n)) s += 8;
-    if (s > 0) scored.push({ n, s });
-  }
-  scored.sort((a, b) => b.s - a.s);
-  
-  const combos = [];
-  for (let t = 0; t < 5; t++) {
-    const used = new Set();
-    const combo = [];
-    // 优先选中行号码(4个)
-    for (let j = 0; j < scored.length && combo.length < 4; j++) {
-      const idx = (t * 4 + j) % scored.length;
-      if (!used.has(scored[idx].n) && srcSet.has(scored[idx].n)) {
-        combo.push(scored[idx].n); used.add(scored[idx].n);
-      }
-    }
-    // 补全到4个中行号
-    for (const s of scored) { if (combo.length >= 4) break; if (!used.has(s.n) && srcSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 加1个前一期号码
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n) && prevSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 桥接补全
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    if (combo.length === 5) combos.push(combo.sort((a, b) => a - b));
-  }
-  return combos.length >= 5 ? combos : null;
-}
-
-// ═══ v10: 策略多样性 - 邻号偏重 ═══
-// 策略: 邻号占主导(4个) + 选中行/前一期重号(1个)
-function generateNeighborCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-  const prevRow = (src0 + 9 < allBalls.length) ? allBalls[src0 + 9] : allBalls[src0];
-  if (!prevRow || !prevRow.front) return null;
-  
-  const srcSet = new Set(srcRow.front);
-  const prevSet = new Set(prevRow.front);
-  const nbSet = new Set();
-  srcRow.front.forEach(n => { if (n > 1) nbSet.add(n - 1); if (n < 35) nbSet.add(n + 1); });
-  prevRow.front.forEach(n => { if (n > 1) nbSet.add(n - 1); if (n < 35) nbSet.add(n + 1); });
-  
-  // 邻号评分: 邻号+15, 重号+12
-  const scored = [];
-  for (let n = 1; n <= 35; n++) {
-    let s = 0;
-    if (nbSet.has(n)) s += 15;
-    if (srcSet.has(n)) s += 12;
-    if (prevSet.has(n)) s += 10;
-    if (s > 0) scored.push({ n, s });
-  }
-  scored.sort((a, b) => b.s - a.s);
-  
-  const combos = [];
-  for (let t = 0; t < 5; t++) {
-    const used = new Set();
-    const combo = [];
-    // 优先邻号(4个)
-    for (let j = 0; j < scored.length && combo.length < 4; j++) {
-      const idx = (t * 4 + j) % scored.length;
-      if (!used.has(scored[idx].n) && nbSet.has(scored[idx].n)) {
-        combo.push(scored[idx].n); used.add(scored[idx].n);
-      }
-    }
-    for (const s of scored) { if (combo.length >= 4) break; if (!used.has(s.n) && nbSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 加1个重号
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n) && (srcSet.has(s.n) || prevSet.has(s.n))) { combo.push(s.n); used.add(s.n); } }
-    // 补全
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    if (combo.length === 5) combos.push(combo.sort((a, b) => a - b));
-  }
-  return combos.length >= 5 ? combos : null;
-}
-
-// ═══ v10: 策略多样性 - 桥接偏重 ═══
-// 策略: 桥接号码(±1~5)占主导(3个) + 选中行(1个) + 前一期(1个)
-function generateBridgeCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-  const prevRow = (src0 + 9 < allBalls.length) ? allBalls[src0 + 9] : allBalls[src0];
-  if (!prevRow || !prevRow.front) return null;
-  
-  const srcSet = new Set(srcRow.front);
-  const prevSet = new Set(prevRow.front);
-  
-  // 桥接: 选中行号码的±1~5
-  const bridgeFreq = new Array(36).fill(0);
-  srcRow.front.forEach(n => {
-    for (let d = 1; d <= 5; d++) {
-      if (n - d >= 1) bridgeFreq[n - d]++;
-      if (n + d <= 35) bridgeFreq[n + d]++;
-    }
-  });
-  
-  const scored = [];
-  for (let n = 1; n <= 35; n++) {
-    let s = bridgeFreq[n] * 10;
-    if (srcSet.has(n)) s += 5;
-    if (prevSet.has(n)) s += 8;
-    if (s > 0) scored.push({ n, s });
-  }
-  scored.sort((a, b) => b.s - a.s);
-  
-  const combos = [];
-  for (let t = 0; t < 5; t++) {
-    const used = new Set();
-    const combo = [];
-    // 桥接号码(3个)
-    for (let j = 0; j < scored.length && combo.length < 3; j++) {
-      const idx = (t * 3 + j) % scored.length;
-      if (!used.has(scored[idx].n) && !srcSet.has(scored[idx].n) && bridgeFreq[scored[idx].n] > 0) {
-        combo.push(scored[idx].n); used.add(scored[idx].n);
-      }
-    }
-    for (const s of scored) { if (combo.length >= 3) break; if (!used.has(s.n) && !srcSet.has(s.n) && bridgeFreq[s.n] > 0) { combo.push(s.n); used.add(s.n); } }
-    // 加1个选中行
-    for (const s of scored) { if (combo.length >= 4) break; if (!used.has(s.n) && srcSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 加1个前一期
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n) && prevSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 补全
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    if (combo.length === 5) combos.push(combo.sort((a, b) => a - b));
-  }
-  return combos.length >= 5 ? combos : null;
-}
-
-// ═══ v10: 策略多样性 - 等差偏重 ═══
-// 策略: 等差延伸点(±1~4)占主导(3个) + 选中行(1个) + 邻号(1个)
-function generateArithmeticCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-  const prevRow = (src0 + 9 < allBalls.length) ? allBalls[src0 + 9] : allBalls[src0];
-  if (!prevRow || !prevRow.front) return null;
-  
-  const srcSet = new Set(srcRow.front);
-  const prevSet = new Set(prevRow.front);
-  const nbSet = new Set();
-  srcRow.front.forEach(n => { if (n > 1) nbSet.add(n - 1); if (n < 35) nbSet.add(n + 1); });
-  
-  // 等差延伸: 对选中行号码对计算延伸点
-  const arithFreq = new Array(36).fill(0);
-  const sorted = [...srcRow.front].sort((a, b) => a - b);
-  for (let i = 0; i < sorted.length; i++) {
-    for (let j = i + 1; j < sorted.length; j++) {
-      const d = sorted[j] - sorted[i];
-      if (d >= 1 && d <= 4) {
-        const ext = sorted[j] + d;
-        if (ext >= 1 && ext <= 35) arithFreq[ext] += (5 - d) * 2;
-        // 邻号
-        if (ext - 1 >= 1) arithFreq[ext - 1] += (5 - d);
-        if (ext + 1 <= 35) arithFreq[ext + 1] += (5 - d);
-      }
-    }
-  }
-  
-  const scored = [];
-  for (let n = 1; n <= 35; n++) {
-    let s = arithFreq[n];
-    if (srcSet.has(n)) s += 5;
-    if (prevSet.has(n)) s += 8;
-    if (nbSet.has(n)) s += 6;
-    if (s > 0) scored.push({ n, s });
-  }
-  scored.sort((a, b) => b.s - a.s);
-  
-  const combos = [];
-  for (let t = 0; t < 5; t++) {
-    const used = new Set();
-    const combo = [];
-    // 等差延伸(3个)
-    for (let j = 0; j < scored.length && combo.length < 3; j++) {
-      const idx = (t * 3 + j) % scored.length;
-      if (!used.has(scored[idx].n) && arithFreq[scored[idx].n] > 0) {
-        combo.push(scored[idx].n); used.add(scored[idx].n);
-      }
-    }
-    for (const s of scored) { if (combo.length >= 3) break; if (!used.has(s.n) && arithFreq[s.n] > 0) { combo.push(s.n); used.add(s.n); } }
-    // 加1个选中行
-    for (const s of scored) { if (combo.length >= 4) break; if (!used.has(s.n) && srcSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 加1个邻号
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n) && nbSet.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    // 补全
-    for (const s of scored) { if (combo.length >= 5) break; if (!used.has(s.n)) { combo.push(s.n); used.add(s.n); } }
-    if (combo.length === 5) combos.push(combo.sort((a, b) => a - b));
-  }
-  return combos.length >= 5 ? combos : null;
-}
-
-// ═══ v21: src为主comboRelationBonus（无泄露159期分析） ═══
-// 关键发现：src关系全部>基线(15.0-15.6%)，prev关系全部<基线(13.1-13.7%)
-// 最强交集是src内部交集（src重号∩src桥接=19.2%, src等差d3∩src桥接=20.0%）
-function computeComboRelationBonusScript(allBalls, srcIdx) {
-  const bonusMap = new Map();
-  if (!allBalls || allBalls.length === 0) return bonusMap;
-  const src0 = srcIdx - 1;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return bonusMap;
-
-  const srcNums = srcRow.front;
-  if (srcNums.length < 2) return bonusMap;
-
-  // src关系集合
-  const srcRep = new Set(srcNums);
-  const srcNb = new Set();
-  srcNums.forEach(n => { if (n > 1) srcNb.add(n - 1); if (n < 35) srcNb.add(n + 1); });
-
-  // src等差d2延伸
-  const srcArithD2 = new Set();
-  const sSorted = [...srcNums].sort((a, b) => a - b);
-  for (let i = 0; i < sSorted.length; i++) {
-    for (let j = i + 1; j < sSorted.length; j++) {
-      const d = sSorted[j] - sSorted[i];
-      if (d === 2) {
-        if (sSorted[i] - 2 >= 1) srcArithD2.add(sSorted[i] - 2);
-        if (sSorted[j] + 2 <= 35) srcArithD2.add(sSorted[j] + 2);
-      }
-    }
-  }
-
-  // src等差d3延伸（最强信号源）
-  const srcArithD3 = new Set();
-  for (let i = 0; i < sSorted.length; i++) {
-    for (let j = i + 1; j < sSorted.length; j++) {
-      const d = sSorted[j] - sSorted[i];
-      if (d === 3) {
-        if (sSorted[i] - 3 >= 1) srcArithD3.add(sSorted[i] - 3);
-        if (sSorted[j] + 3 <= 35) srcArithD3.add(sSorted[j] + 3);
-      }
-    }
-  }
-
-  // src桥接g2-4
-  const srcBridge = new Set();
-  for (let i = 0; i < sSorted.length; i++) {
-    for (let j = i + 1; j < sSorted.length; j++) {
-      const dist = sSorted[j] - sSorted[i];
-      if (dist >= 2 && dist <= 4) {
-        for (let mid = sSorted[i] + 1; mid < sSorted[j]; mid++) {
-          srcBridge.add(mid);
-        }
-      }
-    }
-  }
-
-  // 前一期关系集合（权重低）
-  let prevRep = new Set(), prevNb = new Set();
-  const prevIdx = src0 + 1;
-  if (prevIdx < allBalls.length) {
-    const prevRow = allBalls[prevIdx];
-    if (prevRow && prevRow.front) {
-      const prevNums = prevRow.front;
-      prevRep = new Set(prevNums);
-      prevNums.forEach(n => { if (n > 1) prevNb.add(n - 1); if (n < 35) prevNb.add(n + 1); });
-    }
-  }
-
-  for (let n = 1; n <= 35; n++) {
-    const a3 = srcArithD3.has(n);
-    const a2 = srcArithD2.has(n);
-    const b = srcNb.has(n);
-    const e = srcRep.has(n);
-    const g = srcBridge.has(n);
-    const c = prevRep.has(n);
-    const d = prevNb.has(n);
-
-    let score = 0;
-
-    // 最强交集：src内部
-    if (a3 && g) score = 15;            // src等差d3∩src桥接 = 20.0%
-    else if (a2 && c) score = 14;       // src等差d2∩prev重号 = 23.8%
-    else if (e && g) score = 12;        // src重号∩src桥接 = 19.2%
-
-    // 强交集：src+prev
-    else if (b && c) score = 10;        // src邻号∩prev重号 = 19.3%
-
-    // src单关系
-    else if (e) score = 8;              // src重号 = 15.6%
-    else if (a2) score = 7;             // src等差d2 = 15.5%
-    else if (b) score = 6;              // src邻号 = 15.3%
-    else if (g) score = 5;              // src桥接g2-4 = 15.0%
-
-    // prev弱信号
-    else if (c && d) score = 1;         // prev重号∩prev邻号 = 15.5%
-
-    if (score > 0) bonusMap.set(n, score);
-  }
-
-  return bonusMap;
-}
-
-// ═══ v25 策略1: src交集最强（src等差d3∩src桥接 + src重号∩src桥接） ═══
-// 关键发现：src等差d3∩src桥接=20.0%(1.40x), src重号∩src桥接=19.2%(1.35x)
-function generateSrcIntersectionCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  if (src0 < 0 || src0 >= allBalls.length) return null;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-  
-  const srcNums = srcRow.front;
-  const srcSet = new Set(srcNums);
-  const sSorted = [...srcNums].sort((a, b) => a - b);
-  
-  // src等差d3延伸点
-  const srcArithD3 = new Set();
-  for (let i = 0; i < sSorted.length; i++) {
-    for (let j = i + 1; j < sSorted.length; j++) {
-      const d = sSorted[j] - sSorted[i];
-      if (d === 3) {
-        if (sSorted[i] - 3 >= 1) srcArithD3.add(sSorted[i] - 3);
-        if (sSorted[j] + 3 <= 35) srcArithD3.add(sSorted[j] + 3);
-      }
-    }
-  }
-  
-  // src桥接g2-4: src号码间距2-4的中点
-  const srcBridge = new Set();
-  for (let i = 0; i < sSorted.length; i++) {
-    for (let j = i + 1; j < sSorted.length; j++) {
-      const dist = sSorted[j] - sSorted[i];
-      if (dist >= 2 && dist <= 4) {
-        for (let mid = sSorted[i] + 1; mid < sSorted[j]; mid++) {
-          srcBridge.add(mid);
-        }
-      }
-    }
-  }
-  
-  // 评分：src等差d3∩src桥接=15分，src重号∩src桥接=12分
-  const scores = new Map();
-  for (let n = 1; n <= 35; n++) {
-    let score = 0;
-    if (srcArithD3.has(n) && srcBridge.has(n)) score += 15;
-    else if (srcSet.has(n) && srcBridge.has(n)) score += 12;
-    if (srcArithD3.has(n)) score += 3;
-    if (srcBridge.has(n)) score += 2;
-    if (score > 0) scores.set(n, score);
-  }
-  
-  const sorted = Array.from(scores.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([num]) => num)
-    .filter(n => n >= 1 && n <= 35);
-  
-  const combos = [];
-  const seen = new Set();
-  for (let t = 0; t < 5; t++) {
-    const start = t % Math.max(1, sorted.length);
-    const combo = [];
-    for (let i = 0; i < 5 && combo.length < 5; i++) {
-      const n = sorted[(start + i) % sorted.length];
-      if (!combo.includes(n)) combo.push(n);
-    }
-    if (combo.length === 5) {
-      combo.sort((a, b) => a - b);
-      const key = combo.join(',');
-      if (!seen.has(key)) { seen.add(key); combos.push(combo); }
-    }
-  }
-  return combos.length >= 5 ? combos : (combos.length > 0 ? combos : null);
-}
-
-// ═══ v24 策略4: 热冷号混合（2热号+3冷号） ═══
-// 恢复v9热冷号策略，基于窗口频率+邻号关系
-function generateCrossSourceACombosScript(allBalls, srcIdx, candidateEntries) {
-  // 直接调用热冷号函数
-  return generateHotColdCombosScript(allBalls, srcIdx, candidateEntries, 2, 3);
-}
-
-// ═══ v24 策略5: 智能多样性 - 频率排序次Top5（避免与策略4重复） ═══
-function generateCrossSourceBCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0) return null;
-  const src0 = srcIdx - 1;
-  if (src0 < 0 || src0 >= allBalls.length) return null;
-  const srcRow = allBalls[src0];
-  if (!srcRow || !srcRow.front) return null;
-
-  // 计算窗口频率（前5期）
-  const windowStart = Math.max(0, src0 - 4);
-  const windowNumbers = [];
-  for (let i = windowStart; i < src0; i++) {
-    if (allBalls[i] && allBalls[i].front) {
-      windowNumbers.push(...allBalls[i].front);
-    }
-  }
-
-  const windowFreq = new Map();
-  windowNumbers.forEach(n => {
-    windowFreq.set(n, (windowFreq.get(n) || 0) + 1);
-  });
-
-  // 按频率排序
-  const freqSorted = Array.from(windowFreq.entries())
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .map(([num]) => num);
-
-  // 获取策略4的号码（假设策略4已经生成）
-  // 由于策略4和5是独立生成的，我们无法直接获取策略4的号码
-  // 因此，我们生成一组与策略4不同的组合，通过轮转偏移实现
-  const poolNums = candidateEntries ? candidateEntries.map(e => e.number) : [];
-  const candidates = freqSorted.length >= 10 ? freqSorted : [...freqSorted, ...poolNums.filter(n => !freqSorted.includes(n))];
-
-  // 生成多组组合（轮转偏移，避免与策略4重复）
-  const combos = [];
-  const seen = new Set();
-  for (let t = 0; t < 5; t++) {
-    // 使用偏移量，确保与策略4不同
-    const start = (t + 3) % Math.max(1, candidates.length);
-    const combo = [];
-    for (let i = 0; i < 5 && combo.length < 5; i++) {
-      const n = candidates[(start + i) % candidates.length];
-      if (!combo.includes(n)) combo.push(n);
-    }
-    if (combo.length === 5) {
-      combo.sort((a, b) => a - b);
-      const key = combo.join(',');
-      if (!seen.has(key)) { seen.add(key); combos.push(combo); }
-    }
-  }
-  return combos.length >= 5 ? combos : (combos.length > 0 ? combos : null);
-}
-
-// ═══ v10.6 策略6: 跨源C（1跨源 + 4池顶，保守配比备用） ═══
-function generateCrossSourceCCombosScript(allBalls, srcIdx, candidateEntries) {
-  if (!allBalls || allBalls.length === 0 || !candidateEntries) return null;
-  const bonus = computeComboRelationBonusScript(allBalls, srcIdx);
-  if (bonus.size < 1) return null;
-
-  const crossNums = [...bonus.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
-  const poolSorted = [...candidateEntries].sort((a, b) => (b.score || 0) - (a.score || 0));
-  const fillNums = poolSorted.map(e => e.number).filter(n => !crossNums.includes(n));
-
-  const combos = [];
-  const seen = new Set();
-  for (let t = 0; t < 5; t++) {
-    const crossN = crossNums[t % crossNums.length];
-    const fillStart = (t * 2) % Math.max(1, fillNums.length);
-    const fill = [];
-    for (let i = 0; i < 4 && fill.length < 4; i++) {
-      const n = fillNums[(fillStart + i) % fillNums.length];
-      if (crossN !== n && !fill.includes(n)) fill.push(n);
-    }
-    const combo = [crossN, ...fill].sort((a, b) => a - b);
-    if (combo.length === 5) {
-      const key = combo.join(',');
-      if (!seen.has(key)) { seen.add(key); combos.push(combo); }
-    }
-  }
-  return combos.length >= 5 ? combos : (combos.length > 0 ? combos : null);
-}
-
-// ═══ v4.1 单组五行计划（覆盖优先策略）+ 补漏6 ═══
-function buildV4SingleSamplePlan(frontCombos, backCombos, poolNumbers = null, candidateEntries = null, predictedTails = null, firstBallPreds = null, tailRelationData = null, allBalls = null, sourceStartRow = 0) {
-  const frontBase = frontCombos[0] || null;
-  const backBase = backCombos[0] || null;
-  if (!frontBase && !backBase) return [];
-  
-  // ═══ 双模式策略选择Top5 = 等差+连续+连接点(3) + 多段连续+连接点(2) ═══
-  const arithConsecTails = tailRelationData?.arithConsecTails || [];
-  const multiSegPatternTails = tailRelationData?.multiSegPatternTails || [];
-  const msPatterns = tailRelationData?.multiSegmentPatterns || [];
-  
-  let selectedFront = [];
+// ═══ buildV4SingleSamplePlan: 从optimized_picker.js同步的组合选择 ═══
+function buildV4SingleSamplePlan(frontCombos, backCombos, poolNumbers, candidateEntries, predictedTails, firstBallPreds, tailRelationData, allBalls, sourceStartRow) {
+  const frontBase = frontCombos[0] || { numbers: poolNumbers.slice(0, 5).map(n => n.number || n), ratioText: '候选' };
+  const backBase = backCombos[0] || { numbers: [1, 2], ratioText: '候选' };
+  const selectedFront = [];
   const usedKeys = new Set();
-  
+
   // ═══ v27: 分组锚定 + 动态窗口关系补全（从optimized_picker.js同步） ═══
   const newCombos = generate5CombosNewScript(allBalls, sourceStartRow, candidateEntries);
   for (const nums of newCombos) {
